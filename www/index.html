@@ -1,0 +1,3554 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLOPPY NEON</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --neon-cyan: #00f5ff;
+    --neon-yellow: #ffbe0b;
+    --neon-gold: #ffd700;
+    --bg-dark: #020014;
+    --common: #a0a0c0;
+    --rare: #4fc3f7;
+    --epic: #ce93d8;
+    --legendary: #ffb300;
+    --secret: #ff1744;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+    overflow: hidden;
+  }
+
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .star  { position: absolute; background: white; border-radius: 50%; animation: twinkle var(--d) ease-in-out infinite var(--delay); }
+  @keyframes twinkle { 0%,100% { opacity: var(--max-op); } 50% { opacity: 0.1; } }
+
+  /* ── GAME SCREEN ─────────────────────────────────── */
+  #gameScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  #gameCanvas {
+    display: block;
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 0 20px var(--neon-cyan), 0 0 60px rgba(0,245,255,0.3);
+    cursor: pointer;
+  }
+
+  /* ── SHOP SCREEN ─────────────────────────────────── */
+  #shopScreen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(2,0,20,0.97);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 70px 20px 40px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .shop-container {
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .shop-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid rgba(0,245,255,0.2);
+  }
+
+  .shop-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 1.5rem;
+    color: #ff9100;
+    text-shadow: 0 0 10px #ff9100, 0 0 30px #ff9100;
+    letter-spacing: 0.15em;
+  }
+
+  .shop-coins-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--neon-gold);
+    font-size: 0.65rem;
+    text-shadow: 0 0 8px var(--neon-gold);
+  }
+
+  .coin-icon-lg {
+    width: 20px; height: 20px;
+    background: radial-gradient(circle at 35% 35%, #fff9c4, #ffd700 40%, #b8860b);
+    border-radius: 50%;
+    box-shadow: 0 0 10px #ffd700;
+    display: inline-block;
+  }
+
+  .btn-back-fixed {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 110;
+    background: rgba(2,0,20,0.9);
+    border: 2px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.5rem;
+    padding: 10px 16px;
+    cursor: pointer;
+    text-shadow: 0 0 8px var(--neon-cyan);
+    box-shadow: 0 0 16px rgba(0,245,255,0.5);
+    transition: all 0.15s;
+  }
+  .btn-back-fixed:hover { background: rgba(0,245,255,0.15); box-shadow: 0 0 30px rgba(0,245,255,0.8); }
+
+  /* ── GACHA BOXES ─────────────────────────────────── */
+  .gacha-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .gacha-box {
+    border: 2px solid;
+    border-radius: 12px;
+    padding: 10px 8px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+ 
+  .gacha-box:hover { transform: translateY(-3px); }
+  .gacha-box:active { transform: scale(0.97); }
+
+  .gacha-box.skins {
+    border-color: #00ff99;
+    background: linear-gradient(135deg, rgba(0,255,153,0.05), rgba(0,100,60,0.1));
+    box-shadow: 0 0 20px rgba(0,255,153,0.2), inset 0 0 30px rgba(0,255,153,0.03);
+  }
+  .gacha-box.accessories {
+    border-color: #c77dff;
+    background: linear-gradient(135deg, rgba(199,125,255,0.05), rgba(80,0,130,0.1));
+    box-shadow: 0 0 20px rgba(199,125,255,0.2), inset 0 0 30px rgba(199,125,255,0.03);
+  }
+  .gacha-box.pipes {
+    border-color: #ff6b35;
+    background: linear-gradient(135deg, rgba(255,107,53,0.05), rgba(120,40,0,0.1));
+    box-shadow: 0 0 20px rgba(255,107,53,0.2), inset 0 0 30px rgba(255,107,53,0.03);
+  }
+
+  .gacha-box::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.03), transparent 70%);
+    animation: shimmer 4s linear infinite;
+  }
+  @keyframes shimmer { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+
+  .gacha-icon { font-size: 2rem; margin-bottom: 8px; display: block; text-align: center; }
+  .gacha-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.62rem;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 0.08em;
+  }
+  .gacha-box.skins .gacha-name { color: #00ff99; text-shadow: 0 0 8px #00ff99; }
+  .gacha-box.accessories .gacha-name { color: #c77dff; text-shadow: 0 0 8px #c77dff; }
+  .gacha-box.pipes .gacha-name { color: #ff6b35; text-shadow: 0 0 8px #ff6b35; }
+
+  .gacha-desc {
+    font-size: 0.34rem;
+    text-align: center;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .gacha-price {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.48rem;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  .gacha-box.skins .gacha-price { background: rgba(0,255,153,0.15); color: #00ff99; border: 1px solid rgba(0,255,153,0.4); }
+  .gacha-box.accessories .gacha-price { background: rgba(199,125,255,0.15); color: #c77dff; border: 1px solid rgba(199,125,255,0.4); }
+  .gacha-box.pipes .gacha-price { background: rgba(255,107,53,0.15); color: #ff6b35; border: 1px solid rgba(255,107,53,0.4); }
+
+  /* Previews canvas in gacha boxes */
+  .gacha-preview-row {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .gacha-preview-canvas {
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* ── RARITY TABLE ─────────────────────────────────── */
+  .rarity-section {
+    margin-bottom: 28px;
+  }
+  .section-title {
+    font-size: 0.55rem;
+    color: rgba(0,245,255,0.7);
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+    border-left: 3px solid var(--neon-cyan);
+    padding-left: 10px;
+  }
+  .rarity-bars { display: flex; flex-direction: column; gap: 8px; }
+  .rarity-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .rarity-label {
+    width: 90px;
+    font-size: 0.42rem;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+  }
+  .rarity-bar-bg {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .rarity-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+  .rarity-pct {
+    width: 50px;
+    font-size: 0.42rem;
+    text-align: right;
+    flex-shrink: 0;
+    color: rgba(255,255,255,0.6);
+  }
+  .r-common { color: var(--common); }
+  .r-rare { color: var(--rare); }
+  .r-epic { color: var(--epic); }
+  .r-legendary { color: var(--legendary); }
+  .r-secret { color: var(--secret); text-shadow: 0 0 8px var(--secret); animation: secretGlow 1.5s ease-in-out infinite; }
+  @keyframes secretGlow { 0%,100%{text-shadow:0 0 8px var(--secret)} 50%{text-shadow:0 0 20px var(--secret),0 0 40px var(--secret)} }
+
+  /* ── COLLECTION ─────────────────────────────────── */
+  .collection-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+  .tab-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.4);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.38rem;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .tab-btn.active {
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+    background: rgba(0,245,255,0.08);
+    text-shadow: 0 0 8px var(--neon-cyan);
+  }
+
+  .collection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .collection-grid::-webkit-scrollbar { width: 4px; }
+  .collection-grid::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+  .collection-grid::-webkit-scrollbar-thumb { background: rgba(0,245,255,0.3); border-radius: 2px; }
+
+  .item-card {
+    border: 1.5px solid;
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .item-card.locked { opacity: 0.3; filter: grayscale(0.8); cursor: default; }
+  .item-card.equipped::after {
+    content: '✓';
+    position: absolute;
+    top: 3px; right: 5px;
+    font-size: 0.4rem;
+    color: #00ff99;
+  }
+  .item-card:not(.locked):hover { transform: translateY(-2px); }
+
+  .item-card.c-common { border-color: var(--common); background: rgba(160,160,192,0.06); }
+  .item-card.c-rare { border-color: var(--rare); background: rgba(79,195,247,0.06); }
+  .item-card.c-epic { border-color: var(--epic); background: rgba(206,147,216,0.06); }
+  .item-card.c-legendary { border-color: var(--legendary); background: rgba(255,179,0,0.06); box-shadow: 0 0 8px rgba(255,179,0,0.15); }
+  .item-card.c-secret { border-color: var(--secret); background: rgba(255,23,68,0.06); box-shadow: 0 0 12px rgba(255,23,68,0.2); animation: secretCardGlow 2s ease-in-out infinite; }
+  @keyframes secretCardGlow { 0%,100%{box-shadow:0 0 8px rgba(255,23,68,0.2)} 50%{box-shadow:0 0 20px rgba(255,23,68,0.5)} }
+
+  .item-preview-canvas { display: block; margin: 0 auto 4px; border-radius: 4px; }
+  .item-name { font-size: 0.3rem; letter-spacing: 0.03em; line-height: 1.5; }
+  .item-rarity-badge {
+    font-size: 0.28rem;
+    margin-top: 3px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+  .badge-common { background: rgba(160,160,192,0.2); color: var(--common); }
+  .badge-rare { background: rgba(79,195,247,0.2); color: var(--rare); }
+  .badge-epic { background: rgba(206,147,216,0.2); color: var(--epic); }
+  .badge-legendary { background: rgba(255,179,0,0.2); color: var(--legendary); }
+  .badge-secret { background: rgba(255,23,68,0.2); color: var(--secret); }
+
+  /* ── GACHA RESULT OVERLAY ─────────────────────────── */
+  #gachaOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0,0,0,0.92);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .result-panel {
+    border-radius: 16px;
+    padding: 40px 50px;
+    text-align: center;
+    max-width: 360px;
+    width: 90%;
+    position: relative;
+    animation: resultAppear 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes resultAppear { from{transform:scale(0.5) rotate(-5deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
+
+  .result-panel.c-common { border: 2px solid var(--common); background: linear-gradient(135deg, rgba(10,10,25,0.98), rgba(40,40,60,0.95)); box-shadow: 0 0 40px rgba(160,160,192,0.3); }
+  .result-panel.c-rare { border: 2px solid var(--rare); background: linear-gradient(135deg, rgba(5,15,30,0.98), rgba(10,40,60,0.95)); box-shadow: 0 0 50px rgba(79,195,247,0.4); }
+  .result-panel.c-epic { border: 2px solid var(--epic); background: linear-gradient(135deg, rgba(15,5,25,0.98), rgba(50,10,70,0.95)); box-shadow: 0 0 60px rgba(206,147,216,0.5); }
+  .result-panel.c-legendary { border: 2px solid var(--legendary); background: linear-gradient(135deg, rgba(20,10,0,0.98), rgba(60,30,0,0.95)); box-shadow: 0 0 80px rgba(255,179,0,0.6); }
+  .result-panel.c-secret { border: 2px solid var(--secret); background: linear-gradient(135deg, rgba(20,0,5,0.98), rgba(60,0,15,0.95)); box-shadow: 0 0 100px rgba(255,23,68,0.7), 0 0 200px rgba(255,23,68,0.3); }
+
+  #resultPreviewCanvas { display: block; margin: 0 auto 8px; border-radius: 8px; }
+
+  .result-rarity-label {
+    font-size: 0.45rem;
+    letter-spacing: 0.2em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .result-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: 0.1em;
+  }
+  .result-type {
+    font-size: 0.38rem;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 24px;
+    letter-spacing: 0.1em;
+  }
+  .result-new-badge {
+    display: inline-block;
+    background: linear-gradient(90deg, #ff9100, #ffbe0b);
+    color: #000;
+    font-size: 0.4rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    animation: newBadgePulse 0.8s ease-in-out infinite alternate;
+  }
+  .result-duplicate-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+    font-size: 0.4rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+  @keyframes newBadgePulse { from{box-shadow:0 0 5px rgba(255,145,0,0.5)} to{box-shadow:0 0 20px rgba(255,145,0,0.9)} }
+
+  .result-close-btn {
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.7);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.45rem;
+    padding: 10px 24px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+    letter-spacing: 0.1em;
+  }
+  .result-close-btn:hover { border-color: rgba(255,255,255,0.7); color: #fff; background: rgba(255,255,255,0.05); }
+
+  /* ── TOAST ─────────────────────────────────────── */
+  #toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: rgba(10,0,30,0.95);
+    border: 1.5px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    font-size: 0.5rem;
+    padding: 10px 20px;
+    border-radius: 6px;
+    z-index: 300;
+    transition: transform 0.3s ease;
+    text-shadow: 0 0 8px var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0,245,255,0.3);
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  #particleCanvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 199;
+    display: none;
+  }
+
+  /* ── FIXED AD BUTTON ─────────────────────────────── */
+  #fixedAdBtn {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 120;
+    background: linear-gradient(90deg, rgba(0,10,30,0.97), rgba(0,20,50,0.97));
+    border-bottom: 2px solid rgba(0,245,255,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  #fixedAdBtn:hover { background: linear-gradient(90deg, rgba(0,245,255,0.12), rgba(0,100,180,0.18)); }
+  #fixedAdBtn .fad-icon { font-size: 1.3rem; }
+  #fixedAdBtn .fad-text {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.65rem;
+    color: #00f5ff;
+    text-shadow: 0 0 10px #00f5ff;
+    letter-spacing: 0.1em;
+  }
+  #fixedAdBtn .fad-reward {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(0,245,255,0.15);
+    border: 1.5px solid rgba(0,245,255,0.5);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.6rem;
+    color: #ffd700;
+    text-shadow: 0 0 8px #ffd700;
+    box-shadow: 0 0 10px rgba(0,245,255,0.2);
+  }
+  #fixedAdBtn .fad-cd {
+    font-size: 0.35rem;
+    color: rgba(255,255,255,0.4);
+    min-width: 60px;
+    text-align: right;
+  }
+
+  /* ── MANDATORY AD OVERLAY ────────────────────────── */
+  #mandatoryAdOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(0,0,0,0.97);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .mad-panel {
+    background: rgba(5,0,20,0.98);
+    border: 2px solid #ff9100;
+    border-radius: 16px;
+    padding: 40px 50px;
+    text-align: center;
+    max-width: 380px;
+    width: 90%;
+    box-shadow: 0 0 60px rgba(255,145,0,0.3);
+    animation: resultAppear 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .mad-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 0.8rem;
+    color: #ff9100;
+    text-shadow: 0 0 12px #ff9100;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+  .mad-sub {
+    font-size: 0.38rem;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 24px;
+    line-height: 1.8;
+  }
+  .mad-fake-ad {
+    background: linear-gradient(135deg, rgba(255,145,0,0.08), rgba(255,50,0,0.08));
+    border: 1.5px solid rgba(255,145,0,0.3);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    font-size: 2rem;
+  }
+  .mad-fake-ad-text {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.5rem;
+    color: rgba(255,255,255,0.6);
+    margin-top: 8px;
+  }
+  .mad-bar-wrap {
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    height: 8px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .mad-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff9100, #ffbe0b);
+    border-radius: 6px;
+    width: 0%;
+    transition: none;
+    box-shadow: 0 0 10px #ff9100;
+  }
+  .mad-timer {
+    font-size: 0.38rem;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 18px;
+  }
+  .mad-skip-btn {
+    background: transparent;
+    border: 2px solid rgba(0,245,255,0.4);
+    color: rgba(0,245,255,0.7);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.42rem;
+    padding: 10px 24px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+    letter-spacing: 0.08em;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .mad-skip-btn.ready {
+    opacity: 1;
+    pointer-events: auto;
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+    box-shadow: 0 0 12px rgba(0,245,255,0.3);
+  }
+  .mad-skip-btn.ready:hover { background: rgba(0,245,255,0.1); }
+
+  /* ── RATING POPUP ────────────────────────────────── */
+  #ratingOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 450;
+    background: rgba(0,0,0,0.88);
+    align-items: center;
+    justify-content: center;
+  }
+  .rating-panel {
+    background: rgba(5,0,20,0.98);
+    border: 2px solid #ffd700;
+    border-radius: 16px;
+    padding: 36px 40px;
+    text-align: center;
+    max-width: 340px;
+    width: 90%;
+    box-shadow: 0 0 60px rgba(255,215,0,0.25);
+    animation: resultAppear 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .rating-icon { font-size: 3rem; margin-bottom: 12px; }
+  .rating-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 0.75rem;
+    color: #ffd700;
+    text-shadow: 0 0 12px #ffd700;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+  .rating-sub {
+    font-size: 0.36rem;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 20px;
+    line-height: 1.9;
+  }
+  .rating-stars {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    letter-spacing: 4px;
+    animation: starPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes starPulse { 0%,100%{text-shadow:0 0 8px #ffd700} 50%{text-shadow:0 0 24px #ffd700, 0 0 48px #ffbe0b} }
+  .rating-btns { display: flex; flex-direction: column; gap: 10px; }
+  .rating-yes-btn {
+    background: linear-gradient(90deg, #ff9100, #ffbe0b);
+    border: none;
+    color: #000;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.45rem;
+    padding: 12px 24px;
+    cursor: pointer;
+    border-radius: 8px;
+    letter-spacing: 0.08em;
+    font-weight: bold;
+    transition: all 0.15s;
+  }
+  .rating-yes-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,145,0,0.4); }
+  .rating-later-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.35);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.36rem;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .rating-later-btn:hover { color: rgba(255,255,255,0.6); border-color: rgba(255,255,255,0.4); }
+
+  /* ── AD BLOCKER ITEM IN SHOP ─────────────────────── */
+  .adblocker-box {
+    border: 2px solid #a855f7;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, rgba(168,85,247,0.06), rgba(80,0,150,0.1));
+    box-shadow: 0 0 20px rgba(168,85,247,0.15);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .adblocker-box:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(168,85,247,0.3); }
+  .adblocker-box.owned { border-color: #00ff99; background: linear-gradient(135deg,rgba(0,255,153,0.06),rgba(0,80,50,0.1)); box-shadow: 0 0 20px rgba(0,255,153,0.2); cursor: default; }
+  .adblocker-box.owned:hover { transform: none; }
+  .ab-price-btn {
+    background: linear-gradient(90deg, #a855f7, #7c3aed);
+    border: none;
+    color: #fff;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.42rem;
+    padding: 10px 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: all 0.15s;
+    box-shadow: 0 0 12px rgba(168,85,247,0.4);
+  }
+  .ab-price-btn:hover { transform: scale(1.05); }
+  .ab-owned-badge {
+    background: rgba(0,255,153,0.2);
+    border: 1.5px solid rgba(0,255,153,0.5);
+    color: #00ff99;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.5rem;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-shadow: 0 0 8px #00ff99;
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<canvas id="particleCanvas"></canvas>
+
+<!-- ══════════ FIXED TOP AD BUTTON ══════════ -->
+<div id="fixedAdBtn">
+  <span class="fad-icon">📺</span>
+  <span class="fad-text">PUB GRATUITE</span>
+  <span class="fad-reward"><span style="display:inline-block;width:14px;height:14px;background:radial-gradient(circle at 35% 35%,#fff9c4,#ffd700 40%,#b8860b);border-radius:50%;box-shadow:0 0 8px #ffd700;"></span>+25</span>
+  <span class="fad-cd" id="fixedAdCd">DISPONIBLE</span>
+</div>
+
+<!-- ══════════ MANDATORY AD OVERLAY ══════════ -->
+<div id="mandatoryAdOverlay" style="display:none">
+  <div class="mad-panel">
+    <div class="mad-title">⚡ PAUSE PUB</div>
+    <div class="mad-sub">Une courte publicité vous permet<br>de continuer à jouer gratuitement !</div>
+    <div class="mad-fake-ad">
+      🎮
+      <div class="mad-fake-ad-text">SUPER GACHA 3000 — JOUEZ MAINTENANT!</div>
+    </div>
+    <div class="mad-bar-wrap"><div class="mad-bar-fill" id="madBarFill"></div></div>
+    <div class="mad-timer" id="madTimer">5s...</div>
+    <button class="mad-skip-btn" id="madSkipBtn">▶ CONTINUER</button>
+  </div>
+</div>
+
+<!-- ══════════ OFFRES SPÉCIALES POPUP ══════════ -->
+<div id="offresOverlay" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.95);align-items:center;justify-content:center;flex-direction:column;">
+  <div style="background:linear-gradient(135deg,#0a001e,#180030);border:2px solid #ff9100;border-radius:20px;padding:28px 24px;max-width:340px;width:90%;text-align:center;box-shadow:0 0 60px rgba(255,145,0,0.3);animation:resultAppear 0.4s cubic-bezier(0.34,1.56,0.64,1);">
+    <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:0.75rem;color:#ff9100;text-shadow:0 0 12px #ff9100;letter-spacing:0.1em;margin-bottom:4px;">⚡ OFFRES SPÉCIALES</div>
+    <div style="font-size:0.34rem;color:rgba(255,255,255,0.4);margin-bottom:18px;line-height:1.8;">Débloquez des avantages permanents !</div>
+
+    <!-- Offre 1 — Bloqueur de pub -->
+    <div id="offre1Box" style="border:2px solid #a855f7;border-radius:12px;padding:14px 16px;margin-bottom:12px;background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(80,0,150,0.12));cursor:pointer;transition:transform 0.15s;" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''" onclick="purchaseAdBlockerFromPopup()">
+      <div style="font-size:1.8rem;margin-bottom:6px;">🛡️</div>
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.6rem;color:#a855f7;text-shadow:0 0 8px #a855f7;letter-spacing:0.08em;margin-bottom:5px;">BLOQUEUR DE PUB</div>
+      <div style="font-size:0.32rem;color:rgba(255,255,255,0.45);margin-bottom:10px;line-height:1.8;">Supprime toutes les pubs obligatoires<br>pour toujours ✨</div>
+      <div style="background:linear-gradient(90deg,#a855f7,#7c3aed);border-radius:8px;padding:9px 22px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.55rem;color:#fff;display:inline-block;box-shadow:0 0 14px rgba(168,85,247,0.5);">0,99 €</div>
+    </div>
+
+    <!-- Offre 2 — Pièces X2 permanent -->
+    <div id="offre2Box" style="border:2px solid #ffd700;border-radius:12px;padding:14px 16px;margin-bottom:18px;background:linear-gradient(135deg,rgba(255,215,0,0.08),rgba(255,100,0,0.06));cursor:pointer;transition:transform 0.15s;" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''" onclick="purchaseCoinBoostIapFromPopup()">
+      <div style="font-size:1.8rem;margin-bottom:6px;">💰</div>
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.6rem;color:#ffd700;text-shadow:0 0 8px #ffd700;letter-spacing:0.08em;margin-bottom:5px;">PIÈCES X2 PERMANENT</div>
+      <div style="font-size:0.32rem;color:rgba(255,255,255,0.45);margin-bottom:10px;line-height:1.8;">Doublez toutes vos pièces<br>pour toujours 🚀</div>
+      <div style="background:linear-gradient(90deg,#ffd700,#ff8c00);border-radius:8px;padding:9px 22px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.55rem;color:#000;display:inline-block;box-shadow:0 0 14px rgba(255,215,0,0.5);">0,99 €</div>
+    </div>
+
+    <button onclick="document.getElementById('offresOverlay').style.display='none'" style="background:transparent;border:1px solid rgba(255,255,255,0.18);border-radius:8px;padding:9px 22px;font-family:'Press Start 2P',monospace;font-size:0.36rem;color:rgba(255,255,255,0.3);cursor:pointer;letter-spacing:0.05em;">Plus tard...</button>
+  </div>
+</div>
+
+<!-- ══════════ RATING POPUP ══════════ -->
+<div id="ratingOverlay" style="display:none">
+  <div class="rating-panel">
+    <div class="rating-icon">🎮</div>
+    <div class="rating-title">VOUS AIMEZ FLOPPY NEON?</div>
+    <div class="rating-sub">Donnez-nous 5 étoiles pour soutenir<br>le jeu et recevez <span style="color:#ffd700;font-weight:700;">+100 pièces</span> !</div>
+    <div class="rating-stars">⭐⭐⭐⭐⭐</div>
+    <div class="rating-btns">
+      <button class="rating-yes-btn" id="ratingYesBtn">⭐ NOTER 5 ÉTOILES !</button>
+      <button class="rating-later-btn" id="ratingLaterBtn">Plus tard...</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SHARE POPUP ══════════ -->
+<div id="shareOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,20,0.92);z-index:9100;align-items:center;justify-content:center;">
+  <div style="background:linear-gradient(135deg,#0a001e,#150030);border:2px solid #00f5ff;border-radius:20px;padding:32px 28px;max-width:300px;width:88%;text-align:center;box-shadow:0 0 40px rgba(0,245,255,0.3);">
+    <div style="font-size:2.5rem;margin-bottom:12px;">🚀</div>
+    <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.82rem;color:#00f5ff;text-shadow:0 0 10px #00f5ff;margin-bottom:10px;">INVITEZ UN AMI!</div>
+    <div style="font-size:0.75rem;color:rgba(255,255,255,0.6);line-height:1.8;margin-bottom:20px;">Partagez Floppy Neon et<br>recevez <span style="color:#ffd700;font-weight:700;">+100 pièces</span>!</div>
+    <button id="shareYesBtn" style="width:100%;padding:14px;background:linear-gradient(90deg,#00f5ff,#0080ff);border:none;border-radius:10px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.68rem;color:#000;cursor:pointer;margin-bottom:10px;">📤 PARTAGER</button>
+    <button id="shareLaterBtn" style="width:100%;padding:10px;background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:10px;font-family:'Orbitron',sans-serif;font-size:0.52rem;color:rgba(255,255,255,0.4);cursor:pointer;">Plus tard...</button>
+  </div>
+</div>
+
+<!-- ══════════ DAILY BONUS POPUP ══════════ -->
+<div id="dailyBonusOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,20,0.92);z-index:9200;align-items:center;justify-content:center;">
+  <div style="background:linear-gradient(135deg,#0d1a00,#1a3000);border:2px solid #ffd700;border-radius:20px;padding:36px 28px;max-width:300px;width:88%;text-align:center;box-shadow:0 0 50px rgba(255,215,0,0.4);">
+    <div style="font-size:2.8rem;margin-bottom:8px;">🎁</div>
+    <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.7rem;color:rgba(255,255,255,0.5);letter-spacing:0.15em;margin-bottom:4px;">BONUS DE CONNEXION</div>
+    <div id="dailyDay" style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:1.1rem;color:#ffd700;text-shadow:0 0 20px #ffd700;margin-bottom:16px;">JOUR 1</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;">
+      <span style="display:inline-block;width:28px;height:28px;background:radial-gradient(circle at 35% 35%,#fff9c4,#ffd700 40%,#b8860b);border-radius:50%;box-shadow:0 0 15px #ffd700;"></span>
+      <span id="dailyReward" style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:1.6rem;color:#ffd700;">+30</span>
+    </div>
+    <div id="dailyStreak" style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-bottom:24px;">🔥 Première connexion!</div>
+    <button id="dailyClaimBtn" style="width:100%;padding:16px;background:linear-gradient(90deg,#ffd700,#ff8c00);border:none;border-radius:12px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.75rem;color:#000;cursor:pointer;">✨ RÉCLAMER</button>
+  </div>
+</div>
+
+<!-- ══════════ GAME SCREEN ══════════ -->
+<div id="gameScreen">
+  <canvas id="gameCanvas" width="400" height="580"></canvas>
+</div>
+
+<!-- ══════════ SHOP SCREEN ══════════ -->
+<div id="shopScreen" style="display:none">
+  <button class="btn-back-fixed" id="shopBackBtn">🏠 ACCUEIL</button>
+  <div class="shop-container">
+
+    <div class="shop-header">
+      <div class="shop-title">🛒 BOUTIQUE</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="shop-coins-display">
+          <span class="coin-icon-lg"></span>
+          <span id="shopCoinsDisplay">0</span> PIÈCES
+        </div>
+      </div>
+    </div>
+
+    <!-- PUB BONUS SHOP -->
+    <div id="adBonusBox" style="border:2px solid #00f5ff;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(0,245,255,0.05),rgba(0,80,120,0.1));cursor:pointer;transition:all 0.15s;" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''" onclick="handleShopAdBonus()">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:1.8rem;">📺</span>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.65rem;color:#00f5ff;letter-spacing:0.1em;margin-bottom:4px;">REGARDER UNE PUB</div>
+          <div style="font-size:0.33rem;color:rgba(255,255,255,0.5);">Recevez 25 pièces gratuites</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(0,245,255,0.15);border:1px solid rgba(0,245,255,0.4);border-radius:6px;padding:7px 12px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.55rem;color:#00f5ff;">+25 🪙</div>
+        <div id="adBonusCooldown" style="font-size:0.3rem;color:#00ff99;">DISPONIBLE</div>
+      </div>
+    </div>
+
+    <!-- BLOQUEUR DE PUB -->
+    <div class="adblocker-box" id="adBlockerBox">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:2rem;">🛡️</span>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.68rem;color:#a855f7;text-shadow:0 0 8px #a855f7;letter-spacing:0.08em;margin-bottom:5px;">BLOQUEUR DE PUB</div>
+          <div style="font-size:0.34rem;color:rgba(255,255,255,0.45);line-height:1.7;">Supprime toutes les publicités<br>obligatoires pour toujours ✨</div>
+        </div>
+      </div>
+      <div id="adBlockerRight">
+        <button class="ab-price-btn" id="adBlockerBuyBtn">0,99 €</button>
+      </div>
+    </div>
+
+    <!-- X2 PIÈCES IAP -->
+    <div id="coinBoostIapBox" style="border:2px solid #ffd700;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(255,215,0,0.06),rgba(255,100,0,0.04));cursor:pointer;transition:all 0.15s;" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''" onclick="purchaseCoinBoostIap()">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:1.8rem;">💰</span>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.65rem;color:#ffd700;letter-spacing:0.08em;margin-bottom:4px;">PIÈCES X2 — PERMANENT</div>
+          <div style="font-size:0.33rem;color:rgba(255,255,255,0.5);">Doublez toutes vos pièces pour toujours</div>
+        </div>
+      </div>
+      <div id="coinBoostIapRight">
+        <button style="background:linear-gradient(90deg,#ffd700,#ff8c00);border:none;border-radius:8px;padding:8px 14px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.6rem;color:#000;cursor:pointer;">0,99 €</button>
+      </div>
+    </div>
+
+    <!-- X2 PIÈCES PUB (5 min) -->
+    <div id="coinBoostAdBox" style="border:2px solid #ff6b35;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(255,107,53,0.06),rgba(255,50,0,0.04));cursor:pointer;transition:all 0.15s;" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''" onclick="handleCoinBoostAd()">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:1.8rem;">⚡</span>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.65rem;color:#ff6b35;letter-spacing:0.08em;margin-bottom:4px;">PIÈCES X2 — 5 MINUTES</div>
+          <div style="font-size:0.33rem;color:rgba(255,255,255,0.5);">Regardez une pub pour doubler vos gains</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <div style="background:rgba(255,107,53,0.2);border:1px solid rgba(255,107,53,0.5);border-radius:6px;padding:7px 12px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.55rem;color:#ff6b35;">📺 PUB</div>
+        <div id="coinBoostAdCd" style="font-size:0.3rem;color:#00ff99;">DISPONIBLE</div>
+      </div>
+    </div>
+
+    <!-- GACHA BOXES -->
+    <div class="gacha-grid" id="gachaGrid">
+      <!-- remplie dynamiquement -->
+    </div>
+
+    <!-- RARITY TABLE -->
+    <div class="rarity-section">
+      <div class="section-title">TAUX DE DROP</div>
+      <div class="rarity-bars">
+        <div class="rarity-row">
+          <span class="rarity-label r-common">⬜ COMMUN</span>
+          <div class="rarity-bar-bg"><div class="rarity-bar-fill" style="width:50%;background:var(--common)"></div></div>
+          <span class="rarity-pct">50%</span>
+        </div>
+        <div class="rarity-row">
+          <span class="rarity-label r-rare">🔷 RARE</span>
+          <div class="rarity-bar-bg"><div class="rarity-bar-fill" style="width:30%;background:var(--rare)"></div></div>
+          <span class="rarity-pct">30%</span>
+        </div>
+        <div class="rarity-row">
+          <span class="rarity-label r-epic">🔮 ÉPIQUE</span>
+          <div class="rarity-bar-bg"><div class="rarity-bar-fill" style="width:14%;background:var(--epic)"></div></div>
+          <span class="rarity-pct">14%</span>
+        </div>
+        <div class="rarity-row">
+          <span class="rarity-label r-legendary">⭐ LÉGENDAIRE</span>
+          <div class="rarity-bar-bg"><div class="rarity-bar-fill" style="width:5%;background:var(--legendary)"></div></div>
+          <span class="rarity-pct">5%</span>
+        </div>
+        <div class="rarity-row">
+          <span class="rarity-label r-secret">🔴 SECRET</span>
+          <div class="rarity-bar-bg"><div class="rarity-bar-fill" style="width:1%;background:var(--secret)"></div></div>
+          <span class="rarity-pct">1%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACHAT PIÈCES -->
+    <div class="rarity-section">
+      <div class="section-title">💳 ACHETER DES PIÈCES</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;" id="coinPackGrid"></div>
+    </div>
+
+    <!-- COLLECTION -->
+    <div class="rarity-section">
+      <div class="section-title">MA COLLECTION</div>
+      <div class="collection-tabs">
+        <button class="tab-btn active" data-tab="skins">🎭 SKINS</button>
+        <button class="tab-btn" data-tab="bg">🌌 DÉCORS</button>
+        <button class="tab-btn" data-tab="pipes">🟩 TUYAUX</button>
+        <button class="tab-btn" data-tab="accessories">🎩 ACCESSOIRES</button>
+      </div>
+      <div class="collection-grid" id="collectionGrid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ GACHA RESULT OVERLAY ══════════ -->
+<div id="gachaOverlay" style="display:none">
+  <div class="result-panel" id="resultPanel">
+    <div class="result-rarity-label" id="resultRarity"></div>
+    <canvas id="resultPreviewCanvas" width="80" height="80"></canvas>
+    <div class="result-name" id="resultName"></div>
+    <div class="result-type" id="resultType"></div>
+    <div id="resultBadge"></div>
+    <button class="result-close-btn" id="resultCloseBtn">CONTINUER</button>
+  </div>
+</div>
+
+<!-- ══════════ TOAST ══════════ -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA — Items catalogue
+// ═══════════════════════════════════════════════════
+const RARITIES = {
+  common:    { label: '⬜ COMMUN',    color: '#a0a0c0', cls: 'c-common',    weight: 50 },
+  rare:      { label: '🔷 RARE',      color: '#4fc3f7', cls: 'c-rare',      weight: 30 },
+  epic:      { label: '🔮 ÉPIQUE',    color: '#ce93d8', cls: 'c-epic',      weight: 14 },
+  legendary: { label: '⭐ LÉGENDAIRE',color: '#ffb300', cls: 'c-legendary', weight: 5  },
+  secret:    { label: '🔴 SECRET',    color: '#ff1744', cls: 'c-secret',    weight: 1  }
+};
+
+const SKIN_ITEMS = [
+  // bird skins — ORIGINAUX
+  { id:'s1',  type:'skin',   name:'Canari Cyber',      rarity:'common',    subtype:'bird' },
+  { id:'s2',  type:'skin',   name:'Corneille Noire',   rarity:'common',    subtype:'bird' },
+  { id:'s3',  type:'skin',   name:'Perroquet Néon',    rarity:'rare',      subtype:'bird' },
+  { id:'s4',  type:'skin',   name:'Faucon Laser',      rarity:'rare',      subtype:'bird' },
+  { id:'s5',  type:'skin',   name:'Hibou Fantôme',     rarity:'epic',      subtype:'bird' },
+  { id:'s6',  type:'skin',   name:'Phénix Doré',       rarity:'legendary', subtype:'bird' },
+  { id:'s7',  type:'skin',   name:'VOID BIRD',         rarity:'secret',    subtype:'bird' },
+  // bird skins — WESTERN
+  { id:'s15', type:'skin',   name:'Cowbird Bandit',    rarity:'common',    subtype:'bird', theme:'western' },
+  { id:'s16', type:'skin',   name:'Sheriff Plume',     rarity:'rare',      subtype:'bird', theme:'western' },
+  { id:'s17', type:'skin',   name:'Vautour Desperado', rarity:'epic',      subtype:'bird', theme:'western' },
+  // bird skins — CARTOON
+  { id:'s18', type:'skin',   name:'Piou Piou Rose',    rarity:'common',    subtype:'bird', theme:'cartoon' },
+  { id:'s19', type:'skin',   name:'Canard Turbo',      rarity:'rare',      subtype:'bird', theme:'cartoon' },
+  { id:'s20', type:'skin',   name:'Super Poussin',     rarity:'epic',      subtype:'bird', theme:'cartoon' },
+  // bird skins — SCI-FI
+  { id:'s21', type:'skin',   name:'Drone X-9',         rarity:'common',    subtype:'bird', theme:'scifi' },
+  { id:'s22', type:'skin',   name:'Cyborg Aigle',      rarity:'rare',      subtype:'bird', theme:'scifi' },
+  { id:'s23', type:'skin',   name:'Plasma Condor',     rarity:'epic',      subtype:'bird', theme:'scifi' },
+  { id:'s24', type:'skin',   name:'OMEGA UNIT',        rarity:'legendary', subtype:'bird', theme:'scifi' },
+  // bird skins — MEDIEVAL
+  { id:'s25', type:'skin',   name:'Moineau Archer',    rarity:'common',    subtype:'bird', theme:'medieval' },
+  { id:'s26', type:'skin',   name:'Chevalier Plumé',   rarity:'rare',      subtype:'bird', theme:'medieval' },
+  { id:'s27', type:'skin',   name:'Dragon Miniature',  rarity:'legendary', subtype:'bird', theme:'medieval' },
+  { id:'s28', type:'skin',   name:'ROI CORBEAU',       rarity:'secret',    subtype:'bird', theme:'medieval' },
+  // background skins — ORIGINAUX (7)
+  { id:'s8',  type:'skin',   name:'Coucher de Soleil', rarity:'common',    subtype:'bg' },
+  { id:'s9',  type:'skin',   name:'Forêt Digitale',    rarity:'common',    subtype:'bg' },
+  { id:'s10', type:'skin',   name:'Océan Synthwave',   rarity:'rare',      subtype:'bg' },
+  { id:'s11', type:'skin',   name:'Cité Néon',         rarity:'rare',      subtype:'bg' },
+  { id:'s12', type:'skin',   name:'Galaxie Violette',  rarity:'epic',      subtype:'bg' },
+  { id:'s13', type:'skin',   name:'Dimension Dorée',   rarity:'legendary', subtype:'bg' },
+  { id:'s14', type:'skin',   name:'ABYSSAL VOID',      rarity:'secret',    subtype:'bg' },
+  // background skins — WESTERN (4)
+  { id:'s29', type:'skin',   name:'Prairie Western',   rarity:'common',    subtype:'bg', theme:'western' },
+  { id:'s33', type:'skin',   name:'Canyon Rouge',      rarity:'rare',      subtype:'bg', theme:'western' },
+  { id:'s34', type:'skin',   name:'Mine d\'Or',        rarity:'epic',      subtype:'bg', theme:'western' },
+  { id:'s35', type:'skin',   name:'GHOST TOWN',        rarity:'legendary', subtype:'bg', theme:'western' },
+  // background skins — CARTOON (4)
+  { id:'s30', type:'skin',   name:'Cartoon Land',      rarity:'common',    subtype:'bg', theme:'cartoon' },
+  { id:'s36', type:'skin',   name:'Monde Bonbon',      rarity:'rare',      subtype:'bg', theme:'cartoon' },
+  { id:'s37', type:'skin',   name:'Jardin Magique',    rarity:'epic',      subtype:'bg', theme:'cartoon' },
+  { id:'s38', type:'skin',   name:'RAINBOW WORLD',     rarity:'secret',    subtype:'bg', theme:'cartoon' },
+  // background skins — SCI-FI (3)
+  { id:'s31', type:'skin',   name:'Station Orbitale',  rarity:'rare',      subtype:'bg', theme:'scifi' },
+  { id:'s39', type:'skin',   name:'Nébuleuse Rouge',   rarity:'epic',      subtype:'bg', theme:'scifi' },
+  { id:'s40', type:'skin',   name:'SINGULARITÉ',       rarity:'legendary', subtype:'bg', theme:'scifi' },
+  // background skins — MÉDIÉVAL (3)
+  { id:'s32', type:'skin',   name:'Château Médiéval',  rarity:'common',    subtype:'bg', theme:'medieval' },
+  { id:'s41', type:'skin',   name:'Forêt Enchantée',   rarity:'rare',      subtype:'bg', theme:'medieval' },
+  { id:'s42', type:'skin',   name:'DONJON MAUDIT',     rarity:'legendary', subtype:'bg', theme:'medieval' },
+];
+
+// PIPE SKINS
+const PIPE_ITEMS = [
+  // ORIGINAUX (7)
+  { id:'p1',  type:'pipe', name:'Tuyau Néon',        rarity:'common',    pipeColor:['#004d3a','#06d6a0','#06d6a0','#003d2e'], glowColor:'#06d6a0' },
+  { id:'p2',  type:'pipe', name:'Tuyau Laser',       rarity:'common',    pipeColor:['#003060','#0088ff','#00aaff','#002050'], glowColor:'#00aaff' },
+  { id:'p3',  type:'pipe', name:'Tuyau Plasma',      rarity:'rare',      pipeColor:['#300040','#cc00ff','#cc00ff','#200030'], glowColor:'#cc00ff' },
+  { id:'p4',  type:'pipe', name:'Tuyau Volcanique',  rarity:'rare',      pipeColor:['#4d1a00','#ff6600','#ff8800','#3d1000'], glowColor:'#ff6600' },
+  { id:'p5',  type:'pipe', name:'Tuyau Cristal',     rarity:'epic',      pipeColor:['#004455','#00ffee','#aaffff','#002233'], glowColor:'#00ffee' },
+  { id:'p6',  type:'pipe', name:'Tuyau Or',          rarity:'legendary', pipeColor:['#3d2600','#ffd700','#ffe566','#2a1800'], glowColor:'#ffd700' },
+  { id:'p7',  type:'pipe', name:'VOID PIPE',         rarity:'secret',    pipeColor:['#050005','#7b00ff','#9900ff','#030003'], glowColor:'#7b00ff' },
+  // WESTERN (4)
+  { id:'p8',  type:'pipe', name:'Cactus Western',    rarity:'common',    pipeColor:['#1a3a00','#4a8c00','#5aac00','#122800'], glowColor:'#7ec850', theme:'western' },
+  { id:'p9',  type:'pipe', name:'Bois Patiné',       rarity:'rare',      pipeColor:['#3d2200','#8b5a2b','#c49060','#2a1800'], glowColor:'#c49060', theme:'western' },
+  { id:'p20', type:'pipe', name:'Corde de Ranch',    rarity:'epic',      pipeColor:['#4a2800','#a0522d','#cd853f','#3d2000'], glowColor:'#cd853f', theme:'western' },
+  { id:'p21', type:'pipe', name:'GOLD RUSH',         rarity:'legendary', pipeColor:['#3d2800','#d4a017','#f5c842','#2a1a00'], glowColor:'#f5c842', theme:'western' },
+  // CARTOON (4)
+  { id:'p10', type:'pipe', name:'Bambou Cartoon',    rarity:'common',    pipeColor:['#2a4a00','#88cc00','#aaee22','#1a3a00'], glowColor:'#aaee22', theme:'cartoon' },
+  { id:'p12', type:'pipe', name:'Candy Cane',        rarity:'rare',      pipeColor:['#400000','#ff2244','#ff88aa','#300000'], glowColor:'#ff88aa', theme:'cartoon' },
+  { id:'p13', type:'pipe', name:'Nuage Sucré',       rarity:'epic',      pipeColor:['#1a0040','#cc88ff','#eeccff','#0d0030'], glowColor:'#eeccff', theme:'cartoon' },
+  { id:'p22', type:'pipe', name:'ARC-EN-CIEL',       rarity:'secret',    pipeColor:['#200000','#ff4488','#88ffcc','#000020'], glowColor:'#ff88ff', theme:'cartoon' },
+  // SCI-FI (3)
+  { id:'p11', type:'pipe', name:'Laser Titanium',    rarity:'rare',      pipeColor:['#1a1a2e','#c0c0e0','#e8e8ff','#0d0d1e'], glowColor:'#c8c8ff', theme:'scifi' },
+  { id:'p14', type:'pipe', name:'Réacteur Plasma',   rarity:'epic',      pipeColor:['#001a3d','#0066cc','#00aaff','#000d20'], glowColor:'#00ccff', theme:'scifi' },
+  { id:'p15', type:'pipe', name:'QUANTUM GATE',      rarity:'legendary', pipeColor:['#000a20','#002288','#0044ff','#000510'], glowColor:'#0088ff', theme:'scifi' },
+  // MÉDIÉVAL (3)
+  { id:'p16', type:'pipe', name:'Pierre Runique',    rarity:'common',    pipeColor:['#2a1500','#8b5e3c','#c48a60','#1a0d00'], glowColor:'#c48a60', theme:'medieval' },
+  { id:'p17', type:'pipe', name:'Mur de Château',    rarity:'rare',      pipeColor:['#1a1a1a','#666666','#aaaaaa','#0d0d0d'], glowColor:'#aaaaaa', theme:'medieval' },
+  { id:'p18', type:'pipe', name:'TOUR MAUDITE',      rarity:'legendary', pipeColor:['#0a0014','#4400aa','#8800ff','#050009'], glowColor:'#aa44ff', theme:'medieval' },
+];
+
+const ACC_ITEMS = [
+  { id:'a1',  type:'acc',    name:'Chapeau de Cowboy', emoji:'🤠', rarity:'common'    },
+  { id:'a2',  type:'acc',    name:'Casquette Rouge',   emoji:'🧢', rarity:'common'    },
+  { id:'a3',  type:'acc',    name:'Lunettes Solaires', emoji:'😎', rarity:'common'    },
+  { id:'a4',  type:'acc',    name:'Nœud Papillon',     emoji:'🎀', rarity:'rare'      },
+  { id:'a5',  type:'acc',    name:'Couronne Néon',     emoji:'👑', rarity:'rare'      },
+  { id:'a6',  type:'acc',    name:'Ailes de Fée',      emoji:'🧚', rarity:'epic'      },
+  { id:'a7',  type:'acc',    name:'Halo Doré',         emoji:'😇', rarity:'epic'      },
+  { id:'a8',  type:'acc',    name:'Masque Cyber',      emoji:'🥷', rarity:'legendary' },
+  { id:'a9',  type:'acc',    name:'SKULL CROWN',       emoji:'💀', rarity:'secret'    },
+  // NOUVEAUX ACCESSOIRES
+  { id:'a10', type:'acc',    name:'Étoile de Shérif',  emoji:'⭐', rarity:'common'    },
+  { id:'a11', type:'acc',    name:'Chapeau de Mage',   emoji:'🎩', rarity:'rare'      },
+  { id:'a12', type:'acc',    name:'Casque Astronaute', emoji:'🪖', rarity:'rare'      },
+  { id:'a13', type:'acc',    name:'Épée Héroïque',     emoji:'⚔️', rarity:'epic'      },
+  { id:'a14', type:'acc',    name:'Arc-en-ciel',       emoji:'🌈', rarity:'epic'      },
+  { id:'a15', type:'acc',    name:'Flamme Éternelle',  emoji:'🔥', rarity:'legendary' },
+  { id:'a16', type:'acc',    name:'Œil du Dragon',     emoji:'🐉', rarity:'legendary' },
+  { id:'a17', type:'acc',    name:'NOVA CORONA',       emoji:'🌟', rarity:'secret'    },
+];
+
+// ═══════════════════════════════════════════════════
+// PERSISTENT STATE (localStorage)
+// ═══════════════════════════════════════════════════
+function loadState() {
+  try { return JSON.parse(localStorage.getItem('floppyNeonSave')) || {}; } catch(e){ return {}; }
+}
+function saveState() {
+  localStorage.setItem('floppyNeonSave', JSON.stringify({
+    totalCoins, unlockedItems, equippedSkin, equippedBg, equippedAcc, equippedPipe, best,
+    adBlockerOwned, gamesPlayedTotal, ratingDismissed
+  }));
+}
+
+let saved = loadState();
+let totalCoins   = saved.totalCoins   || 200;
+let unlockedItems = saved.unlockedItems || ['s1','s8','p1'];
+let equippedSkin = saved.equippedSkin || 's1';
+let equippedBg   = saved.equippedBg   || 's8';
+let equippedAcc  = saved.equippedAcc  || null;
+let equippedPipe = saved.equippedPipe || 'p1';
+let best         = saved.best         || 0;
+let adBlockerOwned = saved.adBlockerOwned || false;
+let gamesPlayedTotal = saved.gamesPlayedTotal || 0;
+let ratingDismissed = saved.ratingDismissed || false;
+
+// ═══════════════════════════════════════════════════
+// STARS
+// ═══════════════════════════════════════════════════
+const starsContainer = document.getElementById('stars');
+for (let i = 0; i < 120; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const size = Math.random() * 2.5 + 0.5;
+  s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${(Math.random()*3+1.5).toFixed(1)}s;--delay:-${(Math.random()*4).toFixed(1)}s;--max-op:${(Math.random()*0.7+0.3).toFixed(2)};`;
+  starsContainer.appendChild(s);
+}
+
+// ═══════════════════════════════════════════════════
+// GAME ENGINE
+// ═══════════════════════════════════════════════════
+const canvas  = document.getElementById('gameCanvas');
+const ctx     = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+let best_disp = best;
+
+const GRAVITY    = 0.38;
+const JUMP_FORCE = -7.2;
+const PIPE_W     = 52;
+const PIPE_GAP   = 130;
+const PIPE_SPEED = 2.4;
+const BIRD_R     = 18;
+const GROUND_H   = 60;
+const COIN_R     = 10;
+const COIN_GLOW  = '#ffb700';
+const SKY_TOP    = '#020014';
+const SKY_BOT    = '#0d0040';
+const AD_DURATION = 5000;
+
+const BTN_REPLAY = { x: W/2-145, y: H/2+65,  w: 130, h: 38, label: 'REJOUER',               color: '#06d6a0', hovered: false };
+const BTN_HOME   = { x: W/2+15,  y: H/2+65,  w: 130, h: 38, label: 'ACCUEIL',               color: '#00f5ff', hovered: false };
+const BTN_REVIVE = { x: W/2-140, y: H/2-10,  w: 280, h: 48, label: 'VOIR LA PUB & REVIVRE', color: '#00ff88', hovered: false };
+const BTN_SKIP   = { x: W/2-80,  y: H/2+58,  w: 160, h: 34, label: 'NON MERCI',             color: '#ff006e', hovered: false };
+// Bouton boutique sur l'écran d'accueil
+const BTN_SHOP_IDLE = { x: W/2-75, y: H/2+56, w: 150, h: 34, label: '🛒 BOUTIQUE', color: '#ff9100', hovered: false };
+// Bouton boutique sur l'écran game over
+const BTN_SHOP_DEAD = { x: W/2-60, y: H/2+115, w: 120, h: 30, label: '🛒 SHOP', color: '#ff9100', hovered: false };
+const BTNS = [BTN_REPLAY, BTN_HOME];
+
+function ptInBtn(b, mx, my) { return mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h; }
+
+function drawBtn(b) {
+  ctx.save();
+  ctx.shadowColor = b.color; ctx.shadowBlur = b.hovered ? 22 : 12;
+  ctx.globalAlpha = b.hovered ? 0.35 : 0.15;
+  ctx.fillStyle = b.color;
+  ctx.beginPath(); roundRectPath(b.x, b.y, b.w, b.h, 7); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = b.color; ctx.lineWidth = 2;
+  ctx.beginPath(); roundRectPath(b.x, b.y, b.w, b.h, 7); ctx.stroke();
+  ctx.shadowBlur = 0; ctx.fillStyle = b.color;
+  ctx.font = '7px "Press Start 2P",monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(b.label, b.x+b.w/2, b.y+b.h/2);
+  ctx.restore();
+}
+
+let state = 'idle', score = 0, coins = 0, frames = 0;
+let flashTimer = 0, coinFlashTimer = 0, deathShake = 0;
+let bird = {}, pipes = [], coinObjects = [], particles = [], coinLabels = [], groundOffset = 0;
+let hasUsedRevive = false, reviveCountdown = 5, reviveTimerStart = 0, skipUnlocked = false;
+let adState = 'none', adProgress = 0, adStartTime = 0;
+
+function resetBird() { bird = { x: 100, y: H/2-20, vy: 0, angle: 0, wingAngle: 0, wingDir: 1 }; }
+function resetGame() {
+  score = 0; pipes = []; particles = []; coinObjects = []; coinLabels = [];
+  coins = 0; frames = 0; flashTimer = 0; coinFlashTimer = 0; deathShake = 0;
+  hasUsedRevive = false; reviveCountdown = 5; skipUnlocked = false;
+  adState = 'none'; adProgress = 0;
+  resetBird();
+}
+resetBird();
+
+function doRevive() { hasUsedRevive = true; adState = 'playing'; adStartTime = performance.now(); adProgress = 0; }
+function finishRevive() {
+  adState = 'none'; state = 'playing';
+  bird.vy = 0; bird.y = H/2; bird.angle = 0;
+  pipes = pipes.filter(p => p.x > bird.x + 120);
+  coinObjects = coinObjects.filter(c => c.x > bird.x + 120);
+  deathShake = 0; spawnFlapParticles();
+}
+function skipRevive() { adState = 'none'; state = 'dead'; }
+
+function flap() {
+  if (state !== 'playing') return;
+  bird.vy = JUMP_FORCE; spawnFlapParticles();
+}
+
+function checkMandatoryAdAndFlap() {
+  checkMandatoryAd(() => { resetGame(); state = 'playing'; });
+}
+
+function getCanvasPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - r.left, y: src.clientY - r.top };
+}
+
+canvas.addEventListener('click', e => {
+  if (adState === 'playing') return;
+  const pos = getCanvasPos(e);
+  if (state === 'idle') {
+    if (ptInBtn(BTN_SHOP_IDLE, pos.x, pos.y)) { openShop(); return; }
+    checkMandatoryAdAndFlap(); return;
+  }
+  if (state === 'revive') {
+    if (ptInBtn(BTN_REVIVE, pos.x, pos.y)) { doRevive(); return; }
+    if (skipUnlocked && ptInBtn(BTN_SKIP, pos.x, pos.y)) { skipRevive(); return; }
+    return;
+  }
+  if (state === 'dead') {
+    if (ptInBtn(BTN_REPLAY, pos.x, pos.y)) { doReplay(); return; }
+    if (ptInBtn(BTN_HOME, pos.x, pos.y)) { state = 'idle'; resetBird(); return; }
+    if (ptInBtn(BTN_SHOP_DEAD, pos.x, pos.y)) { openShop(); return; }
+    return;
+  }
+  flap();
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (adState === 'playing') { canvas.style.cursor = 'default'; return; }
+  const pos = getCanvasPos(e);
+  if (state === 'idle') {
+    BTN_SHOP_IDLE.hovered = ptInBtn(BTN_SHOP_IDLE, pos.x, pos.y);
+    canvas.style.cursor = BTN_SHOP_IDLE.hovered ? 'pointer' : 'pointer';
+    return;
+  }
+  if (state === 'revive') {
+    BTN_REVIVE.hovered = ptInBtn(BTN_REVIVE, pos.x, pos.y);
+    BTN_SKIP.hovered = skipUnlocked && ptInBtn(BTN_SKIP, pos.x, pos.y);
+    canvas.style.cursor = (BTN_REVIVE.hovered || BTN_SKIP.hovered) ? 'pointer' : 'default';
+    return;
+  }
+  if (state === 'dead') {
+    BTNS.forEach(b => b.hovered = ptInBtn(b, pos.x, pos.y));
+    BTN_SHOP_DEAD.hovered = ptInBtn(BTN_SHOP_DEAD, pos.x, pos.y);
+    canvas.style.cursor = (BTNS.some(b => b.hovered) || BTN_SHOP_DEAD.hovered) ? 'pointer' : 'default';
+    return;
+  }
+  canvas.style.cursor = 'pointer';
+});
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (adState === 'playing') return;
+  const pos = getCanvasPos(e);
+  if (state === 'idle') {
+    if (ptInBtn(BTN_SHOP_IDLE, pos.x, pos.y)) { openShop(); return; }
+    checkMandatoryAdAndFlap(); return;
+  }
+  if (state === 'revive') {
+    if (ptInBtn(BTN_REVIVE, pos.x, pos.y)) { doRevive(); return; }
+    if (skipUnlocked && ptInBtn(BTN_SKIP, pos.x, pos.y)) { skipRevive(); return; }
+    return;
+  }
+  if (state === 'dead') {
+    if (ptInBtn(BTN_REPLAY, pos.x, pos.y)) { doReplay(); return; }
+    if (ptInBtn(BTN_HOME, pos.x, pos.y)) { state = 'idle'; resetBird(); return; }
+    if (ptInBtn(BTN_SHOP_DEAD, pos.x, pos.y)) { openShop(); return; }
+    return;
+  }
+  flap();
+}, { passive: false });
+
+document.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); flap(); } });
+
+// Particles
+function spawnFlapParticles() {
+  const colors = ['#00f5ff','#ffbe0b','#ff006e'];
+  for (let i = 0; i < 6; i++) {
+    particles.push({ x: bird.x-10, y: bird.y+4, vx: (Math.random()-0.8)*3, vy: (Math.random()-0.5)*3, life: 1, r: Math.random()*3+2, color: colors[Math.floor(Math.random()*3)] });
+  }
+}
+function spawnDeathParticles() {
+  const colors = ['#ffbe0b','#ff006e','#00f5ff','#ff8c00'];
+  for (let i = 0; i < 20; i++) {
+    const a = (i/20)*Math.PI*2, sp = Math.random()*5+2;
+    particles.push({ x: bird.x, y: bird.y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life: 1, r: Math.random()*5+3, color: colors[Math.floor(Math.random()*4)] });
+  }
+}
+function spawnCoinParticles(x, y) {
+  const colors = ['#ffd700','#ffb700','#fff176'];
+  for (let i = 0; i < 8; i++) {
+    const a = (i/8)*Math.PI*2;
+    particles.push({ x, y, vx: Math.cos(a)*(Math.random()*2+1), vy: Math.sin(a)*(Math.random()*2+1), life: 1, r: Math.random()*2+1, color: colors[Math.floor(Math.random()*3)] });
+  }
+}
+function spawnCoinLabel(x, y) { coinLabels.push({ x, y, vy: -1.5, life: 1 }); }
+
+function addPipe() {
+  const minY = 70, maxY = H-GROUND_H-PIPE_GAP-70;
+  const topH = Math.random()*(maxY-minY)+minY;
+  pipes.push({ x: W+10, topH, scored: false });
+  coinObjects.push({ x: W+10+PIPE_W/2+30, y: topH+PIPE_GAP/2, r: COIN_R, collected: false, bobOffset: Math.random()*Math.PI*2, spinAngle: 0 });
+}
+
+function roundRectPath(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+function drawGradientBg() {
+  const bgItem = SKIN_ITEMS.find(s => s.id === equippedBg);
+  let c1 = SKY_TOP, c2 = SKY_BOT;
+  if (bgItem) {
+    const bgColors = {
+      's8': ['#1a0a00','#3d1a00'],
+      's9': ['#001a00','#003d00'],
+      's10':['#00001a','#001a3d'],
+      's11':['#0d0020','#200040'],
+      's12':['#0a0020','#200050'],
+      's13':['#1a1400','#3d3000'],
+      's14':['#000000','#050005'],
+      's29':['#3d2a00','#8b5a00'], // Prairie Western
+      's30':['#001a3d','#003d70'], // Cartoon Land
+      's31':['#000a1a','#001030'], // Station Orbitale
+      's32':['#1a0d00','#3d2000'], // Château Médiéval
+    };
+    if (bgColors[bgItem.id]) { c1 = bgColors[bgItem.id][0]; c2 = bgColors[bgItem.id][1]; }
+  }
+  const grad = ctx.createLinearGradient(0, 0, 0, H-GROUND_H);
+  grad.addColorStop(0, c1); grad.addColorStop(1, c2);
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H-GROUND_H);
+
+  // Décorations thématiques selon le bg
+  if (!bgItem) return;
+  ctx.save();
+  if (bgItem.id === 's29') {
+    // Prairie Western — soleil et montagnes
+    ctx.fillStyle = 'rgba(255,120,0,0.18)';
+    ctx.beginPath(); ctx.arc(W*0.8, 60, 45, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,160,0,0.25)'; ctx.lineWidth = 2;
+    for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(W*0.8, 60, 50+i*8, 0, Math.PI*2); ctx.stroke(); }
+    // Silhouette collines
+    ctx.fillStyle = 'rgba(60,30,0,0.3)';
+    ctx.beginPath(); ctx.moveTo(0, H-GROUND_H);
+    ctx.quadraticCurveTo(80, H-GROUND_H-80, 160, H-GROUND_H-40);
+    ctx.quadraticCurveTo(240, H-GROUND_H-100, 320, H-GROUND_H-50);
+    ctx.quadraticCurveTo(380, H-GROUND_H-70, W, H-GROUND_H-30);
+    ctx.lineTo(W, H-GROUND_H); ctx.closePath(); ctx.fill();
+  } else if (bgItem.id === 's30') {
+    // Cartoon Land — nuages et soleil joyeux
+    ctx.fillStyle = 'rgba(255,220,0,0.2)';
+    ctx.beginPath(); ctx.arc(50, 50, 35, 0, Math.PI*2); ctx.fill();
+    // Nuages cartoon
+    ctx.fillStyle = 'rgba(200,230,255,0.15)';
+    [[100,80,50],[260,50,40],[350,90,35]].forEach(([cx2,cy2,cr]) => {
+      ctx.beginPath(); ctx.arc(cx2, cy2, cr, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx2+cr*0.8, cy2+8, cr*0.75, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx2-cr*0.7, cy2+10, cr*0.65, 0, Math.PI*2); ctx.fill();
+    });
+  } else if (bgItem.id === 's31') {
+    // Station Orbitale — étoiles et planète
+    ctx.fillStyle = 'rgba(0,150,255,0.12)';
+    ctx.beginPath(); ctx.arc(320, 80, 55, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,200,255,0.2)'; ctx.lineWidth = 8;
+    ctx.beginPath(); ctx.ellipse(320, 80, 90, 22, -0.4, 0, Math.PI*2); ctx.stroke();
+    // Étoiles petites
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    [[40,30],[150,20],[80,120],[360,40],[300,140]].forEach(([sx,sy]) => {
+      ctx.beginPath(); ctx.arc(sx, sy, 1.5, 0, Math.PI*2); ctx.fill();
+    });
+  } else if (bgItem.id === 's32') {
+    // Château Médiéval — silhouette château
+    ctx.fillStyle = 'rgba(30,10,0,0.35)';
+    // Tours
+    [[50,H-GROUND_H-120,30,120],[170,H-GROUND_H-100,25,100],[W-60,H-GROUND_H-130,30,130]].forEach(([tx,ty,tw,th]) => {
+      ctx.fillRect(tx, ty, tw, th);
+      // Créneaux
+      for (let i = 0; i < 3; i++) ctx.fillRect(tx+i*(tw/3), ty-16, tw/4, 16);
+    });
+    // Remparts
+    ctx.fillRect(50+30, H-GROUND_H-70, 120, 70);
+    ctx.fillRect(170+25, H-GROUND_H-70, W-60-170-25-30, 70);
+    // Lune
+    ctx.fillStyle = 'rgba(200,180,100,0.15)';
+    ctx.beginPath(); ctx.arc(W*0.5, 55, 35, 0, Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's8') {
+    // Coucher de soleil
+    ctx.fillStyle = 'rgba(255,80,0,0.15)';
+    ctx.beginPath(); ctx.arc(W*0.6, 50, 40, 0, Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's12') {
+    // Galaxie Violette — nébuleuse
+    ctx.fillStyle = 'rgba(150,0,200,0.08)';
+    ctx.beginPath(); ctx.ellipse(W/2, H*0.35, 120, 60, 0.5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(200,100,255,0.06)';
+    ctx.beginPath(); ctx.ellipse(W/2+40, H*0.3, 80, 40, -0.3, 0, Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's13') {
+    // Dimension Dorée — halos
+    ctx.fillStyle = 'rgba(255,200,0,0.1)';
+    ctx.beginPath(); ctx.arc(W/2, H*0.3, 80, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,215,0,0.12)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(W/2, H*0.3, 100, 0, Math.PI*2); ctx.stroke();
+  } else if (bgItem.id === 's14') {
+    // ABYSSAL VOID — portail
+    const vg = ctx.createRadialGradient(W/2, H*0.4, 10, W/2, H*0.4, 80);
+    vg.addColorStop(0,'rgba(100,0,150,0.2)'); vg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = vg; ctx.beginPath(); ctx.arc(W/2, H*0.4, 80, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawGrid() {
+  ctx.save(); ctx.strokeStyle = 'rgba(0,245,255,0.04)'; ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 30) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H-GROUND_H); ctx.stroke(); }
+  for (let y = 0; y < H-GROUND_H; y += 30) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  ctx.restore();
+}
+
+function drawGround() {
+  const bgItem = SKIN_ITEMS.find(s => s.id === equippedBg);
+  let groundCol = '#00f5ff', groundCol2 = 'rgba(0,245,255,0.15)';
+  if (bgItem) {
+    const gc = { 's29':'#c8860a', 's30':'#00cc88', 's31':'#0088ff', 's32':'#8b5e3c' };
+    if (gc[bgItem.id]) { groundCol = gc[bgItem.id]; groundCol2 = gc[bgItem.id]+'33'; }
+  }
+  const g = ctx.createLinearGradient(0, H-GROUND_H, 0, H);
+  g.addColorStop(0,'#0a0030'); g.addColorStop(1,'#020014');
+  ctx.fillStyle = g; ctx.fillRect(0, H-GROUND_H, W, GROUND_H);
+  ctx.save();
+  ctx.shadowColor=groundCol; ctx.shadowBlur=12; ctx.strokeStyle=groundCol; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(0,H-GROUND_H); ctx.lineTo(W,H-GROUND_H); ctx.stroke();
+  ctx.strokeStyle=groundCol2; ctx.lineWidth=1; ctx.shadowBlur=0;
+  const off = groundOffset%40;
+  for (let x = -off; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,H-GROUND_H); ctx.lineTo(x,H); ctx.stroke(); }
+  ctx.restore();
+}
+
+// ── PIPE DRAWING avec skin ──────────────────────────
+function getPipeStyle() {
+  const p = PIPE_ITEMS.find(p => p.id === equippedPipe) || PIPE_ITEMS[0];
+  return p;
+}
+
+function drawPipeStyled(x, topH, pipeStyle) {
+  const botY = topH+PIPE_GAP, botH = H-GROUND_H-botY;
+  ctx.save();
+  const gc = pipeStyle.glowColor;
+  ctx.shadowColor = gc; ctx.shadowBlur = 16;
+  const pg = ctx.createLinearGradient(x, 0, x+PIPE_W, 0);
+  pg.addColorStop(0, pipeStyle.pipeColor[0]);
+  pg.addColorStop(0.3, pipeStyle.pipeColor[1]);
+  pg.addColorStop(0.7, pipeStyle.pipeColor[2]);
+  pg.addColorStop(1, pipeStyle.pipeColor[3]);
+  ctx.fillStyle = pg;
+
+  // Style de dessin selon l'id
+  const pid = pipeStyle.id;
+
+  if (pid === 'p8') {
+    // Cactus Western — corps arrondi avec épines
+    ctx.fillRect(x+4, 0, PIPE_W-8, topH-14);
+    ctx.fillRect(x-5, topH-22, PIPE_W+10, 22);
+    ctx.fillRect(x+4, botY+14, PIPE_W-8, botH);
+    ctx.fillRect(x-5, botY, PIPE_W+10, 22);
+    // Épines
+    ctx.strokeStyle = gc; ctx.lineWidth = 3; ctx.shadowBlur = 6;
+    const spineCount = Math.floor(topH / 30);
+    for (let i = 1; i < spineCount; i++) {
+      ctx.beginPath(); ctx.moveTo(x+4, i*30); ctx.lineTo(x-10, i*30-8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+PIPE_W-4, i*30); ctx.lineTo(x+PIPE_W+10, i*30-8); ctx.stroke();
+    }
+  } else if (pid === 'p9') {
+    // Bambou Cartoon — segments arrondis
+    const segH = 28;
+    for (let y2 = 0; y2 < topH-14; y2 += segH) {
+      const segEnd = Math.min(y2+segH, topH-14);
+      ctx.fillRect(x+3, y2, PIPE_W-6, segEnd-y2-2);
+    }
+    ctx.fillRect(x-5, topH-22, PIPE_W+10, 22);
+    for (let y2 = botY+14; y2 < botY+botH; y2 += segH) {
+      const segEnd = Math.min(y2+segH, botY+botH);
+      ctx.fillRect(x+3, y2, PIPE_W-6, segEnd-y2-2);
+    }
+    ctx.fillRect(x-5, botY, PIPE_W+10, 22);
+    // Noeuds bambou
+    ctx.fillStyle = pipeStyle.pipeColor[0];
+    ctx.shadowBlur = 0;
+    for (let y2 = segH-2; y2 < topH-14; y2 += segH) ctx.fillRect(x+3, y2-2, PIPE_W-6, 4);
+    for (let y2 = botY+14+segH-2; y2 < botY+botH; y2 += segH) ctx.fillRect(x+3, y2-2, PIPE_W-6, 4);
+  } else if (pid === 'p10') {
+    // Laser Titanium — style futuriste avec panneaux
+    ctx.fillRect(x, 0, PIPE_W, topH-10);
+    ctx.fillRect(x-6, topH-20, PIPE_W+12, 20);
+    ctx.fillRect(x, botY+10, PIPE_W, botH);
+    ctx.fillRect(x-6, botY, PIPE_W+12, 20);
+    // Panneaux lumineux sur les côtés
+    ctx.fillStyle = gc; ctx.shadowBlur = 8;
+    ctx.globalAlpha = 0.4;
+    const panH = 8;
+    for (let y2 = 4; y2 < topH-20; y2 += 20) ctx.fillRect(x+2, y2, 4, panH);
+    for (let y2 = botY+18; y2 < botY+botH-4; y2 += 20) ctx.fillRect(x+2, y2, 4, panH);
+    ctx.globalAlpha = 1;
+  } else if (pid === 'p11') {
+    // Pierre Runique — blocs avec gravures
+    ctx.fillRect(x, 0, PIPE_W, topH-10);
+    ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
+    ctx.fillRect(x, botY+10, PIPE_W, botH);
+    ctx.fillRect(x-5, botY, PIPE_W+10, 18);
+    // Runes gravées
+    ctx.strokeStyle = gc; ctx.lineWidth = 1.5; ctx.shadowBlur = 8; ctx.globalAlpha = 0.7;
+    const runeY = [topH*0.25, topH*0.55];
+    runeY.forEach(ry => {
+      ctx.beginPath(); ctx.moveTo(x+10, ry-6); ctx.lineTo(x+10, ry+6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+10, ry-2); ctx.lineTo(x+16, ry-6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+10, ry+2); ctx.lineTo(x+16, ry+6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+PIPE_W-10, ry-6); ctx.lineTo(x+PIPE_W-10, ry+6); ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+  } else {
+    // Style par défaut (tous les autres pipes)
+    ctx.fillRect(x, 0, PIPE_W, topH-10);
+    ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
+    ctx.fillRect(x, botY+10, PIPE_W, botH);
+    ctx.fillRect(x-5, botY, PIPE_W+10, 18);
+  }
+
+  // Reflet commun à tous
+  ctx.fillStyle='rgba(255,255,255,0.10)';
+  ctx.fillRect(x+6, 0, 5, topH-10);
+  ctx.fillRect(x+6, botY+10, 5, botH);
+
+  // Contour lumineux
+  ctx.strokeStyle=gc; ctx.lineWidth=2; ctx.shadowBlur=18; ctx.shadowColor=gc;
+  ctx.strokeRect(x,0,PIPE_W,topH-10);
+  ctx.strokeRect(x-5,topH-18,PIPE_W+10,18);
+  ctx.strokeRect(x,botY+10,PIPE_W,botH);
+  ctx.strokeRect(x-5,botY,PIPE_W+10,18);
+  ctx.restore();
+}
+
+function drawPipe(p) {
+  drawPipeStyled(p.x, p.topH, getPipeStyle());
+}
+
+function drawCoin(c) {
+  if (c.collected) return;
+  ctx.save();
+  ctx.translate(c.x, c.y);
+  const scaleX = Math.abs(Math.cos(c.spinAngle));
+  ctx.scale(scaleX, 1);
+  ctx.shadowColor = COIN_GLOW; ctx.shadowBlur = 18;
+  const faceRight = Math.cos(c.spinAngle) >= 0;
+  const cg = ctx.createRadialGradient(faceRight ? -c.r*0.3 : c.r*0.3, -c.r*0.3, c.r*0.1, 0, 0, c.r);
+  cg.addColorStop(0,'#fff9c4'); cg.addColorStop(0.4,'#ffd700'); cg.addColorStop(1,'#b8860b');
+  ctx.fillStyle = cg;
+  ctx.beginPath(); ctx.arc(0, 0, c.r, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#ffec6e'; ctx.lineWidth=1.5; ctx.shadowBlur=0;
+  ctx.beginPath(); ctx.arc(0, 0, c.r*0.65, 0, Math.PI*2); ctx.stroke();
+  if (scaleX > 0.3) {
+    ctx.fillStyle='#b8860b';
+    ctx.font='bold '+Math.floor(c.r*1.1)+'px "Orbitron",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('$', 0, 1);
+  }
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════
+// BIRD DRAWING — ailes et becs améliorés
+// ═══════════════════════════════════════════════════
+function drawBirdSprite(c, r, skinId, wAngle) {
+  const wa = wAngle !== undefined ? wAngle : bird.wingAngle;
+
+  if (!skinId || skinId === 's1') {
+    // Canari Cyber — jaune vif
+    const aura = c.createRadialGradient(0,0,r*0.5,0,0,r*2.2);
+    aura.addColorStop(0,'rgba(255,190,11,0.2)'); aura.addColorStop(1,'rgba(255,190,11,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2.2,0,Math.PI*2); c.fill();
+    // Aile grande et visible
+    c.save(); c.rotate(wa*0.5);
+    const wg = c.createLinearGradient(-r*1.2,0,0,r*0.3);
+    wg.addColorStop(0,'#ff6b00'); wg.addColorStop(0.5,'#ffbe0b'); wg.addColorStop(1,'#fff176');
+    c.fillStyle=wg;
+    c.beginPath();
+    c.moveTo(0, r*0.1);
+    c.lineTo(-r*1.3, r*0.5);
+    c.lineTo(-r*1.5, -r*0.1);
+    c.lineTo(-r*0.8, -r*0.5);
+    c.lineTo(0, -r*0.1);
+    c.closePath(); c.fill();
+    c.strokeStyle='rgba(255,100,0,0.5)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(0,0); c.lineTo(-r*1.4,r*0.2); c.stroke();
+    c.restore();
+    // Corps
+    const bg2 = c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg2.addColorStop(0,'#fff176'); bg2.addColorStop(0.5,'#ffbe0b'); bg2.addColorStop(1,'#e65100');
+    c.fillStyle=bg2; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.save(); c.shadowColor='#ffbe0b'; c.shadowBlur=14; c.strokeStyle='#ffe000'; c.lineWidth=1.5;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke(); c.restore();
+    // Oeil
+    c.fillStyle='#fff'; c.beginPath(); c.arc(r*0.4,-r*0.2,r*0.35,0,Math.PI*2); c.fill();
+    c.fillStyle='#111'; c.beginPath(); c.arc(r*0.5,-r*0.2,r*0.18,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.9)'; c.beginPath(); c.arc(r*0.56,-r*0.28,r*0.07,0,Math.PI*2); c.fill();
+    // Bec grand et visible — triangle orange vif
+    c.fillStyle='#ff6b00';
+    c.beginPath();
+    c.moveTo(r*0.7, -r*0.08);
+    c.lineTo(r*1.6, r*0.05);
+    c.lineTo(r*0.7, r*0.4);
+    c.closePath(); c.fill();
+    c.strokeStyle='#ff3d00'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(r*0.7, r*0.16); c.lineTo(r*1.55, r*0.05); c.stroke(); // ligne de bouche
+
+  } else if (skinId === 's2') {
+    // Corneille Noire
+    const aura = c.createRadialGradient(0,0,r*0.5,0,0,r*2);
+    aura.addColorStop(0,'rgba(80,0,200,0.18)'); aura.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2,0,Math.PI*2); c.fill();
+    // Aile grande et pointue
+    c.save(); c.rotate(wa*0.4);
+    c.fillStyle='#1a1a2e';
+    c.beginPath();
+    c.moveTo(0, r*0.1);
+    c.lineTo(-r*1.4, r*0.6);
+    c.lineTo(-r*1.7, r*0.0);
+    c.lineTo(-r*1.3, -r*0.5);
+    c.lineTo(-r*0.4, -r*0.3);
+    c.lineTo(0, -r*0.05);
+    c.closePath(); c.fill();
+    // Plumes
+    c.strokeStyle='rgba(80,0,255,0.35)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(-r*0.3,-r*0.1); c.lineTo(-r*1.2,r*0.2); c.stroke();
+    c.beginPath(); c.moveTo(-r*0.5,r*0.0); c.lineTo(-r*1.4,r*0.3); c.stroke();
+    c.restore();
+    const bg = c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#2d2d44'); bg.addColorStop(1,'#0a0a18');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.save(); c.strokeStyle='#5500ff'; c.shadowColor='#5500ff'; c.shadowBlur=10; c.lineWidth=1.5;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke(); c.restore();
+    // Oeil rouge
+    c.fillStyle='#ff0000'; c.beginPath(); c.arc(r*0.4,-r*0.2,r*0.3,0,Math.PI*2); c.fill();
+    c.fillStyle='#800000'; c.beginPath(); c.arc(r*0.5,-r*0.2,r*0.15,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,150,150,0.8)'; c.beginPath(); c.arc(r*0.42,-r*0.28,r*0.07,0,Math.PI*2); c.fill();
+    // Bec noir pointu et grand
+    c.fillStyle='#333';
+    c.beginPath();
+    c.moveTo(r*0.65, -r*0.1);
+    c.lineTo(r*1.65, -r*0.02);
+    c.lineTo(r*0.65, r*0.35);
+    c.closePath(); c.fill();
+    c.fillStyle='#222';
+    c.beginPath(); c.moveTo(r*0.65, r*0.12); c.lineTo(r*1.6, r*0.0); c.stroke();
+
+  } else if (skinId === 's3') {
+    // Perroquet Néon
+    const aura = c.createRadialGradient(0,0,r*0.5,0,0,r*2.2);
+    aura.addColorStop(0,'rgba(0,255,100,0.2)'); aura.addColorStop(1,'rgba(0,255,100,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2.2,0,Math.PI*2); c.fill();
+    c.save(); c.rotate(wa*0.5);
+    const wg = c.createLinearGradient(-r*1.3,r*0.3,0,-r*0.2);
+    wg.addColorStop(0,'#ff6b00'); wg.addColorStop(0.4,'#ffbe0b'); wg.addColorStop(1,'#00ff88');
+    c.fillStyle=wg;
+    c.beginPath();
+    c.moveTo(0, 0);
+    c.lineTo(-r*1.4, r*0.6);
+    c.lineTo(-r*1.6, r*0.0);
+    c.lineTo(-r*1.1, -r*0.5);
+    c.lineTo(0, -r*0.1);
+    c.closePath(); c.fill();
+    c.restore();
+    const bg = c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#aaffcc'); bg.addColorStop(0.5,'#00cc55'); bg.addColorStop(1,'#005522');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.save(); c.strokeStyle='#00ff88'; c.shadowColor='#00ff88'; c.shadowBlur=16; c.lineWidth=2;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke(); c.restore();
+    // Masque facial
+    c.fillStyle='#ffeb3b'; c.beginPath(); c.ellipse(r*0.15,0,r*0.55,r*0.45,0,0,Math.PI*2); c.fill();
+    c.fillStyle='#111'; c.beginPath(); c.arc(r*0.42,-r*0.18,r*0.22,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.9)'; c.beginPath(); c.arc(r*0.5,-r*0.26,r*0.08,0,Math.PI*2); c.fill();
+    // Bec crochu grand et coloré
+    c.fillStyle='#ff8f00';
+    c.beginPath();
+    c.moveTo(r*0.55, -r*0.05);
+    c.lineTo(r*1.35, -r*0.15);
+    c.lineTo(r*1.15, r*0.22);
+    c.lineTo(r*0.6, r*0.38);
+    c.closePath(); c.fill();
+    c.fillStyle='#e65100';
+    c.beginPath(); c.moveTo(r*0.6, r*0.18); c.lineTo(r*1.1, r*0.10); c.stroke(); // ligne bouche
+
+  } else if (skinId === 's4') {
+    // Faucon Laser
+    const aura = c.createRadialGradient(0,0,r*0.5,0,0,r*2);
+    aura.addColorStop(0,'rgba(0,245,255,0.15)'); aura.addColorStop(1,'rgba(0,245,255,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2,0,Math.PI*2); c.fill();
+    // Ailes pointues de faucon
+    c.save(); c.rotate(wa*0.3);
+    c.fillStyle='#546e7a';
+    c.beginPath();
+    c.moveTo(0, r*0.15);
+    c.lineTo(-r*1.6, r*0.4);
+    c.lineTo(-r*1.8, -r*0.1);
+    c.lineTo(-r*0.8, -r*0.5);
+    c.lineTo(0, -r*0.05);
+    c.closePath(); c.fill();
+    c.strokeStyle='rgba(0,245,255,0.3)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(0,0); c.lineTo(-r*1.5,r*0.1); c.stroke();
+    c.restore();
+    const bg = c.createRadialGradient(-r*0.1,-r*0.1,r*0.1,0,0,r);
+    bg.addColorStop(0,'#b0bec5'); bg.addColorStop(0.6,'#607d8b'); bg.addColorStop(1,'#263238');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.save(); c.strokeStyle='#00f5ff'; c.shadowColor='#00f5ff'; c.shadowBlur=18; c.lineWidth=2;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke(); c.restore();
+    // Trait laser
+    c.save(); c.strokeStyle='#00f5ff'; c.shadowColor='#00f5ff'; c.shadowBlur=12; c.lineWidth=2; c.globalAlpha=0.8;
+    c.beginPath(); c.moveTo(r*0.5,-r*0.2); c.lineTo(r*2.5,-r*0.2); c.stroke(); c.restore();
+    c.fillStyle='#eceff1'; c.beginPath(); c.arc(r*0.38,-r*0.2,r*0.32,0,Math.PI*2); c.fill();
+    c.fillStyle='#00bcd4'; c.beginPath(); c.arc(r*0.46,-r*0.2,r*0.18,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.9)'; c.beginPath(); c.arc(r*0.52,-r*0.28,r*0.07,0,Math.PI*2); c.fill();
+    // Bec acéré grand
+    c.fillStyle='#37474f';
+    c.beginPath();
+    c.moveTo(r*0.65, -r*0.08);
+    c.lineTo(r*1.6, -r*0.0);
+    c.lineTo(r*0.65, r*0.28);
+    c.closePath(); c.fill();
+    c.save(); c.strokeStyle='#00f5ff'; c.lineWidth=1; c.shadowColor='#00f5ff'; c.shadowBlur=6;
+    c.beginPath(); c.moveTo(r*0.65,r*0.1); c.lineTo(r*1.5,r*0.0); c.stroke(); c.restore();
+
+  } else if (skinId === 's5') {
+    // Hibou Fantôme
+    const aura = c.createRadialGradient(0,0,r*0.5,0,0,r*2.5);
+    aura.addColorStop(0,'rgba(200,200,255,0.25)'); aura.addColorStop(1,'rgba(200,200,255,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2.5,0,Math.PI*2); c.fill();
+    c.save(); c.rotate(wa*0.25);
+    c.fillStyle='rgba(220,220,255,0.65)';
+    c.beginPath();
+    c.moveTo(0, r*0.1);
+    c.lineTo(-r*1.3, r*0.55);
+    c.lineTo(-r*1.5, r*0.05);
+    c.lineTo(-r*1.1, -r*0.45);
+    c.lineTo(0, -r*0.1);
+    c.closePath(); c.fill();
+    c.restore();
+    c.fillStyle='rgba(240,240,255,0.75)'; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.save(); c.strokeStyle='rgba(180,180,255,0.8)'; c.shadowColor='#aaaaff'; c.shadowBlur=20; c.lineWidth=1.5;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke(); c.restore();
+    // Oreilles de hibou
+    c.fillStyle='rgba(220,220,255,0.8)';
+    c.beginPath(); c.moveTo(-r*0.4,-r*0.8); c.lineTo(-r*0.1,-r*1.4); c.lineTo(r*0.2,-r*0.8); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(r*0.0,-r*0.8); c.lineTo(r*0.3,-r*1.4); c.lineTo(r*0.6,-r*0.8); c.closePath(); c.fill();
+    // Yeux immenses
+    c.fillStyle='#ffee58'; c.beginPath(); c.arc(-r*0.15,-r*0.1,r*0.38,0,Math.PI*2); c.fill();
+    c.fillStyle='#ffee58'; c.beginPath(); c.arc(r*0.45,-r*0.1,r*0.38,0,Math.PI*2); c.fill();
+    c.fillStyle='#111'; c.beginPath(); c.arc(-r*0.15,-r*0.1,r*0.2,0,Math.PI*2); c.fill();
+    c.fillStyle='#111'; c.beginPath(); c.arc(r*0.45,-r*0.1,r*0.2,0,Math.PI*2); c.fill();
+    c.fillStyle='white'; c.beginPath(); c.arc(-r*0.08,-r*0.18,r*0.08,0,Math.PI*2); c.fill();
+    c.fillStyle='white'; c.beginPath(); c.arc(r*0.52,-r*0.18,r*0.08,0,Math.PI*2); c.fill();
+    // Bec triangulaire grand
+    c.fillStyle='#ffb300';
+    c.beginPath();
+    c.moveTo(r*0.05, r*0.22);
+    c.lineTo(r*0.45, r*0.65);
+    c.lineTo(r*0.85, r*0.22);
+    c.closePath(); c.fill();
+    c.strokeStyle='#e65100'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(r*0.1,r*0.38); c.lineTo(r*0.8,r*0.38); c.stroke();
+
+  } else if (skinId === 's6') {
+    // Phénix Doré
+    const aura = c.createRadialGradient(0,0,r*0.3,0,0,r*2.8);
+    aura.addColorStop(0,'rgba(255,200,0,0.4)'); aura.addColorStop(0.5,'rgba(255,80,0,0.15)'); aura.addColorStop(1,'rgba(255,50,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2.8,0,Math.PI*2); c.fill();
+    // Queue de flammes
+    c.save(); c.rotate(wa*0.2);
+    for (let i=0; i<5; i++) {
+      const a = (Math.PI*0.7)+i*(Math.PI*0.15)-Math.PI*0.3;
+      const fg = c.createLinearGradient(0,0,Math.cos(a)*r*2.2,Math.sin(a)*r*2.2);
+      fg.addColorStop(0,'rgba(255,200,0,0.9)'); fg.addColorStop(0.5,'rgba(255,80,0,0.6)'); fg.addColorStop(1,'rgba(255,0,0,0)');
+      c.fillStyle=fg;
+      c.beginPath(); c.moveTo(0,0); c.lineTo(Math.cos(a-0.1)*r*2.2,Math.sin(a-0.1)*r*2.2); c.lineTo(Math.cos(a+0.1)*r*2.2,Math.sin(a+0.1)*r*2.2); c.closePath(); c.fill();
+    }
+    c.restore();
+    // Ailes grandes de feu
+    c.save(); c.rotate(-wa*0.5);
+    const wg = c.createLinearGradient(-r*1.4,-r*0.5,0,r*0.3);
+    wg.addColorStop(0,'rgba(255,50,0,0.85)'); wg.addColorStop(0.4,'rgba(255,150,0,0.85)'); wg.addColorStop(1,'rgba(255,220,0,0.7)');
+    c.fillStyle=wg;
+    c.beginPath();
+    c.moveTo(0, -r*0.1);
+    c.lineTo(-r*1.5, -r*0.8);
+    c.lineTo(-r*1.7, -r*0.2);
+    c.lineTo(-r*0.8, r*0.4);
+    c.lineTo(0, r*0.1);
+    c.closePath(); c.fill();
+    c.restore();
+    // Corps doré
+    const bg = c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#fff9c4'); bg.addColorStop(0.4,'#ffd700'); bg.addColorStop(1,'#e65100');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.save(); c.strokeStyle='#ffd700'; c.shadowColor='#ff8c00'; c.shadowBlur=24; c.lineWidth=2;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke(); c.restore();
+    // Crête de feu
+    c.fillStyle='#ff6d00';
+    c.beginPath(); c.moveTo(-r*0.1,-r); c.lineTo(r*0.1,-r*1.6); c.lineTo(r*0.3,-r); c.lineTo(r*0.4,-r*1.35); c.lineTo(r*0.6,-r); c.closePath(); c.fill();
+    c.fillStyle='#fff'; c.beginPath(); c.arc(r*0.38,-r*0.18,r*0.33,0,Math.PI*2); c.fill();
+    c.fillStyle='#e65100'; c.beginPath(); c.arc(r*0.46,-r*0.18,r*0.18,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.9)'; c.beginPath(); c.arc(r*0.52,-r*0.26,r*0.07,0,Math.PI*2); c.fill();
+    // Bec doré grand
+    c.fillStyle='#ffa000';
+    c.beginPath();
+    c.moveTo(r*0.6, -r*0.05);
+    c.lineTo(r*1.5, r*0.04);
+    c.lineTo(r*0.6, r*0.4);
+    c.closePath(); c.fill();
+    c.strokeStyle='#ff6d00'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(r*0.62,r*0.17); c.lineTo(r*1.4,r*0.06); c.stroke();
+
+  } else if (skinId === 's7') {
+    // VOID BIRD
+    const aura = c.createRadialGradient(0,0,r*0.2,0,0,r*2.8);
+    aura.addColorStop(0,'rgba(100,0,200,0.35)'); aura.addColorStop(0.4,'rgba(50,0,100,0.2)'); aura.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2.8,0,Math.PI*2); c.fill();
+    // Ailes de ténèbres grandes
+    c.save(); c.rotate(wa*0.3);
+    const wg = c.createLinearGradient(-r*1.6,0,0,0);
+    wg.addColorStop(0,'rgba(80,0,180,0.0)'); wg.addColorStop(0.4,'rgba(80,0,180,0.6)'); wg.addColorStop(1,'rgba(20,0,50,0.9)');
+    c.fillStyle=wg;
+    c.beginPath();
+    c.moveTo(0, r*0.1);
+    c.lineTo(-r*1.7, r*0.6);
+    c.lineTo(-r*2.0, 0);
+    c.lineTo(-r*1.5, -r*0.6);
+    c.lineTo(0, -r*0.1);
+    c.closePath(); c.fill();
+    c.save(); c.strokeStyle='rgba(120,0,255,0.4)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(0,0); c.lineTo(-r*1.7,r*0.1); c.stroke();
+    c.beginPath(); c.moveTo(-r*0.4,-r*0.1); c.lineTo(-r*1.5,-r*0.3); c.stroke();
+    c.restore();
+    c.restore();
+    c.fillStyle='#050008'; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    // Fissures cosmiques
+    c.save(); c.strokeStyle='#7b00ff'; c.shadowColor='#7b00ff'; c.shadowBlur=18; c.lineWidth=1.5;
+    c.beginPath(); c.moveTo(-r*0.6,r*0.2); c.lineTo(-r*0.1,-r*0.1); c.lineTo(r*0.3,r*0.4); c.stroke();
+    c.beginPath(); c.moveTo(-r*0.2,-r*0.5); c.lineTo(r*0.2,-r*0.2); c.lineTo(r*0.5,-r*0.6); c.stroke();
+    c.strokeStyle='#ff00ff'; c.shadowColor='#ff00ff'; c.shadowBlur=12; c.lineWidth=1;
+    c.beginPath(); c.moveTo(r*0.0,r*0.0); c.lineTo(r*0.4,r*0.3); c.stroke(); c.restore();
+    c.save(); c.strokeStyle='#7b00ff'; c.shadowColor='#7b00ff'; c.shadowBlur=25; c.lineWidth=2;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke(); c.restore();
+    c.fillStyle='#2d0060'; c.beginPath(); c.arc(r*0.38,-r*0.2,r*0.36,0,Math.PI*2); c.fill();
+    c.save(); c.strokeStyle='#cc00ff'; c.shadowColor='#cc00ff'; c.shadowBlur=14; c.lineWidth=1;
+    c.beginPath(); c.arc(r*0.38,-r*0.2,r*0.25,0,Math.PI*2); c.stroke();
+    c.beginPath(); c.arc(r*0.38,-r*0.2,r*0.14,0,Math.PI*2); c.stroke(); c.restore();
+    c.fillStyle='#cc00ff'; c.beginPath(); c.arc(r*0.38,-r*0.2,r*0.1,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.9)'; c.beginPath(); c.arc(r*0.44,-r*0.28,r*0.05,0,Math.PI*2); c.fill();
+    // Bec void grand
+    c.fillStyle='#1a0030';
+    c.beginPath();
+    c.moveTo(r*0.6, -r*0.06);
+    c.lineTo(r*1.5, r*0.01);
+    c.lineTo(r*0.6, r*0.35);
+    c.closePath(); c.fill();
+    c.save(); c.strokeStyle='#7b00ff'; c.shadowColor='#7b00ff'; c.shadowBlur=8; c.lineWidth=1;
+    c.beginPath(); c.moveTo(r*0.6,-r*0.06); c.lineTo(r*1.5,r*0.01); c.lineTo(r*0.6,r*0.35); c.closePath(); c.stroke();
+    c.beginPath(); c.moveTo(r*0.62,r*0.15); c.lineTo(r*1.4,r*0.03); c.stroke();
+    c.restore();
+
+  } else if (skinId === 's15') {
+    // Cowbird Bandit — marron poussiéreux
+    const aura = c.createRadialGradient(0,0,r*0.5,0,0,r*2);
+    aura.addColorStop(0,'rgba(139,90,43,0.18)'); aura.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2,0,Math.PI*2); c.fill();
+    c.save(); c.rotate(wa*0.45);
+    const wg=c.createLinearGradient(-r*1.3,0,0,0);
+    wg.addColorStop(0,'#5c3317'); wg.addColorStop(1,'#8b5e3c');
+    c.fillStyle=wg;
+    c.beginPath(); c.moveTo(0,r*0.1); c.lineTo(-r*1.3,r*0.5); c.lineTo(-r*1.5,-r*0.1); c.lineTo(-r*0.7,-r*0.45); c.lineTo(0,-r*0.1); c.closePath(); c.fill();
+    c.restore();
+    const bg=c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#c48a60'); bg.addColorStop(1,'#7a4a1e');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.strokeStyle='#5c3317'; c.lineWidth=1.5; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke();
+    c.fillStyle='#fff'; c.beginPath(); c.arc(r*0.4,-r*0.2,r*0.32,0,Math.PI*2); c.fill();
+    c.fillStyle='#333'; c.beginPath(); c.arc(r*0.5,-r*0.2,r*0.16,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.9)'; c.beginPath(); c.arc(r*0.56,-r*0.28,r*0.06,0,Math.PI*2); c.fill();
+    // Bandana
+    c.fillStyle='#cc2200'; c.beginPath(); c.ellipse(0,r*0.1,r*0.7,r*0.25,0,0,Math.PI); c.fill();
+    c.fillStyle='#ff4400'; c.font=(r*0.28)+'px serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('✦',0,r*0.1);
+    // Bec
+    c.fillStyle='#8b5e3c'; c.beginPath(); c.moveTo(r*0.7,-r*0.08); c.lineTo(r*1.55,r*0.04); c.lineTo(r*0.7,r*0.38); c.closePath(); c.fill();
+
+  } else if (skinId === 's16') {
+    // Sheriff Plume — blanc étoilé
+    c.save(); c.rotate(wa*0.45);
+    const wg=c.createLinearGradient(-r*1.3,0,0,0);
+    wg.addColorStop(0,'#b8a000'); wg.addColorStop(1,'#ffe566');
+    c.fillStyle=wg;
+    c.beginPath(); c.moveTo(0,r*0.1); c.lineTo(-r*1.3,r*0.5); c.lineTo(-r*1.5,-r*0.05); c.lineTo(-r*0.8,-r*0.4); c.lineTo(0,-r*0.08); c.closePath(); c.fill();
+    c.restore();
+    const bg=c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#fffde7'); bg.addColorStop(1,'#c8a800');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.save(); c.strokeStyle='#ffd700'; c.shadowColor='#ffd700'; c.shadowBlur=14; c.lineWidth=2;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke(); c.restore();
+    c.fillStyle='#333'; c.beginPath(); c.arc(r*0.4,-r*0.2,r*0.32,0,Math.PI*2); c.fill();
+    c.fillStyle='#000'; c.beginPath(); c.arc(r*0.5,-r*0.2,r*0.16,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.9)'; c.beginPath(); c.arc(r*0.56,-r*0.28,r*0.06,0,Math.PI*2); c.fill();
+    // Étoile de shérif
+    c.save(); c.fillStyle='#ffd700'; c.shadowColor='#ffd700'; c.shadowBlur=12;
+    c.font=(r*0.7)+'px serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('⭐',0,0); c.restore();
+    c.fillStyle='#c8a800'; c.beginPath(); c.moveTo(r*0.7,-r*0.08); c.lineTo(r*1.55,r*0.04); c.lineTo(r*0.7,r*0.38); c.closePath(); c.fill();
+
+  } else if (skinId === 's17') {
+    // Vautour Desperado — noir sinistre
+    const aura = c.createRadialGradient(0,0,r*0.5,0,0,r*2.2);
+    aura.addColorStop(0,'rgba(100,0,0,0.2)'); aura.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2.2,0,Math.PI*2); c.fill();
+    c.save(); c.rotate(wa*0.35);
+    c.fillStyle='#0d0d0d';
+    c.beginPath(); c.moveTo(0,r*0.1); c.lineTo(-r*1.6,r*0.7); c.lineTo(-r*1.9,r*0.0); c.lineTo(-r*1.5,-r*0.6); c.lineTo(-r*0.3,-r*0.3); c.lineTo(0,-r*0.05); c.closePath(); c.fill();
+    c.restore();
+    const bg=c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#2a0a0a'); bg.addColorStop(1,'#050505');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.strokeStyle='#8b0000'; c.lineWidth=1.5; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke();
+    c.fillStyle='#ff2200'; c.beginPath(); c.arc(r*0.4,-r*0.2,r*0.32,0,Math.PI*2); c.fill();
+    c.fillStyle='#800000'; c.beginPath(); c.arc(r*0.5,-r*0.2,r*0.15,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,150,0,0.9)'; c.beginPath(); c.arc(r*0.52,-r*0.28,r*0.07,0,Math.PI*2); c.fill();
+    // Cou déplumé
+    c.fillStyle='#e06030'; c.beginPath(); c.ellipse(0,-r*0.7,r*0.28,r*0.3,0,0,Math.PI*2); c.fill();
+    c.fillStyle='#333'; c.beginPath(); c.moveTo(r*0.65,-r*0.1); c.lineTo(r*1.65,-r*0.02); c.lineTo(r*0.65,r*0.35); c.closePath(); c.fill();
+
+  } else if (skinId === 's18') {
+    // Piou Piou Rose — super mignon cartoon
+    const aura = c.createRadialGradient(0,0,r*0.5,0,0,r*2.2);
+    aura.addColorStop(0,'rgba(255,150,200,0.25)'); aura.addColorStop(1,'rgba(255,100,200,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2.2,0,Math.PI*2); c.fill();
+    c.save(); c.rotate(wa*0.6);
+    const wg=c.createLinearGradient(-r*1.1,0,0,0);
+    wg.addColorStop(0,'#ff80b5'); wg.addColorStop(1,'#ffd6ee');
+    c.fillStyle=wg; c.beginPath(); c.ellipse(-r*0.7,-r*0.1,r*0.75,r*0.4,0.3,0,Math.PI*2); c.fill();
+    c.restore();
+    const bg=c.createRadialGradient(-r*0.15,-r*0.15,r*0.1,0,0,r);
+    bg.addColorStop(0,'#ffe0f0'); bg.addColorStop(0.6,'#ffaad5'); bg.addColorStop(1,'#ff6bba');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.strokeStyle='#ff4da6'; c.lineWidth=1.5; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke();
+    // Joues roses
+    c.fillStyle='rgba(255,100,160,0.4)'; c.beginPath(); c.arc(r*0.2,r*0.1,r*0.28,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,100,160,0.4)'; c.beginPath(); c.arc(-r*0.25,r*0.1,r*0.22,0,Math.PI*2); c.fill();
+    // Gros yeux kawaii
+    c.fillStyle='#111'; c.beginPath(); c.arc(r*0.35,-r*0.15,r*0.36,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.9)'; c.beginPath(); c.arc(r*0.42,-r*0.24,r*0.13,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.5)'; c.beginPath(); c.arc(r*0.27,-r*0.1,r*0.09,0,Math.PI*2); c.fill();
+    // Petit bec rond
+    c.fillStyle='#ff8c00'; c.beginPath(); c.ellipse(r*0.72,r*0.04,r*0.28,r*0.18,0,0,Math.PI*2); c.fill();
+
+  } else if (skinId === 's19') {
+    // Canard Turbo — bleu cartoon
+    c.save(); c.rotate(wa*0.5);
+    c.fillStyle='#0088cc'; c.beginPath(); c.ellipse(-r*0.8,-r*0.05,r*0.85,r*0.35,0.2,0,Math.PI*2); c.fill();
+    c.fillStyle='#00aaff'; c.beginPath(); c.ellipse(-r*0.7,-r*0.08,r*0.6,r*0.22,0.2,0,Math.PI*2); c.fill();
+    c.restore();
+    const bg=c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#aaeeff'); bg.addColorStop(0.5,'#0099dd'); bg.addColorStop(1,'#005588');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.strokeStyle='#00f5ff'; c.shadowColor='#00f5ff'; c.shadowBlur=12; c.lineWidth=2;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke();
+    // Contour cartoon bold
+    c.strokeStyle='#003355'; c.lineWidth=2.5; c.shadowBlur=0;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke();
+    c.fillStyle='#fff'; c.beginPath(); c.arc(r*0.4,-r*0.2,r*0.33,0,Math.PI*2); c.fill();
+    c.strokeStyle='#003355'; c.lineWidth=1.5; c.beginPath(); c.arc(r*0.4,-r*0.2,r*0.33,0,Math.PI*2); c.stroke();
+    c.fillStyle='#003355'; c.beginPath(); c.arc(r*0.5,-r*0.2,r*0.15,0,Math.PI*2); c.fill();
+    c.fillStyle='#fff'; c.beginPath(); c.arc(r*0.56,-r*0.28,r*0.06,0,Math.PI*2); c.fill();
+    // Bec jaune plat cartoon
+    c.fillStyle='#ffdd00'; c.strokeStyle='#cc8800'; c.lineWidth=1.5;
+    c.beginPath(); c.moveTo(r*0.65,-r*0.05); c.lineTo(r*1.5,r*0.0); c.lineTo(r*0.65,r*0.28); c.closePath(); c.fill(); c.stroke();
+    // Speed lines
+    c.strokeStyle='rgba(255,255,255,0.4)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(-r*0.5,-r*0.5); c.lineTo(-r*1.2,-r*0.6); c.stroke();
+    c.beginPath(); c.moveTo(-r*0.6,r*0.0); c.lineTo(-r*1.3,r*0.05); c.stroke();
+
+  } else if (skinId === 's20') {
+    // Super Poussin — rouge superhéros
+    const aura = c.createRadialGradient(0,0,r*0.3,0,0,r*2.5);
+    aura.addColorStop(0,'rgba(255,50,0,0.25)'); aura.addColorStop(1,'rgba(255,100,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2.5,0,Math.PI*2); c.fill();
+    // Cape
+    c.save();
+    c.fillStyle='#cc0000';
+    c.beginPath(); c.moveTo(-r*0.2,-r*0.3); c.lineTo(-r*1.2,r*0.8); c.lineTo(-r*0.5,r*0.6); c.lineTo(-r*0.1,r*1.0); c.lineTo(r*0.1,r*0.3); c.closePath(); c.fill();
+    c.restore();
+    c.save(); c.rotate(wa*0.5);
+    c.fillStyle='#ff6600'; c.beginPath(); c.ellipse(-r*0.8,-r*0.1,r*0.8,r*0.3,0.2,0,Math.PI*2); c.fill();
+    c.restore();
+    const bg=c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#ffcc00'); bg.addColorStop(0.5,'#ff8800'); bg.addColorStop(1,'#cc3300');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.strokeStyle='#222'; c.lineWidth=2.5; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke();
+    // Masque de héros
+    c.fillStyle='#cc0000'; c.beginPath(); c.ellipse(r*0.15,-r*0.25,r*0.58,r*0.22,0,0,Math.PI*2); c.fill();
+    c.strokeStyle='#660000'; c.lineWidth=1; c.beginPath(); c.ellipse(r*0.15,-r*0.25,r*0.58,r*0.22,0,0,Math.PI*2); c.stroke();
+    c.fillStyle='#fff'; c.beginPath(); c.arc(r*0.4,-r*0.25,r*0.18,0,Math.PI*2); c.fill();
+    c.fillStyle='#003366'; c.beginPath(); c.arc(r*0.45,-r*0.25,r*0.1,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.9)'; c.beginPath(); c.arc(r*0.5,-r*0.31,r*0.05,0,Math.PI*2); c.fill();
+    c.fillStyle='#ffdd00'; c.beginPath(); c.moveTo(r*0.65,-r*0.02); c.lineTo(r*1.5,r*0.04); c.lineTo(r*0.65,r*0.36); c.closePath(); c.fill();
+    c.strokeStyle='#cc8800'; c.lineWidth=1.5; c.beginPath(); c.moveTo(r*0.65,-r*0.02); c.lineTo(r*1.5,r*0.04); c.lineTo(r*0.65,r*0.36); c.closePath(); c.stroke();
+
+  } else if (skinId === 's21') {
+    // Drone X-9 — gris mécanique
+    const aura = c.createRadialGradient(0,0,r*0.2,0,0,r*2);
+    aura.addColorStop(0,'rgba(0,200,255,0.15)'); aura.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2,0,Math.PI*2); c.fill();
+    // Rotors
+    c.save(); c.rotate(frames*0.3);
+    c.strokeStyle='rgba(0,245,255,0.5)'; c.lineWidth=1;
+    for(let i=0;i<4;i++) {
+      c.save(); c.rotate(i*Math.PI/2);
+      c.beginPath(); c.moveTo(0,0); c.lineTo(r*1.3,0); c.stroke(); c.restore();
+    }
+    c.restore();
+    // Corps carré
+    c.fillStyle='#2a3a4a'; c.strokeStyle='#00f5ff'; c.lineWidth=2; c.shadowColor='#00f5ff'; c.shadowBlur=12;
+    c.beginPath(); c.roundRect(-r*0.85,-r*0.7,r*1.7,r*1.4,r*0.2); c.fill(); c.stroke();
+    c.shadowBlur=0;
+    // Détails mécaniques
+    c.fillStyle='#1a2a3a'; c.fillRect(-r*0.5,-r*0.3,r,r*0.6);
+    c.strokeStyle='rgba(0,245,255,0.4)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(-r*0.5,-r*0.15); c.lineTo(r*0.5,-r*0.15); c.stroke();
+    c.beginPath(); c.moveTo(-r*0.5,r*0.15); c.lineTo(r*0.5,r*0.15); c.stroke();
+    // Capteur/oeil
+    c.fillStyle='#00f5ff'; c.shadowColor='#00f5ff'; c.shadowBlur=16;
+    c.beginPath(); c.arc(r*0.35,-r*0.1,r*0.3,0,Math.PI*2); c.fill();
+    c.fillStyle='#fff'; c.shadowBlur=0; c.beginPath(); c.arc(r*0.38,-r*0.13,r*0.12,0,Math.PI*2); c.fill();
+    // Antenne
+    c.strokeStyle='#aaa'; c.lineWidth=1.5; c.beginPath(); c.moveTo(0,-r*0.7); c.lineTo(0,-r*1.3); c.stroke();
+    c.fillStyle='#ff4400'; c.beginPath(); c.arc(0,-r*1.3,r*0.1,0,Math.PI*2); c.fill();
+
+  } else if (skinId === 's22') {
+    // Cyborg Aigle — mi-organique mi-métal
+    const aura = c.createRadialGradient(0,0,r*0.3,0,0,r*2.2);
+    aura.addColorStop(0,'rgba(100,200,255,0.2)'); aura.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2.2,0,Math.PI*2); c.fill();
+    c.save(); c.rotate(wa*0.45);
+    // Aile gauche naturelle, droite mécanique
+    const wg=c.createLinearGradient(-r*1.4,0,0,0);
+    wg.addColorStop(0,'#1a3a6a'); wg.addColorStop(0.5,'#2a6ab0'); wg.addColorStop(1,'#4a90d0');
+    c.fillStyle=wg;
+    c.beginPath(); c.moveTo(0,r*0.1); c.lineTo(-r*1.4,r*0.6); c.lineTo(-r*1.6,0); c.lineTo(-r*1.2,-r*0.5); c.lineTo(0,-r*0.1); c.closePath(); c.fill();
+    // Plaques métal
+    c.fillStyle='rgba(160,220,255,0.3)'; c.beginPath(); c.rect(-r*1.2,r*0.0,r*0.4,r*0.3); c.fill();
+    c.strokeStyle='rgba(0,245,255,0.6)'; c.lineWidth=1; c.beginPath(); c.rect(-r*1.2,r*0.0,r*0.4,r*0.3); c.stroke();
+    c.restore();
+    const bg=c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#4a7ab0'); bg.addColorStop(1,'#1a3060');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    // Demi-corps cybernétique
+    c.fillStyle='rgba(50,100,180,0.7)'; c.beginPath(); c.arc(r*0.2,0,r*0.7,Math.PI*1.5,Math.PI*0.5); c.fill();
+    c.save(); c.strokeStyle='#00f5ff'; c.shadowColor='#00f5ff'; c.shadowBlur=10; c.lineWidth=1.5;
+    c.beginPath(); c.arc(r*0.2,0,r*0.7,Math.PI*1.5,Math.PI*0.5); c.stroke(); c.restore();
+    // Oeil naturel
+    c.fillStyle='#fff'; c.beginPath(); c.arc(-r*0.1,-r*0.18,r*0.28,0,Math.PI*2); c.fill();
+    c.fillStyle='#8b5e0a'; c.beginPath(); c.arc(-r*0.04,-r*0.18,r*0.15,0,Math.PI*2); c.fill();
+    // Oeil cyborg
+    c.fillStyle='#00f5ff'; c.shadowColor='#00f5ff'; c.shadowBlur=14;
+    c.beginPath(); c.arc(r*0.46,-r*0.18,r*0.28,0,Math.PI*2); c.fill();
+    c.fillStyle='#003366'; c.shadowBlur=0; c.beginPath(); c.arc(r*0.52,-r*0.18,r*0.14,0,Math.PI*2); c.fill();
+    c.fillStyle='#fff'; c.beginPath(); c.arc(r*0.56,-r*0.25,r*0.06,0,Math.PI*2); c.fill();
+    c.fillStyle='#2a6ab0'; c.beginPath(); c.moveTo(r*0.6,-r*0.05); c.lineTo(r*1.5,r*0.03); c.lineTo(r*0.6,r*0.36); c.closePath(); c.fill();
+    c.strokeStyle='#00f5ff'; c.lineWidth=1; c.beginPath(); c.moveTo(r*0.6,-r*0.05); c.lineTo(r*1.5,r*0.03); c.lineTo(r*0.6,r*0.36); c.closePath(); c.stroke();
+
+  } else if (skinId === 's23') {
+    // Plasma Condor — violet électrique
+    const aura = c.createRadialGradient(0,0,r*0.3,0,0,r*2.5);
+    aura.addColorStop(0,'rgba(180,0,255,0.3)'); aura.addColorStop(0.5,'rgba(100,0,200,0.1)'); aura.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2.5,0,Math.PI*2); c.fill();
+    c.save(); c.rotate(wa*0.4);
+    const wg=c.createLinearGradient(-r*1.5,-r*0.3,0,r*0.3);
+    wg.addColorStop(0,'rgba(100,0,200,0.8)'); wg.addColorStop(0.5,'rgba(180,0,255,0.9)'); wg.addColorStop(1,'rgba(220,100,255,0.7)');
+    c.fillStyle=wg;
+    c.beginPath(); c.moveTo(0,-r*0.05); c.lineTo(-r*1.6,-r*0.8); c.lineTo(-r*1.8,-r*0.2); c.lineTo(-r*0.8,r*0.4); c.lineTo(0,r*0.1); c.closePath(); c.fill();
+    c.save(); c.strokeStyle='rgba(220,100,255,0.6)'; c.lineWidth=1;
+    for(let i=0;i<3;i++) { c.beginPath(); c.moveTo(-r*(0.3+i*0.3),-r*0.1); c.lineTo(-r*(1.0+i*0.25),-r*(0.2+i*0.15)); c.stroke(); }
+    c.restore();
+    c.restore();
+    const bg=c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#e040fb'); bg.addColorStop(0.5,'#9c27b0'); bg.addColorStop(1,'#4a0072');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.save(); c.strokeStyle='#e040fb'; c.shadowColor='#e040fb'; c.shadowBlur=22; c.lineWidth=2;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke(); c.restore();
+    // Plasmique crâne
+    c.fillStyle='rgba(255,255,255,0.15)'; c.beginPath(); c.arc(-r*0.05,0,r*0.65,0,Math.PI*2); c.fill();
+    c.fillStyle='#fff'; c.beginPath(); c.arc(r*0.38,-r*0.2,r*0.3,0,Math.PI*2); c.fill();
+    c.fillStyle='#7b00d4'; c.beginPath(); c.arc(r*0.46,-r*0.2,r*0.16,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.9)'; c.beginPath(); c.arc(r*0.52,-r*0.28,r*0.07,0,Math.PI*2); c.fill();
+    c.fillStyle='#9c27b0'; c.beginPath(); c.moveTo(r*0.62,-r*0.05); c.lineTo(r*1.52,r*0.03); c.lineTo(r*0.62,r*0.38); c.closePath(); c.fill();
+    c.save(); c.strokeStyle='#e040fb'; c.shadowColor='#e040fb'; c.shadowBlur=8; c.lineWidth=1;
+    c.beginPath(); c.moveTo(r*0.62,-r*0.05); c.lineTo(r*1.52,r*0.03); c.lineTo(r*0.62,r*0.38); c.closePath(); c.stroke(); c.restore();
+
+  } else if (skinId === 's24') {
+    // OMEGA UNIT — or et chrome légendaire
+    const aura = c.createRadialGradient(0,0,r*0.2,0,0,r*3);
+    aura.addColorStop(0,'rgba(255,200,0,0.3)'); aura.addColorStop(0.4,'rgba(200,150,0,0.1)'); aura.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*3,0,Math.PI*2); c.fill();
+    c.save(); c.rotate(wa*0.3);
+    const wg=c.createLinearGradient(-r*1.6,-r*0.4,0,r*0.3);
+    wg.addColorStop(0,'#b8860b'); wg.addColorStop(0.4,'#ffd700'); wg.addColorStop(0.7,'#ffe566'); wg.addColorStop(1,'#ffec8b');
+    c.fillStyle=wg;
+    c.beginPath(); c.moveTo(0,-r*0.1); c.lineTo(-r*1.7,-r*0.7); c.lineTo(-r*1.9,-r*0.15); c.lineTo(-r*0.9,r*0.45); c.lineTo(0,r*0.1); c.closePath(); c.fill();
+    // Circuit motifs
+    c.strokeStyle='rgba(255,255,255,0.3)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(-r*0.5,-r*0.1); c.lineTo(-r*1.2,-r*0.3); c.lineTo(-r*1.5,-r*0.2); c.stroke();
+    c.restore();
+    const bg=c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#fffde7'); bg.addColorStop(0.3,'#ffd700'); bg.addColorStop(0.7,'#ff8f00'); bg.addColorStop(1,'#4a2800');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.save(); c.strokeStyle='#ffd700'; c.shadowColor='#ffec00'; c.shadowBlur=30; c.lineWidth=3;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke(); c.restore();
+    // Armure géométrique
+    c.fillStyle='rgba(255,255,255,0.12)'; c.beginPath(); c.moveTo(-r*0.4,-r*0.6); c.lineTo(r*0.4,-r*0.6); c.lineTo(r*0.6,r*0.2); c.lineTo(-r*0.2,r*0.5); c.closePath(); c.fill();
+    // Visière
+    c.fillStyle='#001a3d'; c.beginPath(); c.ellipse(r*0.2,-r*0.15,r*0.55,r*0.3,-0.1,0,Math.PI*2); c.fill();
+    c.save(); c.strokeStyle='#00f5ff'; c.shadowColor='#00f5ff'; c.shadowBlur=12; c.lineWidth=1.5;
+    c.beginPath(); c.ellipse(r*0.2,-r*0.15,r*0.55,r*0.3,-0.1,0,Math.PI*2); c.stroke(); c.restore();
+    // Scan line
+    c.fillStyle='rgba(0,245,255,0.6)'; c.fillRect(r*-0.3,-r*0.18,r*1.0,r*0.06);
+    c.fillStyle='#ffd700';
+    c.beginPath(); c.moveTo(r*0.62,-r*0.04); c.lineTo(r*1.55,r*0.04); c.lineTo(r*0.62,r*0.36); c.closePath(); c.fill();
+    c.save(); c.strokeStyle='#ff8f00'; c.shadowColor='#ff8f00'; c.shadowBlur=10; c.lineWidth=1.5;
+    c.beginPath(); c.moveTo(r*0.62,-r*0.04); c.lineTo(r*1.55,r*0.04); c.lineTo(r*0.62,r*0.36); c.closePath(); c.stroke(); c.restore();
+
+  } else if (skinId === 's25') {
+    // Moineau Archer — brun médiéval
+    c.save(); c.rotate(wa*0.45);
+    const wg=c.createLinearGradient(-r*1.2,0,0,0);
+    wg.addColorStop(0,'#4a3010'); wg.addColorStop(1,'#8b6538');
+    c.fillStyle=wg;
+    c.beginPath(); c.moveTo(0,r*0.1); c.lineTo(-r*1.3,r*0.5); c.lineTo(-r*1.5,-r*0.1); c.lineTo(-r*0.7,-r*0.45); c.lineTo(0,-r*0.1); c.closePath(); c.fill();
+    c.restore();
+    const bg=c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#c8a060'); bg.addColorStop(1,'#6b4020');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.strokeStyle='#4a2800'; c.lineWidth=1.5; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke();
+    c.fillStyle='#fff'; c.beginPath(); c.arc(r*0.4,-r*0.2,r*0.3,0,Math.PI*2); c.fill();
+    c.fillStyle='#2a1500'; c.beginPath(); c.arc(r*0.48,-r*0.2,r*0.15,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.9)'; c.beginPath(); c.arc(r*0.54,-r*0.28,r*0.06,0,Math.PI*2); c.fill();
+    // Capuche verte
+    c.fillStyle='#2d5a1b';
+    c.beginPath(); c.moveTo(-r*0.5,-r*0.6); c.lineTo(r*0.0,-r*1.2); c.lineTo(r*0.5,-r*0.6); c.arc(0,-r*0.2,r*0.75,Math.PI*1.3,Math.PI*1.7); c.closePath(); c.fill();
+    c.strokeStyle='#1a3a0a'; c.lineWidth=1; c.beginPath(); c.moveTo(-r*0.5,-r*0.6); c.lineTo(r*0.0,-r*1.2); c.lineTo(r*0.5,-r*0.6); c.stroke();
+    c.fillStyle='#6b4020'; c.beginPath(); c.moveTo(r*0.65,-r*0.08); c.lineTo(r*1.55,r*0.02); c.lineTo(r*0.65,r*0.36); c.closePath(); c.fill();
+
+  } else if (skinId === 's26') {
+    // Chevalier Plumé — armure grise
+    const aura = c.createRadialGradient(0,0,r*0.4,0,0,r*2);
+    aura.addColorStop(0,'rgba(150,150,200,0.15)'); aura.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2,0,Math.PI*2); c.fill();
+    c.save(); c.rotate(wa*0.35);
+    c.fillStyle='#888';
+    c.beginPath(); c.moveTo(0,r*0.1); c.lineTo(-r*1.3,r*0.4); c.lineTo(-r*1.5,-r*0.1); c.lineTo(-r*0.7,-r*0.4); c.lineTo(0,-r*0.1); c.closePath(); c.fill();
+    c.strokeStyle='#aaa'; c.lineWidth=1.5; c.beginPath(); c.moveTo(0,r*0.1); c.lineTo(-r*1.3,r*0.4); c.lineTo(-r*1.5,-r*0.1); c.lineTo(-r*0.7,-r*0.4); c.lineTo(0,-r*0.1); c.closePath(); c.stroke();
+    c.restore();
+    // Corps — armure
+    const bg=c.createLinearGradient(-r,-r,r,r);
+    bg.addColorStop(0,'#c0c0d0'); bg.addColorStop(0.5,'#808090'); bg.addColorStop(1,'#404050');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    c.strokeStyle='#ccc'; c.lineWidth=2; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke();
+    // Lignes d'armure
+    c.strokeStyle='rgba(255,255,255,0.3)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(-r*0.5,-r*0.6); c.lineTo(r*0.5,-r*0.6); c.stroke();
+    c.beginPath(); c.moveTo(-r*0.3,r*0.0); c.lineTo(r*0.5,r*0.0); c.stroke();
+    // Visière de casque
+    c.fillStyle='#333'; c.beginPath(); c.ellipse(r*0.2,-r*0.15,r*0.5,r*0.28,0,0,Math.PI*2); c.fill();
+    c.strokeStyle='#888'; c.lineWidth=1.5; c.beginPath(); c.ellipse(r*0.2,-r*0.15,r*0.5,r*0.28,0,0,Math.PI*2); c.stroke();
+    // Fente de visière
+    c.strokeStyle='rgba(255,255,100,0.6)'; c.lineWidth=2;
+    c.beginPath(); c.moveTo(-r*0.2,-r*0.15); c.lineTo(r*0.6,-r*0.15); c.stroke();
+    // Pennache rouge
+    c.fillStyle='#dd0000';
+    c.beginPath(); c.moveTo(r*0.0,-r*0.9); c.lineTo(-r*0.3,-r*1.6); c.lineTo(r*0.0,-r*1.4); c.lineTo(r*0.3,-r*1.6); c.lineTo(r*0.0,-r*0.9); c.closePath(); c.fill();
+    c.fillStyle='#808090'; c.beginPath(); c.moveTo(r*0.62,-r*0.08); c.lineTo(r*1.52,r*0.02); c.lineTo(r*0.62,r*0.36); c.closePath(); c.fill();
+
+  } else if (skinId === 's27') {
+    // Dragon Miniature — rouge écailleux
+    const aura = c.createRadialGradient(0,0,r*0.3,0,0,r*2.5);
+    aura.addColorStop(0,'rgba(255,80,0,0.3)'); aura.addColorStop(0.5,'rgba(150,0,0,0.15)'); aura.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2.5,0,Math.PI*2); c.fill();
+    // Queue
+    c.save(); c.strokeStyle='#cc2200'; c.lineWidth=r*0.35; c.lineCap='round';
+    c.beginPath(); c.moveTo(-r*0.2,r*0.3); c.quadraticCurveTo(-r*1.2,r*0.8,-r*1.5,r*0.2); c.stroke();
+    c.strokeStyle='#ff4400'; c.lineWidth=r*0.18;
+    c.beginPath(); c.moveTo(-r*0.2,r*0.3); c.quadraticCurveTo(-r*1.2,r*0.8,-r*1.5,r*0.2); c.stroke();
+    c.restore();
+    // Ailes
+    c.save(); c.rotate(-wa*0.5);
+    c.fillStyle='rgba(180,0,0,0.7)';
+    c.beginPath(); c.moveTo(0,-r*0.2); c.lineTo(-r*1.5,-r*1.2); c.lineTo(-r*0.8,-r*0.1); c.closePath(); c.fill();
+    c.fillStyle='rgba(220,60,0,0.5)';
+    c.beginPath(); c.moveTo(-r*0.8,-r*0.1); c.lineTo(-r*1.5,-r*1.2); c.lineTo(-r*1.7,-r*0.5); c.closePath(); c.fill();
+    c.restore();
+    // Corps écailleux
+    const bg=c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#ff6b35'); bg.addColorStop(0.5,'#cc2200'); bg.addColorStop(1,'#660000');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    // Écailles
+    c.strokeStyle='rgba(0,0,0,0.3)'; c.lineWidth=1;
+    for(let i=0;i<4;i++) {
+      c.beginPath(); c.arc(-r*0.2+i*r*0.15,r*0.0,r*0.25,Math.PI,Math.PI*2); c.stroke();
+    }
+    c.strokeStyle='rgba(255,100,0,0.3)'; c.lineWidth=1.5; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke();
+    // Cornes
+    c.fillStyle='#ffcc00'; c.beginPath(); c.moveTo(-r*0.2,-r*0.85); c.lineTo(-r*0.4,-r*1.4); c.lineTo(r*0.0,-r*0.9); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(r*0.2,-r*0.85); c.lineTo(r*0.5,-r*1.35); c.lineTo(r*0.4,-r*0.85); c.closePath(); c.fill();
+    // Oeil
+    c.fillStyle='#ffdd00'; c.beginPath(); c.arc(r*0.38,-r*0.15,r*0.32,0,Math.PI*2); c.fill();
+    c.fillStyle='#000'; c.beginPath(); c.ellipse(r*0.45,-r*0.15,r*0.08,r*0.2,0,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,255,255,0.9)'; c.beginPath(); c.arc(r*0.42,-r*0.24,r*0.07,0,Math.PI*2); c.fill();
+    // Bec/gueule
+    c.fillStyle='#cc2200'; c.beginPath(); c.moveTo(r*0.6,-r*0.05); c.lineTo(r*1.6,r*0.04); c.lineTo(r*0.6,r*0.45); c.closePath(); c.fill();
+    c.fillStyle='#fff'; c.beginPath(); c.moveTo(r*0.65,r*0.05); c.lineTo(r*1.2,r*0.1); c.lineTo(r*0.65,r*0.3); c.closePath(); c.fill();
+    // Flamme
+    c.save(); c.shadowColor='#ff6d00'; c.shadowBlur=12;
+    c.fillStyle='rgba(255,150,0,0.7)'; c.beginPath(); c.ellipse(r*1.7,r*0.05,r*0.35,r*0.15,0.2,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,220,0,0.5)'; c.beginPath(); c.ellipse(r*1.9,r*0.05,r*0.2,r*0.1,0.2,0,Math.PI*2); c.fill();
+    c.restore();
+
+  } else if (skinId === 's28') {
+    // ROI CORBEAU — noir et or légendaire
+    const aura = c.createRadialGradient(0,0,r*0.2,0,0,r*2.8);
+    aura.addColorStop(0,'rgba(180,130,0,0.3)'); aura.addColorStop(0.4,'rgba(100,50,0,0.15)'); aura.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=aura; c.beginPath(); c.arc(0,0,r*2.8,0,Math.PI*2); c.fill();
+    c.save(); c.rotate(wa*0.3);
+    c.fillStyle='#0a0a10';
+    c.beginPath(); c.moveTo(0,r*0.1); c.lineTo(-r*1.6,r*0.7); c.lineTo(-r*1.9,r*0.05); c.lineTo(-r*1.5,-r*0.65); c.lineTo(-r*0.3,-r*0.3); c.lineTo(0,-r*0.1); c.closePath(); c.fill();
+    // Détails plumes or
+    c.strokeStyle='rgba(255,200,0,0.4)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(-r*0.3,-r*0.2); c.lineTo(-r*1.2,-r*0.3); c.stroke();
+    c.beginPath(); c.moveTo(-r*0.5,r*0.1); c.lineTo(-r*1.5,r*0.2); c.stroke();
+    c.beginPath(); c.moveTo(-r*0.4,r*0.4); c.lineTo(-r*1.4,r*0.5); c.stroke();
+    c.restore();
+    const bg=c.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r);
+    bg.addColorStop(0,'#2a2010'); bg.addColorStop(0.5,'#0d0d0d'); bg.addColorStop(1,'#030303');
+    c.fillStyle=bg; c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.fill();
+    // Plumes or iridescentes
+    c.strokeStyle='rgba(255,210,0,0.6)'; c.shadowColor='#ffd700'; c.shadowBlur=12; c.lineWidth=2;
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke(); c.shadowBlur=0;
+    // Couronne royale
+    c.fillStyle='#ffd700'; c.shadowColor='#ffd700'; c.shadowBlur=16;
+    c.beginPath();
+    c.moveTo(-r*0.5,-r*0.85); c.lineTo(-r*0.5,-r*1.4);
+    c.lineTo(-r*0.2,-r*1.1); c.lineTo(r*0.0,-r*1.5); c.lineTo(r*0.2,-r*1.1);
+    c.lineTo(r*0.4,-r*1.35); c.lineTo(r*0.5,-r*0.85); c.closePath(); c.fill();
+    c.shadowBlur=0;
+    // Joyaux de couronne
+    c.fillStyle='#ff1744'; c.beginPath(); c.arc(-r*0.5,-r*1.4,r*0.1,0,Math.PI*2); c.fill();
+    c.fillStyle='#00b0ff'; c.beginPath(); c.arc(r*0.0,-r*1.5,r*0.1,0,Math.PI*2); c.fill();
+    c.fillStyle='#00e676'; c.beginPath(); c.arc(r*0.4,-r*1.35,r*0.1,0,Math.PI*2); c.fill();
+    // Oeil rouge intense
+    c.fillStyle='#cc0000'; c.beginPath(); c.arc(r*0.4,-r*0.2,r*0.32,0,Math.PI*2); c.fill();
+    c.fillStyle='#600000'; c.beginPath(); c.arc(r*0.48,-r*0.2,r*0.15,0,Math.PI*2); c.fill();
+    c.fillStyle='rgba(255,150,0,0.9)'; c.beginPath(); c.arc(r*0.54,-r*0.28,r*0.07,0,Math.PI*2); c.fill();
+    // Sceptre
+    c.strokeStyle='#ffd700'; c.lineWidth=2; c.lineCap='round';
+    c.beginPath(); c.moveTo(r*0.6,r*0.05); c.lineTo(r*1.5,r*0.05); c.stroke();
+    c.fillStyle='#ff9100'; c.beginPath(); c.arc(r*1.5,r*0.05,r*0.12,0,Math.PI*2); c.fill();
+    // Bec noir royal
+    c.fillStyle='#1a1a1a';
+    c.beginPath(); c.moveTo(r*0.6,-r*0.08); c.lineTo(r*1.6,-r*0.0); c.lineTo(r*0.6,r*0.36); c.closePath(); c.fill();
+    c.strokeStyle='#ffd700'; c.lineWidth=1; c.beginPath(); c.moveTo(r*0.6,-r*0.08); c.lineTo(r*1.6,-r*0.0); c.lineTo(r*0.6,r*0.36); c.closePath(); c.stroke();
+  }
+}
+
+function drawBird() {
+  ctx.save(); ctx.translate(bird.x, bird.y); ctx.rotate(bird.angle);
+  const r = BIRD_R;
+  const skinItem = SKIN_ITEMS.find(s => s.id === equippedSkin && s.subtype === 'bird');
+  const accItem  = ACC_ITEMS.find(a => a.id === equippedAcc);
+  drawBirdSprite(ctx, r, skinItem ? skinItem.id : 's1', bird.wingAngle);
+  if (accItem) {
+    ctx.font = (r*1.2)+'px serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText(accItem.emoji, 0, -r*0.9);
+  }
+  ctx.restore();
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.save(); ctx.globalAlpha=p.life; ctx.shadowColor=p.color; ctx.shadowBlur=10;
+    ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); ctx.fill(); ctx.restore();
+  });
+}
+
+function drawCoinLabels() {
+  coinLabels.forEach(l => {
+    ctx.save(); ctx.globalAlpha=l.life; ctx.shadowColor=COIN_GLOW; ctx.shadowBlur=10;
+    ctx.fillStyle='#ffd700'; ctx.font='9px "Press Start 2P",monospace';
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.fillText('+1', l.x, l.y); ctx.restore();
+  });
+}
+
+function drawScore() {
+  ctx.save(); ctx.shadowColor='#00f5ff'; ctx.shadowBlur=20; ctx.fillStyle='#fff';
+  ctx.font='bold 36px "Orbitron",monospace'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  ctx.fillText(score, W/2, 55); ctx.restore();
+}
+
+function drawCoinHUD() {
+  ctx.save();
+  const pulse = coinFlashTimer > 0 ? 1+(coinFlashTimer/15)*0.4 : 1;
+  ctx.shadowColor=COIN_GLOW; ctx.shadowBlur=coinFlashTimer>0?24:8;
+  ctx.save();
+  ctx.translate(W-58, 24); ctx.scale(pulse, pulse);
+  const cg = ctx.createRadialGradient(-3,-3,1,0,0,9);
+  cg.addColorStop(0,'#fff9c4'); cg.addColorStop(0.4,'#ffd700'); cg.addColorStop(1,'#b8860b');
+  ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(0,0,9,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#ffec6e'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle=coinFlashTimer>0?'#fff9c4':'#ffd700';
+  ctx.font='bold '+Math.floor(12*pulse)+'px "Orbitron",monospace';
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText(totalCoins, W-44, 24);
+  ctx.restore();
+}
+
+function drawIdleScreen() {
+  ctx.save();
+  ctx.fillStyle='rgba(2,0,20,0.85)';
+  roundRectPath(W/2-155, H/2-110, 310, 200, 12); ctx.fill();
+  ctx.strokeStyle='#00f5ff'; ctx.shadowColor='#00f5ff'; ctx.shadowBlur=20; ctx.lineWidth=2;
+  roundRectPath(W/2-155, H/2-110, 310, 200, 12); ctx.stroke();
+  ctx.shadowBlur=0; ctx.fillStyle='#00f5ff'; ctx.font='13px "Press Start 2P",monospace';
+  ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  ctx.fillText('APPUYEZ POUR', W/2, H/2-68);
+  ctx.fillStyle='#ffbe0b'; ctx.shadowColor='#ffbe0b'; ctx.shadowBlur=16;
+  ctx.font='18px "Press Start 2P",monospace'; ctx.fillText('JOUER', W/2, H/2-36);
+  if (best > 0) {
+    ctx.shadowBlur=0; ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font='8px "Press Start 2P",monospace';
+    ctx.fillText('MEILLEUR SCORE: '+best, W/2, H/2-8);
+  }
+  ctx.fillStyle='#ffd700'; ctx.shadowColor=COIN_GLOW; ctx.shadowBlur=10;
+  ctx.font='8px "Press Start 2P",monospace';
+  ctx.fillText('PIECES: '+totalCoins, W/2, H/2+14);
+  ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(0,245,255,0.6)'; ctx.font='7px "Press Start 2P",monospace';
+  ctx.fillText('ESPACE / CLIC / TAP', W/2, H/2+34);
+  ctx.restore();
+  // Bouton boutique
+  drawBtn(BTN_SHOP_IDLE);
+}
+
+function drawReviveScreen() {
+  ctx.save();
+  ctx.fillStyle='rgba(2,0,20,0.88)';
+  roundRectPath(W/2-170, H/2-130, 340, 220, 14); ctx.fill();
+  const pulse = 0.7+0.3*Math.sin(frames*0.12);
+  ctx.strokeStyle='rgba(0,255,136,'+pulse+')';
+  ctx.shadowColor='#00ff88'; ctx.shadowBlur=20*pulse; ctx.lineWidth=2.5;
+  roundRectPath(W/2-170, H/2-130, 340, 220, 14); ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  ctx.fillStyle='#00ff88'; ctx.font='11px "Press Start 2P",monospace';
+  ctx.fillText('CONTINUER?', W/2, H/2-88);
+  ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font='7px "Press Start 2P",monospace';
+  ctx.fillText('SCORE: '+score, W/2, H/2-65);
+  const elapsed = (performance.now()-reviveTimerStart)/1000;
+  const remaining = Math.max(0, 5-elapsed);
+  if (remaining <= 0) skipUnlocked = true;
+  const arcPct = Math.max(0, remaining/5);
+  ctx.save(); ctx.strokeStyle='rgba(0,255,136,0.2)'; ctx.lineWidth=5;
+  ctx.beginPath(); ctx.arc(W/2, H/2-38, 22, 0, Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='#00ff88'; ctx.shadowColor='#00ff88'; ctx.shadowBlur=15;
+  ctx.beginPath(); ctx.arc(W/2, H/2-38, 22, -Math.PI/2, -Math.PI/2+arcPct*Math.PI*2); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle='#fff'; ctx.font='bold 18px "Orbitron",monospace';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(Math.ceil(remaining), W/2, H/2-38);
+  if (remaining <= 0) skipUnlocked = true;
+  drawBtn(BTN_REVIVE);
+  if (skipUnlocked) drawBtn(BTN_SKIP);
+  ctx.restore();
+}
+
+function drawDeadScreen() {
+  ctx.save();
+  ctx.fillStyle='rgba(2,0,20,0.88)';
+  roundRectPath(W/2-155, H/2-100, 310, 235, 12); ctx.fill();
+  ctx.strokeStyle='#ff006e'; ctx.shadowColor='#ff006e'; ctx.shadowBlur=20; ctx.lineWidth=2;
+  roundRectPath(W/2-155, H/2-100, 310, 235, 12); ctx.stroke();
+  ctx.shadowBlur=0; ctx.fillStyle='#ff006e'; ctx.font='14px "Press Start 2P",monospace';
+  ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  ctx.fillText('GAME OVER', W/2, H/2-60);
+  ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.font='8px "Press Start 2P",monospace';
+  ctx.fillText('SCORE: '+score, W/2, H/2-32);
+  ctx.fillStyle='rgba(255,215,0,0.8)'; ctx.font='8px "Press Start 2P",monospace';
+  ctx.fillText('PIECES: +'+coins, W/2, H/2-14);
+  if (score >= best && score > 0) {
+    ctx.fillStyle='#ffbe0b'; ctx.shadowColor='#ffbe0b'; ctx.shadowBlur=12;
+    ctx.font='8px "Press Start 2P",monospace';
+    ctx.fillText('★ NOUVEAU RECORD! ★', W/2, H/2+6);
+  } else {
+    ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='7px "Press Start 2P",monospace';
+    ctx.fillText('MEILLEUR: '+best, W/2, H/2+6);
+  }
+  BTNS.forEach(b => drawBtn(b));
+  drawBtn(BTN_SHOP_DEAD);
+  ctx.restore();
+}
+
+function drawAdScreen() {
+  const elapsed = performance.now()-adStartTime;
+  adProgress = Math.min(1, elapsed/AD_DURATION);
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.92)'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(10,0,30,0.95)';
+  roundRectPath(W/2-150, H/2-80, 300, 160, 12); ctx.fill();
+  ctx.strokeStyle='#00ff88'; ctx.lineWidth=2; ctx.shadowColor='#00ff88'; ctx.shadowBlur=20;
+  roundRectPath(W/2-150, H/2-80, 300, 160, 12); ctx.stroke();
+  ctx.shadowBlur=0; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  ctx.fillStyle='rgba(0,255,136,0.4)'; ctx.font='7px "Press Start 2P",monospace';
+  ctx.fillText('PUBLICITÉ', W/2, H/2-50);
+  ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.font='8px "Press Start 2P",monospace';
+  ctx.fillText('SUPER GACHA 3000', W/2, H/2-24);
+  ctx.fillStyle='rgba(255,215,0,0.5)'; ctx.font='7px "Press Start 2P",monospace';
+  ctx.fillText('JOUEZ MAINTENANT!', W/2, H/2-6);
+  const barW = 240, barH = 10, barX = W/2-barW/2, barY = H/2+16;
+  ctx.fillStyle='rgba(255,255,255,0.1)';
+  roundRectPath(barX, barY, barW, barH, 5); ctx.fill();
+  ctx.fillStyle='#00ff88'; ctx.shadowColor='#00ff88'; ctx.shadowBlur=10;
+  roundRectPath(barX, barY, barW*adProgress, barH, 5); ctx.fill();
+  ctx.shadowBlur=0; ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='6px "Press Start 2P",monospace';
+  ctx.fillText(Math.ceil((1-adProgress)*AD_DURATION/1000)+'s...', W/2, H/2+42);
+  ctx.restore();
+  if (adProgress >= 1) finishRevive();
+}
+
+// ── Main game loop ──────────────────────────────────
+function gameLoop() {
+  requestAnimationFrame(gameLoop);
+  frames++;
+  let sx = 0, sy = 0;
+  if (deathShake > 0) { sx=(Math.random()-0.5)*deathShake*0.6; sy=(Math.random()-0.5)*deathShake*0.6; deathShake*=0.82; if(deathShake<0.5) deathShake=0; }
+  ctx.save(); ctx.translate(sx, sy);
+
+  drawGradientBg();
+  drawGrid();
+
+  if (state === 'playing') {
+    groundOffset += PIPE_SPEED;
+    bird.vy += GRAVITY;
+    bird.y  += bird.vy;
+    bird.angle = Math.max(-Math.PI/4, Math.min(Math.PI/2, bird.vy*0.06));
+    bird.wingAngle += bird.wingDir*0.22;
+    if (Math.abs(bird.wingAngle) > 0.8) bird.wingDir *= -1;
+    if (frames % 90 === 0) addPipe();
+    pipes.forEach(p => {
+      p.x -= PIPE_SPEED;
+      if (!p.scored && p.x+PIPE_W < bird.x) {
+        p.scored = true; score++; flashTimer = 8;
+        const sc = score+1;
+        if (sc % 10 === 0) {
+          const earned = getCoinMultiplier();
+          totalCoins += earned; coins += earned; coinFlashTimer = 15;
+          saveState();
+        }
+      }
+    });
+    coinObjects.forEach(c => {
+      c.x -= PIPE_SPEED;
+      c.spinAngle += 0.07;
+      c.y = c.y + Math.sin((frames*0.05+c.bobOffset))*0.3 - Math.sin(((frames-1)*0.05+c.bobOffset))*0.3;
+      if (!c.collected) {
+        const dx = bird.x-c.x, dy = bird.y-c.y;
+        if (Math.sqrt(dx*dx+dy*dy) < BIRD_R+c.r) {
+          const earned = getCoinMultiplier();
+          c.collected = true; totalCoins += earned; coins += earned; coinFlashTimer = 15;
+          spawnCoinParticles(c.x, c.y);
+          spawnCoinLabel(c.x, c.y-20);
+          saveState();
+        }
+      }
+    });
+    pipes = pipes.filter(p => p.x > -PIPE_W-20);
+    coinObjects = coinObjects.filter(c => c.x > -20);
+
+    // Collisions
+    if (bird.y+BIRD_R > H-GROUND_H || bird.y-BIRD_R < 0) { triggerDeath(); }
+    for (const p of pipes) {
+      const botY = p.topH+PIPE_GAP;
+      if (bird.x+BIRD_R*0.7 > p.x-5 && bird.x-BIRD_R*0.7 < p.x+PIPE_W+5) {
+        if (bird.y-BIRD_R*0.7 < p.topH-10 || bird.y+BIRD_R*0.7 > botY+10) { triggerDeath(); break; }
+      }
+    }
+  }
+
+  pipes.forEach(p => drawPipe(p));
+  coinObjects.forEach(c => drawCoin(c));
+  drawGround();
+  drawParticles();
+  particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.life-=0.025; });
+  particles = particles.filter(p => p.life > 0);
+
+  drawCoinLabels();
+  coinLabels.forEach(l => { l.y+=l.vy; l.life-=0.025; });
+  coinLabels = coinLabels.filter(l => l.life > 0);
+
+  drawBird();
+  if (state === 'playing') drawScore();
+  drawCoinHUD();
+  if (flashTimer > 0) { flashTimer--; }
+  if (coinFlashTimer > 0) coinFlashTimer--;
+
+  if (state === 'idle') drawIdleScreen();
+  if (state === 'revive' && adState === 'none') drawReviveScreen();
+  if (state === 'dead' && adState === 'none') drawDeadScreen();
+  if (adState === 'playing') drawAdScreen();
+
+  ctx.restore();
+}
+gameLoop();
+
+// ═══════════════════════════════════════════════════
+// PREVIEW HELPERS — dessin réel dans mini canvas
+// ═══════════════════════════════════════════════════
+
+// Dessine un preview de bird dans un canvas offscreen
+function renderBirdPreview(skinId, size) {
+  const oc = document.createElement('canvas');
+  oc.width = size; oc.height = size;
+  const oc2 = oc.getContext('2d');
+  // Fond
+  oc2.fillStyle = '#0a0028';
+  oc2.fillRect(0,0,size,size);
+  oc2.save();
+  oc2.translate(size/2, size/2);
+  // Fond grad background adapté
+  const bgItem = SKIN_ITEMS.find(s => s.id === equippedBg);
+  const bgColors = { 's8':['#1a0a00','#3d1a00'], 's9':['#001a00','#003d00'], 's10':['#00001a','#001a3d'], 's11':['#0d0020','#200040'], 's12':['#0a0020','#200050'], 's13':['#1a1400','#3d3000'], 's14':['#000000','#050005'], 's29':['#3d2a00','#8b5a00'], 's30':['#001a3d','#003d70'], 's31':['#000a1a','#001030'], 's32':['#1a0d00','#3d2000'] };
+  const bci = bgItem && bgColors[bgItem.id];
+  if (bci) {
+    const bg = oc2.createLinearGradient(-size/2,-size/2,size/2,size/2);
+    bg.addColorStop(0,bci[0]); bg.addColorStop(1,bci[1]);
+    oc2.fillStyle=bg; oc2.fillRect(-size/2,-size/2,size,size);
+  }
+  const r = size * 0.28;
+  const fakeBird = { wingAngle: 0.3, wingDir: 1 };
+  drawBirdSprite(oc2, r, skinId, 0.3);
+  oc2.restore();
+  return oc;
+}
+
+// Dessine un preview de pipe skin dans un canvas offscreen
+function renderPipePreview(pipeItem, size) {
+  const oc = document.createElement('canvas');
+  oc.width = size; oc.height = size;
+  const oc2 = oc.getContext('2d');
+  oc2.fillStyle = '#0a0028';
+  oc2.fillRect(0,0,size,size);
+  const pw = size * 0.38, ph = size * 0.5;
+  const px = (size - pw) / 2;
+  oc2.save();
+  oc2.shadowColor = pipeItem.glowColor;
+  oc2.shadowBlur = 8;
+  const pg = oc2.createLinearGradient(px,0,px+pw,0);
+  pg.addColorStop(0, pipeItem.pipeColor[0]);
+  pg.addColorStop(0.3, pipeItem.pipeColor[1]);
+  pg.addColorStop(0.7, pipeItem.pipeColor[2]);
+  pg.addColorStop(1, pipeItem.pipeColor[3]);
+  oc2.fillStyle = pg;
+
+  if (pipeItem.id === 'p8') {
+    // Cactus — corps étroit + épines
+    oc2.fillRect(px+3, 0, pw-6, ph*0.6-4);
+    oc2.fillRect(px-3, ph*0.6-8, pw+6, 8);
+    oc2.fillRect(px+3, ph*0.6+8, pw-6, size-(ph*0.6+8));
+    oc2.fillRect(px-3, ph*0.6+8, pw+6, 8);
+    oc2.strokeStyle = pipeItem.glowColor; oc2.lineWidth = 2;
+    oc2.beginPath(); oc2.moveTo(px+3, size*0.2); oc2.lineTo(px-6, size*0.17); oc2.stroke();
+    oc2.beginPath(); oc2.moveTo(px+pw-3, size*0.25); oc2.lineTo(px+pw+6, size*0.22); oc2.stroke();
+  } else if (pipeItem.id === 'p9') {
+    // Bambou — segments
+    const seg = ph*0.14;
+    for (let y=0; y<ph*0.6-4; y+=seg*2) { oc2.fillRect(px+2, y, pw-4, seg*1.6); }
+    oc2.fillRect(px-3, ph*0.6-8, pw+6, 8);
+    for (let y=ph*0.6+8; y<size; y+=seg*2) { oc2.fillRect(px+2, y, pw-4, seg*1.6); }
+    oc2.fillRect(px-3, ph*0.6+8, pw+6, 8);
+  } else if (pipeItem.id === 'p10') {
+    // Laser Titanium — panneaux lumineux
+    oc2.fillRect(px, 0, pw, ph*0.6-4);
+    oc2.fillRect(px-4, ph*0.6-10, pw+8, 10);
+    oc2.fillRect(px, ph*0.6+8, pw, size-(ph*0.6+8));
+    oc2.fillRect(px-4, ph*0.6+8, pw+8, 10);
+    oc2.fillStyle = pipeItem.glowColor; oc2.globalAlpha = 0.5;
+    for (let y=4; y<ph*0.5; y+=10) oc2.fillRect(px+2, y, 3, 5);
+    oc2.globalAlpha = 1;
+  } else if (pipeItem.id === 'p11') {
+    // Pierre Runique — blocs + rune
+    oc2.fillRect(px, 0, pw, ph*0.6-4);
+    oc2.fillRect(px-4, ph*0.6-10, pw+8, 10);
+    oc2.fillRect(px, ph*0.6+8, pw, size-(ph*0.6+8));
+    oc2.fillRect(px-4, ph*0.6+8, pw+8, 10);
+    oc2.strokeStyle = pipeItem.glowColor; oc2.lineWidth = 1.5; oc2.globalAlpha = 0.8;
+    const ry = size*0.28;
+    oc2.beginPath(); oc2.moveTo(px+pw*0.4, ry-5); oc2.lineTo(px+pw*0.4, ry+5); oc2.stroke();
+    oc2.beginPath(); oc2.moveTo(px+pw*0.4, ry-1); oc2.lineTo(px+pw*0.7, ry-5); oc2.stroke();
+    oc2.globalAlpha = 1;
+  } else if (pipeItem.id === 'p12') {
+    // Candy Cane — rayures
+    for (let y=0; y<size; y+=10) { oc2.fillStyle = (Math.floor(y/10)%2===0) ? pipeItem.pipeColor[1] : pipeItem.pipeColor[2]; oc2.fillRect(px, y, pw, 10); }
+    oc2.fillRect(px-4, ph*0.6-10, pw+8, 10);
+    oc2.fillRect(px, ph*0.6+8, pw, size-(ph*0.6+8));
+  } else if (pipeItem.id === 'p13') {
+    // Nuage Sucré — arrondi cotonneux
+    oc2.fillRect(px+3, 0, pw-6, ph*0.55);
+    oc2.fillRect(px-4, ph*0.55-8, pw+8, 8);
+    oc2.fillRect(px+3, ph*0.6+8, pw-6, size-(ph*0.6+8));
+    oc2.fillRect(px-4, ph*0.6+8, pw+8, 8);
+    oc2.fillStyle='rgba(255,255,255,0.25)'; oc2.beginPath(); oc2.arc(px+pw*0.5, size*0.2, pw*0.35, 0, Math.PI*2); oc2.fill();
+  } else if (pipeItem.id === 'p14') {
+    // Réacteur Plasma — anneau lumineux
+    oc2.fillRect(px, 0, pw, ph*0.6-4);
+    oc2.fillRect(px-4, ph*0.6-10, pw+8, 10);
+    oc2.fillRect(px, ph*0.6+8, pw, size-(ph*0.6+8));
+    oc2.fillRect(px-4, ph*0.6+8, pw+8, 10);
+    oc2.strokeStyle=pipeItem.glowColor; oc2.lineWidth=2; oc2.globalAlpha=0.7;
+    oc2.beginPath(); oc2.ellipse(px+pw/2, size*0.2, pw*0.4, 5, 0, 0, Math.PI*2); oc2.stroke();
+    oc2.globalAlpha=1;
+  } else if (pipeItem.id === 'p15' || pipeItem.id === 'p22') {
+    // Quantum Gate / Arc-en-ciel — gradient spectral
+    const gr = oc2.createLinearGradient(0, 0, 0, size);
+    const colors = pipeItem.id==='p22' ? ['#ff4488','#ffaa00','#00ff88','#0088ff','#cc00ff'] : ['#0000ff','#0044ff','#0088ff','#00ccff','#00ffff'];
+    colors.forEach((c,i)=>gr.addColorStop(i/(colors.length-1),c));
+    oc2.fillStyle=gr;
+    oc2.fillRect(px+2, 0, pw-4, ph*0.6-4);
+    oc2.fillRect(px-4, ph*0.6-10, pw+8, 10);
+    oc2.fillRect(px+2, ph*0.6+8, pw-4, size-(ph*0.6+8));
+    oc2.fillRect(px-4, ph*0.6+8, pw+8, 10);
+  } else if (pipeItem.id === 'p17') {
+    // Mur de Château — blocs de pierre
+    const bh=10, bw=pw/2;
+    for(let y=0;y<ph*0.58;y+=bh){const off=Math.floor(y/bh)%2===0?0:bw/2;oc2.fillRect(px+off,y,bw-1,bh-1);oc2.fillRect(px+off+bw,y,bw-1,bh-1);}
+    oc2.fillRect(px-4, ph*0.6-10, pw+8, 10);
+    for(let y=ph*0.6+8;y<size;y+=bh){const off=Math.floor(y/bh)%2===0?0:bw/2;oc2.fillRect(px+off,y,bw-1,bh-1);oc2.fillRect(px+off+bw,y,bw-1,bh-1);}
+    oc2.fillRect(px-4, ph*0.6+8, pw+8, 10);
+  } else if (pipeItem.id === 'p18') {
+    // Tour Maudite — violet sombre avec runes
+    oc2.fillRect(px, 0, pw, ph*0.6-4);
+    oc2.fillRect(px-4, ph*0.6-10, pw+8, 10);
+    oc2.fillRect(px, ph*0.6+8, pw, size-(ph*0.6+8));
+    oc2.fillRect(px-4, ph*0.6+8, pw+8, 10);
+    oc2.strokeStyle='#aa44ff'; oc2.lineWidth=1; oc2.globalAlpha=0.6;
+    [size*0.15, size*0.35, size*0.72, size*0.88].forEach(ry=>{oc2.beginPath();oc2.moveTo(px+4,ry-4);oc2.lineTo(px+4,ry+4);oc2.moveTo(px+4,ry);oc2.lineTo(px+pw-4,ry);oc2.stroke();});
+    oc2.globalAlpha=1;
+  } else if (pipeItem.id === 'p20') {
+    // Corde de Ranch
+    oc2.fillRect(px+3, 0, pw-6, ph*0.6-4);
+    oc2.fillRect(px-4, ph*0.6-10, pw+8, 10);
+    oc2.fillRect(px+3, ph*0.6+8, pw-6, size-(ph*0.6+8));
+    oc2.fillRect(px-4, ph*0.6+8, pw+8, 10);
+    oc2.strokeStyle=pipeItem.glowColor; oc2.lineWidth=1.5; oc2.globalAlpha=0.5;
+    for(let y=4;y<ph*0.55;y+=8){oc2.beginPath();oc2.moveTo(px+3,y);oc2.lineTo(px+pw-3,y+4);oc2.stroke();}
+    oc2.globalAlpha=1;
+  } else if (pipeItem.id === 'p21') {
+    // Gold Rush — doré brillant
+    const gg=oc2.createLinearGradient(px,0,px+pw,0);
+    gg.addColorStop(0,'#8b6914'); gg.addColorStop(0.3,'#f5c842'); gg.addColorStop(0.6,'#fff7a0'); gg.addColorStop(1,'#8b6914');
+    oc2.fillStyle=gg;
+    oc2.fillRect(px, 0, pw, ph*0.6-4);
+    oc2.fillRect(px-5, ph*0.6-12, pw+10, 12);
+    oc2.fillRect(px, ph*0.6+10, pw, size-(ph*0.6+10));
+    oc2.fillRect(px-5, ph*0.6+10, pw+10, 12);
+  } else {
+    oc2.fillRect(px, 0, pw, ph*0.6-4);
+    oc2.fillRect(px-5, ph*0.6-12, pw+10, 12);
+    oc2.fillRect(px, ph*0.6+8, pw, size-(ph*0.6+8));
+    oc2.fillRect(px-5, ph*0.6+8, pw+10, 12);
+  }
+
+  oc2.strokeStyle = pipeItem.glowColor; oc2.lineWidth = 1.5; oc2.shadowBlur = 6;
+  oc2.strokeRect(px, 0, pw, ph*0.6);
+  oc2.restore();
+  return oc;
+}
+
+// Dessine un preview de background
+function renderBgPreview(bgId, size) {
+  const oc = document.createElement('canvas');
+  oc.width = size; oc.height = size;
+  const oc2 = oc.getContext('2d');
+  const bgColors = {
+    's8':['#1a0a00','#3d1a00'], 's9':['#001a00','#003d00'],
+    's10':['#00001a','#001a3d'], 's11':['#0d0020','#200040'],
+    's12':['#0a0020','#200050'], 's13':['#1a1400','#3d3000'],
+    's14':['#000000','#050005'],
+    's29':['#3d2a00','#8b5a00'], 's33':['#3d1400','#8b3000'], 's34':['#2a1a00','#664400'], 's35':['#0d0d0d','#1a1010'],
+    's30':['#001a3d','#003d70'], 's36':['#2a0030','#60006a'], 's37':['#003a00','#006a00'], 's38':['#1a0030','#400060'],
+    's31':['#000a1a','#001030'], 's39':['#1a0000','#3d0010'], 's40':['#000000','#000000'],
+    's32':['#1a0d00','#3d2000'], 's41':['#001a00','#002d00'], 's42':['#050010','#0d0020'],
+    'default':['#020014','#0d0040']
+  };
+  const cols = bgColors[bgId] || bgColors['default'];
+  const grad = oc2.createLinearGradient(0,0,0,size);
+  grad.addColorStop(0,cols[0]); grad.addColorStop(1,cols[1]);
+  oc2.fillStyle=grad; oc2.fillRect(0,0,size,size);
+
+  // Illustrations thématiques
+  if (bgId === 's29') {
+    // Prairie Western — soleil + collines
+    oc2.fillStyle='rgba(255,120,0,0.5)';
+    oc2.beginPath(); oc2.arc(size*0.75, size*0.25, size*0.12, 0, Math.PI*2); oc2.fill();
+    oc2.fillStyle='rgba(60,30,0,0.5)';
+    oc2.beginPath(); oc2.moveTo(0,size); oc2.quadraticCurveTo(size*0.3,size*0.55,size*0.55,size*0.7); oc2.quadraticCurveTo(size*0.75,size*0.5,size,size*0.65); oc2.lineTo(size,size); oc2.closePath(); oc2.fill();
+  } else if (bgId === 's30') {
+    // Cartoon Land — nuages + soleil jaune
+    oc2.fillStyle='rgba(255,220,0,0.6)';
+    oc2.beginPath(); oc2.arc(size*0.2, size*0.22, size*0.12, 0, Math.PI*2); oc2.fill();
+    oc2.fillStyle='rgba(180,220,255,0.35)';
+    [[size*0.6,size*0.2,size*0.12],[size*0.75,size*0.16,size*0.09]].forEach(([cx,cy,cr])=>{oc2.beginPath();oc2.arc(cx,cy,cr,0,Math.PI*2);oc2.fill();});
+  } else if (bgId === 's31') {
+    // Station Orbitale — planète + anneau
+    oc2.fillStyle='rgba(0,150,255,0.4)';
+    oc2.beginPath(); oc2.arc(size*0.65, size*0.3, size*0.16, 0, Math.PI*2); oc2.fill();
+    oc2.strokeStyle='rgba(0,200,255,0.5)'; oc2.lineWidth=3;
+    oc2.beginPath(); oc2.ellipse(size*0.65, size*0.3, size*0.26, size*0.07, -0.4, 0, Math.PI*2); oc2.stroke();
+    // étoiles
+    oc2.fillStyle='rgba(255,255,255,0.6)';
+    [[0.15,0.15],[0.35,0.08],[0.1,0.45]].forEach(([rx,ry])=>{oc2.beginPath();oc2.arc(size*rx,size*ry,1.2,0,Math.PI*2);oc2.fill();});
+  } else if (bgId === 's32') {
+    // Château Médiéval — silhouette tour + lune
+    oc2.fillStyle='rgba(200,180,100,0.3)';
+    oc2.beginPath(); oc2.arc(size*0.2, size*0.22, size*0.1, 0, Math.PI*2); oc2.fill();
+    oc2.fillStyle='rgba(25,10,0,0.6)';
+    oc2.fillRect(size*0.55, size*0.35, size*0.18, size*0.65);
+    for(let i=0;i<3;i++) oc2.fillRect(size*0.55+i*(size*0.06), size*0.28, size*0.04, size*0.1);
+    oc2.fillRect(size*0.35, size*0.5, size*0.2, size*0.5);
+  } else if (bgId === 's8') {
+    oc2.fillStyle='rgba(255,80,0,0.5)';
+    oc2.beginPath(); oc2.arc(size*0.5, size*0.35, size*0.14, 0, Math.PI*2); oc2.fill();
+    for(let i=1;i<4;i++){oc2.strokeStyle=`rgba(255,120,0,${0.2-i*0.05})`;oc2.lineWidth=2;oc2.beginPath();oc2.arc(size*0.5,size*0.35,size*(0.14+i*0.07),0,Math.PI*2);oc2.stroke();}
+  } else if (bgId === 's9') {
+    oc2.fillStyle='rgba(0,200,60,0.25)';
+    for(let i=0;i<4;i++){const tx=size*(0.1+i*0.25);oc2.fillRect(tx,size*0.5,size*0.08,size*0.5);oc2.beginPath();oc2.arc(tx+size*0.04,size*0.5,size*0.08,0,Math.PI*2);oc2.fill();}
+  } else if (bgId === 's12') {
+    const ng=oc2.createRadialGradient(size*0.5,size*0.4,2,size*0.5,size*0.4,size*0.35);
+    ng.addColorStop(0,'rgba(180,0,255,0.4)');ng.addColorStop(1,'rgba(0,0,0,0)');
+    oc2.fillStyle=ng;oc2.beginPath();oc2.arc(size*0.5,size*0.4,size*0.35,0,Math.PI*2);oc2.fill();
+  } else if (bgId === 's13') {
+    oc2.fillStyle='rgba(255,200,0,0.3)';oc2.beginPath();oc2.arc(size*0.5,size*0.4,size*0.18,0,Math.PI*2);oc2.fill();
+    oc2.strokeStyle='rgba(255,215,0,0.3)';oc2.lineWidth=2;
+    for(let r=0.22;r<0.45;r+=0.09){oc2.beginPath();oc2.arc(size*0.5,size*0.4,size*r,0,Math.PI*2);oc2.stroke();}
+  } else if (bgId === 's14') {
+    const vg=oc2.createRadialGradient(size*0.5,size*0.45,2,size*0.5,size*0.45,size*0.3);
+    vg.addColorStop(0,'rgba(120,0,180,0.6)');vg.addColorStop(1,'rgba(0,0,0,0)');
+    oc2.fillStyle=vg;oc2.beginPath();oc2.arc(size*0.5,size*0.45,size*0.3,0,Math.PI*2);oc2.fill();
+  } else if (bgId === 's33') {
+    oc2.fillStyle='rgba(200,50,0,0.5)'; oc2.beginPath(); oc2.arc(size*0.5,size*0.2,size*0.13,0,Math.PI*2); oc2.fill();
+    oc2.fillStyle='rgba(180,60,20,0.55)'; oc2.fillRect(0,size*0.55,size*0.25,size*0.45); oc2.fillRect(size*0.38,size*0.45,size*0.28,size*0.55); oc2.fillRect(size*0.76,size*0.5,size*0.24,size*0.5);
+  } else if (bgId === 's34') {
+    oc2.fillStyle='rgba(100,70,0,0.5)'; oc2.fillRect(size*0.3,size*0.4,size*0.4,size*0.6);
+    oc2.fillStyle='rgba(0,0,0,0.8)'; oc2.beginPath(); oc2.arc(size*0.5,size*0.55,size*0.1,0,Math.PI*2); oc2.fill();
+    oc2.fillStyle='rgba(255,200,0,0.6)'; [[0.2,0.65],[0.75,0.72],[0.55,0.85]].forEach(([rx,ry])=>{oc2.beginPath();oc2.arc(size*rx,size*ry,size*0.04,0,Math.PI*2);oc2.fill();});
+  } else if (bgId === 's35') {
+    oc2.fillStyle='rgba(80,60,80,0.45)'; [[0.1,0.3,0.2,0.7],[0.38,0.4,0.24,0.6],[0.7,0.25,0.2,0.75]].forEach(([rx,ry,rw,rh])=>{oc2.fillRect(size*rx,size*ry,size*rw,size*rh);});
+    oc2.fillStyle='rgba(200,180,255,0.2)'; oc2.beginPath(); oc2.arc(size*0.5,size*0.15,size*0.08,0,Math.PI*2); oc2.fill();
+  } else if (bgId === 's36') {
+    oc2.fillStyle='rgba(255,100,200,0.45)'; oc2.beginPath(); oc2.arc(size*0.5,size*0.35,size*0.16,0,Math.PI*2); oc2.fill();
+    oc2.fillStyle='rgba(255,255,100,0.35)'; [[0.15,0.7,0.1],[0.55,0.65,0.09],[0.8,0.75,0.07]].forEach(([rx,ry,cr])=>{oc2.beginPath();oc2.arc(size*rx,size*ry,size*cr,0,Math.PI*2);oc2.fill();});
+  } else if (bgId === 's37') {
+    oc2.fillStyle='rgba(0,200,80,0.3)'; for(let i=0;i<5;i++){const tx=size*(0.04+i*0.22);oc2.fillRect(tx,size*0.45,size*0.1,size*0.55);oc2.beginPath();oc2.arc(tx+size*0.05,size*0.45,size*0.1,0,Math.PI*2);oc2.fill();}
+    oc2.fillStyle='rgba(255,200,0,0.4)'; oc2.beginPath(); oc2.arc(size*0.5,size*0.2,size*0.1,0,Math.PI*2); oc2.fill();
+  } else if (bgId === 's38') {
+    ['#ff0044aa','#ff6600aa','#ffee00aa','#00ff88aa','#0088ffaa','#cc00ffaa'].forEach((c,i)=>{oc2.strokeStyle=c;oc2.lineWidth=4;oc2.beginPath();oc2.arc(size*0.5,size,size*(0.12+i*0.09),Math.PI,0);oc2.stroke();});
+  } else if (bgId === 's39') {
+    const ng2=oc2.createRadialGradient(size*0.4,size*0.35,2,size*0.4,size*0.35,size*0.38); ng2.addColorStop(0,'rgba(255,50,0,0.5)'); ng2.addColorStop(1,'rgba(0,0,0,0)');
+    oc2.fillStyle=ng2; oc2.beginPath(); oc2.arc(size*0.4,size*0.35,size*0.38,0,Math.PI*2); oc2.fill();
+  } else if (bgId === 's40') {
+    const sg=oc2.createRadialGradient(size*0.5,size*0.4,0,size*0.5,size*0.4,size*0.32); sg.addColorStop(0,'rgba(0,0,0,1)'); sg.addColorStop(0.5,'rgba(80,0,120,0.6)'); sg.addColorStop(1,'rgba(0,0,0,0)');
+    oc2.fillStyle=sg; oc2.beginPath(); oc2.arc(size*0.5,size*0.4,size*0.32,0,Math.PI*2); oc2.fill();
+    oc2.strokeStyle='rgba(180,0,255,0.45)'; oc2.lineWidth=1.5; for(let r=0.08;r<0.35;r+=0.08){oc2.beginPath();oc2.arc(size*0.5,size*0.4,size*r,0,Math.PI*2);oc2.stroke();}
+  } else if (bgId === 's41') {
+    oc2.fillStyle='rgba(0,150,60,0.28)'; for(let i=0;i<4;i++){const tx=size*(0.06+i*0.26);oc2.fillRect(tx,size*0.38,size*0.12,size*0.62);oc2.beginPath();oc2.arc(tx+size*0.06,size*0.38,size*0.12,0,Math.PI*2);oc2.fill();}
+    oc2.fillStyle='rgba(100,255,100,0.2)'; oc2.beginPath(); oc2.arc(size*0.5,size*0.2,size*0.09,0,Math.PI*2); oc2.fill();
+  } else if (bgId === 's42') {
+    oc2.fillStyle='rgba(60,0,100,0.45)'; oc2.fillRect(size*0.35,size*0.2,size*0.3,size*0.8);
+    for(let i=0;i<3;i++) oc2.fillRect(size*(0.35+i*0.1),size*0.14,size*0.08,size*0.09);
+    oc2.fillStyle='rgba(0,0,0,0.7)'; oc2.beginPath(); oc2.arc(size*0.5,size*0.5,size*0.06,0,Math.PI*2); oc2.fill();
+    oc2.fillStyle='rgba(150,0,255,0.35)'; oc2.beginPath(); oc2.arc(size*0.5,size*0.17,size*0.06,0,Math.PI*2); oc2.fill();
+  } else {
+    // Grille générique
+    oc2.strokeStyle='rgba(0,245,255,0.08)'; oc2.lineWidth=1;
+    for(let x=0;x<size;x+=12){oc2.beginPath();oc2.moveTo(x,0);oc2.lineTo(x,size);oc2.stroke();}
+    for(let y=0;y<size;y+=12){oc2.beginPath();oc2.moveTo(0,y);oc2.lineTo(size,y);oc2.stroke();}
+  }
+  return oc;
+} 
+
+// ═══════════════════════════════════════════════════
+// SHOP LOGIC
+// ═══════════════════════════════════════════════════
+const shopScreen    = document.getElementById('shopScreen');
+const shopCoinsEl   = document.getElementById('shopCoinsDisplay');
+const collectionGrid = document.getElementById('collectionGrid');
+const gachaOverlay  = document.getElementById('gachaOverlay');
+
+let currentTab = 'skins';
+
+function openShop() {
+  shopScreen.style.display = 'flex';
+  shopCoinsEl.textContent = totalCoins;
+  document.getElementById('fixedAdBtn').style.display = 'none';
+  updateAdBonusCooldown();
+  renderGachaBoxes();
+  renderCollection();
+  renderCoinPacks();
+}
+  
+function closeShop() {
+  shopScreen.style.display = 'none';
+  document.getElementById('fixedAdBtn').style.display = '';
+  state = 'idle';
+  resetBird();
+  pipes = []; coinObjects = []; particles = []; coinLabels = [];
+}
+
+document.getElementById('shopBackBtn').addEventListener('click', closeShop);
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTab = btn.dataset.tab;
+    renderCollection();
+  });
+});
+
+// ── Render gacha boxes with real previews ─────────
+function renderGachaBoxes() {
+  const grid = document.getElementById('gachaGrid');
+  grid.innerHTML = '';
+
+  // COFFRE SKINS (oiseaux + decors)
+  const skinBox = document.createElement('div');
+  skinBox.className = 'gacha-box skins';
+  skinBox.id = 'btnGachaSkins';
+  // Previews — skins thématiques variés
+  const birdSkins = SKIN_ITEMS.filter(s=>s.subtype==='bird');
+  const prevRow = document.createElement('div');
+  prevRow.className = 'gacha-preview-row';
+  [birdSkins[0], birdSkins[8], birdSkins[13]].forEach(s => {
+    if (!s) return;
+    const pc = renderBirdPreview(s.id, 32);
+    pc.className = 'gacha-preview-canvas';
+    prevRow.appendChild(pc);
+  });
+  skinBox.innerHTML = `<div class="gacha-name">COFFRE SKINS</div>
+    <div class="gacha-desc">Skins oiseau<br>& décors arrière-plan</div>
+    <div class="gacha-price"><span class="coin-icon-lg"></span>100 PIÈCES</div>`;
+  skinBox.insertBefore(prevRow, skinBox.firstChild);
+  grid.appendChild(skinBox);
+
+  // COFFRE TUYAUX
+  const pipeBox = document.createElement('div');
+  pipeBox.className = 'gacha-box pipes';
+  pipeBox.id = 'btnGachaPipes';
+  const pipeRow = document.createElement('div');
+  pipeRow.className = 'gacha-preview-row';
+  [PIPE_ITEMS[0], PIPE_ITEMS[7], PIPE_ITEMS[9]].forEach(p => {
+    const pc = renderPipePreview(p, 32);
+    pc.className = 'gacha-preview-canvas';
+    pipeRow.appendChild(pc);
+  });
+  pipeBox.innerHTML = `<div class="gacha-name">COFFRE TUYAUX</div>
+    <div class="gacha-desc">Skins pour<br>les obstacles</div>
+    <div class="gacha-price"><span class="coin-icon-lg"></span>100 PIÈCES</div>`;
+  pipeBox.insertBefore(pipeRow, pipeBox.firstChild);
+  grid.appendChild(pipeBox);
+
+  // COFFRE ACCESSOIRES
+  const accBox = document.createElement('div');
+  accBox.className = 'gacha-box accessories';
+  accBox.id = 'btnGachaAccessories';
+  const accRow = document.createElement('div');
+  accRow.className = 'gacha-preview-row';
+  accRow.style.fontSize = '1.6rem';
+  accRow.style.justifyContent = 'center';
+  accRow.style.gap = '6px';
+  accRow.style.marginBottom = '8px';
+  ['🤠','😎','👑'].forEach(em => {
+    const sp = document.createElement('span');
+    sp.textContent = em;
+    sp.style.fontSize = '1.2rem';
+    accRow.appendChild(sp);
+  });
+  accBox.innerHTML = `<div class="gacha-name">COFFRE ACCESSO.</div>
+    <div class="gacha-desc">Chapeaux, lunettes<br>& accessoires</div>
+    <div class="gacha-price"><span class="coin-icon-lg"></span>50 PIÈCES</div>`;
+  accBox.insertBefore(accRow, accBox.firstChild);
+  grid.appendChild(accBox);
+
+  document.getElementById('btnGachaSkins').addEventListener('click', () => doGachaRoll('skins'));
+  document.getElementById('btnGachaPipes').addEventListener('click', () => doGachaRoll('pipes'));
+  document.getElementById('btnGachaAccessories').addEventListener('click', () => doGachaRoll('accessories'));
+}
+
+function renderCollection() {
+  collectionGrid.innerHTML = '';
+  let items;
+  if (currentTab === 'skins') items = SKIN_ITEMS.filter(s => s.subtype === 'bird');
+  else if (currentTab === 'bg') items = SKIN_ITEMS.filter(s => s.subtype === 'bg');
+  else if (currentTab === 'pipes') items = PIPE_ITEMS;
+  else items = ACC_ITEMS;
+
+  items.forEach(item => {
+    const unlocked = unlockedItems.includes(item.id);
+    const isEquipped = (currentTab === 'skins' && equippedSkin === item.id) ||
+                       (currentTab === 'bg' && equippedBg === item.id) ||
+                       (currentTab === 'pipes' && equippedPipe === item.id) ||
+                       (currentTab === 'accessories' && equippedAcc === item.id);
+    const r = RARITIES[item.rarity];
+    const card = document.createElement('div');
+    card.className = `item-card ${r.cls} ${unlocked ? '' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+
+    // Preview canvas pour chaque item
+    let previewEl;
+    if (item.type === 'skin' && item.subtype === 'bird') {
+      previewEl = renderBirdPreview(item.id, 56);
+      previewEl.className = 'item-preview-canvas';
+      previewEl.style.width = '56px'; previewEl.style.height = '56px';
+    } else if (item.type === 'skin' && item.subtype === 'bg') {
+      previewEl = renderBgPreview(item.id, 56);
+      previewEl.className = 'item-preview-canvas';
+      previewEl.style.width = '56px'; previewEl.style.height = '56px';
+    } else if (item.type === 'pipe') {
+      previewEl = renderPipePreview(item, 56);
+      previewEl.className = 'item-preview-canvas';
+      previewEl.style.width = '56px'; previewEl.style.height = '56px';
+    } else {
+      // Accessoire emoji
+      previewEl = document.createElement('div');
+      previewEl.style.cssText = 'font-size:2rem;margin-bottom:4px;text-align:center;';
+      previewEl.textContent = item.emoji;
+    }
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'item-name';
+    nameEl.textContent = item.name;
+
+    const badgeEl = document.createElement('span');
+    badgeEl.className = `item-rarity-badge badge-${item.rarity}`;
+    badgeEl.textContent = r.label.split(' ')[1] || r.label;
+
+    if (!unlocked) {
+      const lockEl = document.createElement('div');
+      lockEl.style.cssText = 'font-size:0.3rem;color:rgba(255,255,255,0.3);margin-top:3px';
+      lockEl.textContent = '🔒';
+      card.appendChild(previewEl);
+      card.appendChild(nameEl);
+      card.appendChild(badgeEl);
+      card.appendChild(lockEl);
+    } else {
+      card.appendChild(previewEl);
+      card.appendChild(nameEl);
+      card.appendChild(badgeEl);
+    }
+
+    if (unlocked) {
+      card.addEventListener('click', () => {
+        if (currentTab === 'skins') equippedSkin = item.id;
+        else if (currentTab === 'bg') equippedBg = item.id;
+        else if (currentTab === 'pipes') equippedPipe = item.id;
+        else equippedAcc = (equippedAcc === item.id) ? null : item.id;
+        saveState();
+        renderCollection();
+        // Refresh gacha previews si bg change
+        if (currentTab === 'bg') renderGachaBoxes();
+      });
+    }
+    collectionGrid.appendChild(card);
+  });
+}
+
+// ── GACHA ROLL ──────────────────────────────────────
+function weightedRoll(pool) {
+  const total = pool.reduce((sum, item) => sum + RARITIES[item.rarity].weight, 0);
+  let rand = Math.random() * total;
+  for (const item of pool) {
+    rand -= RARITIES[item.rarity].weight;
+    if (rand <= 0) return item;
+  }
+  return pool[pool.length - 1];
+}
+
+function doGachaRoll(type) {
+  const cost = type === 'accessories' ? 50 : 100;
+  if (totalCoins < cost) {
+    showToast('PAS ASSEZ DE PIÈCES!');
+    return;
+  }
+  let pool;
+  if (type === 'skins') pool = SKIN_ITEMS;
+  else if (type === 'pipes') pool = PIPE_ITEMS;
+  else pool = ACC_ITEMS;
+  const result = weightedRoll(pool);
+  totalCoins -= cost;
+  const isNew = !unlockedItems.includes(result.id);
+  if (isNew) {
+    unlockedItems.push(result.id);
+  } else {
+    // Compensation doublon selon la rareté
+    const dupCoins = { common: 10, rare: 25, epic: 60, legendary: 150, secret: 400 };
+    const bonus = dupCoins[result.rarity] || 10;
+    totalCoins += bonus;
+    result._dupBonus = bonus;
+  }
+  shopCoinsEl.textContent = totalCoins;
+  saveState();
+  showGachaResult(result, isNew);
+  renderCollection();
+}
+
+// ── PUB BONUS ──────────────────────────────────────
+let lastAdBonus = 0;
+const AD_BONUS_COOLDOWN = 5 * 60 * 1000;
+
+function updateAdBonusCooldown() {
+  const el = document.getElementById('adBonusCooldown');
+  if (!el) return;
+  const elapsed = Date.now() - lastAdBonus;
+  if (lastAdBonus === 0 || elapsed >= AD_BONUS_COOLDOWN) {
+    el.textContent = 'DISPONIBLE'; el.style.color = '#00ff99';
+  } else {
+    const remaining = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
+    const m = Math.floor(remaining / 60), s = remaining % 60;
+    el.textContent = `CD: ${m}:${s.toString().padStart(2,'0')}`;
+    el.style.color = 'rgba(255,255,255,0.3)';
+  }
+}
+
+function handleShopAdBonus() {
+  const elapsed = Date.now() - lastAdBonus;
+  if (lastAdBonus !== 0 && elapsed < AD_BONUS_COOLDOWN) {
+    const r = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
+    showToast(`CD: ${Math.floor(r/60)}:${(r%60).toString().padStart(2,'0')}`); return;
+  }
+  const box = document.getElementById('adBonusBox');
+  box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
+  document.getElementById('adBonusCooldown').textContent = 'PUB EN COURS...';
+  let t = 5;
+  const iv = setInterval(() => {
+    t--;
+    const cd = document.getElementById('adBonusCooldown');
+    if (cd) cd.textContent = `${t}s...`;
+    if (t <= 0) {
+      clearInterval(iv); lastAdBonus = Date.now();
+      totalCoins += 25; shopCoinsEl.textContent = totalCoins; saveState();
+      box.style.opacity = '1'; box.style.pointerEvents = '';
+      updateAdBonusCooldown(); showToast('✨ +25 PIÈCES REÇUES!');
+    }
+  }, 1000);
+}
+setInterval(() => { if (shopScreen && shopScreen.style.display !== 'none') updateAdBonusCooldown(); }, 1000);
+
+// ── COIN PACKS ────────────────────────────────────────
+const COIN_PACKS = [
+  { id:'cp1', coins:100,   price:'0,05 €', bonus:'',      highlight:false },
+  { id:'cp2', coins:500,   price:'0,20 €', bonus:'+50',   highlight:false },
+  { id:'cp3', coins:1200,  price:'0,45 €', bonus:'+200',  highlight:false },
+  { id:'cp4', coins:3000,  price:'0,99 €', bonus:'+500',  highlight:true  },
+  { id:'cp5', coins:7000,  price:'1,99 €', bonus:'+2000', highlight:false },
+  { id:'cp6', coins:10000, price:'2,99 €', bonus:'+5000', highlight:true  },
+];
+function renderCoinPacks() {
+  const grid = document.getElementById('coinPackGrid');
+  if (!grid) return;
+  grid.innerHTML = COIN_PACKS.map(p => `
+    <div onclick="buyCoinPack('${p.id}')" style="border:2px solid ${p.highlight?'#ffd700':'rgba(0,245,255,0.3)'};border-radius:12px;padding:14px 10px;text-align:center;background:${p.highlight?'linear-gradient(135deg,rgba(255,215,0,0.08),rgba(255,140,0,0.05))':'rgba(0,245,255,0.03)'};cursor:pointer;position:relative;transition:transform 0.15s;" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
+      ${p.highlight?'<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#ffd700;color:#000;font-family:Orbitron,sans-serif;font-size:0.28rem;font-weight:700;padding:2px 8px;border-radius:20px;">🔥 MEILLEURE OFFRE</div>':''}
+      <div style="font-size:1.3rem;margin-bottom:4px;">🪙</div>
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.65rem;color:${p.highlight?'#ffd700':'#00f5ff'};">${p.coins.toLocaleString()}</div>
+      <div style="font-size:0.28rem;color:#00ff99;min-height:14px;">${p.bonus?p.bonus+' BONUS':''}</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:0.55rem;font-weight:700;color:#fff;margin-top:6px;background:rgba(255,255,255,0.1);padding:5px;border-radius:6px;">${p.price}</div>
+    </div>`).join('');
+}
+function buyCoinPack(id) {
+  const pack = COIN_PACKS.find(p => p.id === id);
+  if (!pack) return;
+  if (confirm(`Acheter ${pack.coins.toLocaleString()} pièces pour ${pack.price} ?`)) {
+    totalCoins += pack.coins;
+    shopCoinsEl.textContent = totalCoins;
+    saveState();
+    showToast(`💳 +${pack.coins.toLocaleString()} PIÈCES!`);
+  }
+}
+
+
+// ── FIXED AD BUTTON (top bar) ─────────────────────────
+function updateFixedAdCd() {
+  const el = document.getElementById('fixedAdCd');
+  const elapsed = Date.now() - lastAdBonus;
+  if (lastAdBonus === 0 || elapsed >= AD_BONUS_COOLDOWN) {
+    el.textContent = 'DISPONIBLE'; el.style.color = '#00ff99';
+  } else {
+    const remaining = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
+    const m = Math.floor(remaining / 60), s = remaining % 60;
+    el.textContent = `CD: ${m}:${s.toString().padStart(2,'0')}`; el.style.color = 'rgba(255,255,255,0.3)';
+  }
+}
+setInterval(updateFixedAdCd, 1000);
+updateFixedAdCd();
+
+document.getElementById('fixedAdBtn').addEventListener('click', () => {
+  const elapsed = Date.now() - lastAdBonus;
+  if (lastAdBonus !== 0 && elapsed < AD_BONUS_COOLDOWN) {
+    const remaining = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
+    const m = Math.floor(remaining / 60), s = remaining % 60;
+    showToast(`PUB DISPONIBLE DANS ${m}:${s.toString().padStart(2,'0')}`);
+    return;
+  }
+  // Simule la pub
+  lastAdBonus = Date.now();
+  totalCoins += 25;
+  shopCoinsEl.textContent = totalCoins;
+  saveState();
+  updateFixedAdCd();
+  showToast('✨ +25 PIÈCES REÇUES!');
+});
+
+// ── COIN BOOST (X2) ──────────────────────────────────
+let coinBoostIapOwned = false;
+let coinBoostAdEnd = 0;
+const COIN_BOOST_AD_DURATION = 5 * 60 * 1000; // 5 min
+const COIN_BOOST_AD_COOLDOWN = 30 * 60 * 1000; // 30 min cooldown
+let lastCoinBoostAd = parseInt(localStorage.getItem('floppyLastBoostAd') || '0');
+
+function isCoinBoostActive() {
+  return coinBoostIapOwned || Date.now() < coinBoostAdEnd;
+}
+
+function getCoinMultiplier() { return isCoinBoostActive() ? 2 : 1; }
+
+function updateCoinBoostAdCd() {
+  const el = document.getElementById('coinBoostAdCd');
+  if (!el) return;
+  if (coinBoostIapOwned) { el.textContent = '✓ X2 PERMANENT'; el.style.color = '#ffd700'; return; }
+  if (Date.now() < coinBoostAdEnd) {
+    const r = Math.ceil((coinBoostAdEnd - Date.now()) / 1000);
+    el.textContent = `ACTIF: ${Math.floor(r/60)}:${(r%60).toString().padStart(2,'0')}`;
+    el.style.color = '#ff6b35'; return;
+  }
+  const elapsed = Date.now() - lastCoinBoostAd;
+  if (lastCoinBoostAd > 0 && elapsed < COIN_BOOST_AD_COOLDOWN) {
+    const r = Math.ceil((COIN_BOOST_AD_COOLDOWN - elapsed) / 1000);
+    el.textContent = `CD: ${Math.floor(r/60)}:${(r%60).toString().padStart(2,'0')}`;
+    el.style.color = 'rgba(255,255,255,0.3)';
+  } else {
+    el.textContent = 'DISPONIBLE'; el.style.color = '#00ff99';
+  }
+}
+
+function handleCoinBoostAd() {
+  if (coinBoostIapOwned) { showToast('💰 X2 PERMANENT DÉJÀ ACTIF!'); return; }
+  if (Date.now() < coinBoostAdEnd) { showToast('⚡ X2 DÉJÀ EN COURS!'); return; }
+  const elapsed = Date.now() - lastCoinBoostAd;
+  if (lastCoinBoostAd > 0 && elapsed < COIN_BOOST_AD_COOLDOWN) {
+    const r = Math.ceil((COIN_BOOST_AD_COOLDOWN - elapsed) / 1000);
+    showToast(`CD: ${Math.floor(r/60)}:${(r%60).toString().padStart(2,'0')}`); return;
+  }
+  // Simule pub 5s
+  const box = document.getElementById('coinBoostAdBox');
+  box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
+  document.getElementById('coinBoostAdCd').textContent = 'PUB EN COURS...';
+  let t = 5;
+  const iv = setInterval(() => {
+    t--;
+    const cd = document.getElementById('coinBoostAdCd');
+    if (cd) cd.textContent = `${t}s...`;
+    if (t <= 0) {
+      clearInterval(iv);
+      coinBoostAdEnd = Date.now() + COIN_BOOST_AD_DURATION;
+      lastCoinBoostAd = Date.now();
+      localStorage.setItem('floppyLastBoostAd', lastCoinBoostAd.toString());
+      box.style.opacity = '1'; box.style.pointerEvents = '';
+      updateCoinBoostAdCd();
+      showToast('⚡ PIÈCES X2 ACTIF — 5 MINUTES!');
+    }
+  }, 1000);
+}
+
+function purchaseCoinBoostIap() {
+  if (coinBoostIapOwned) { showToast('💰 X2 DÉJÀ ACTIF!'); return; }
+  if (confirm('Activer Pièces X2 permanent pour 0,99 € ?')) {
+    coinBoostIapOwned = true;
+    coinBoostAdEnd = 0;
+    localStorage.setItem('floppyCoinBoostIap', '1');
+    updateCoinBoostIapUI();
+    showToast('💰 PIÈCES X2 PERMANENT ACTIVÉ!');
+  }
+}
+
+function purchaseCoinBoostIapFromAd() {
+  purchaseCoinBoostIap();
+}
+
+function updateCoinBoostIapUI() {
+  const right = document.getElementById('coinBoostIapRight');
+  if (!right) return;
+  if (coinBoostIapOwned) {
+    right.innerHTML = '<div style="font-family:Orbitron,sans-serif;font-weight:700;font-size:0.55rem;color:#ffd700;background:rgba(255,215,0,0.15);border:1px solid #ffd700;border-radius:6px;padding:6px 12px;">✓ ACTIF</div>';
+    const box = document.getElementById('coinBoostAdBox');
+    if (box) { box.style.opacity = '0.4'; box.style.pointerEvents = 'none'; }
+  }
+}
+
+// Charger état boost IAP
+if (localStorage.getItem('floppyCoinBoostIap') === '1') {
+  coinBoostIapOwned = true;
+  setTimeout(updateCoinBoostIapUI, 100);
+}
+setInterval(() => {
+  if (shopScreen && shopScreen.style.display !== 'none') updateCoinBoostAdCd();
+}, 1000);
+let madTimer = null, madInterval = null;
+const mandatoryAdOverlay = document.getElementById('mandatoryAdOverlay');
+const madBarFill = document.getElementById('madBarFill');
+const madTimerEl = document.getElementById('madTimer');
+const madSkipBtn = document.getElementById('madSkipBtn');
+
+function showMandatoryAd(onDone) {
+  if (adBlockerOwned) { onDone(); return; }
+  mandatoryAdOverlay.style.display = 'flex';
+  madBarFill.style.width = '0%';
+  madSkipBtn.classList.remove('ready');
+  madTimerEl.textContent = '5s...';
+  let elapsed = 0;
+  const duration = 5000;
+  madInterval = setInterval(() => {
+    elapsed += 100;
+    const pct = Math.min(100, (elapsed/duration)*100);
+    madBarFill.style.width = pct + '%';
+    const remaining = Math.max(0, Math.ceil((duration - elapsed)/1000));
+    madTimerEl.textContent = remaining > 0 ? remaining + 's...' : 'Terminé!';
+    if (elapsed >= duration) {
+      clearInterval(madInterval);
+      madSkipBtn.classList.add('ready');
+    }
+  }, 100);
+  madSkipBtn.onclick = () => {
+    if (!madSkipBtn.classList.contains('ready')) return;
+    clearInterval(madInterval);
+    mandatoryAdOverlay.style.display = 'none';
+    onDone();
+  };
+}
+
+function checkMandatoryAd(onDone) {
+  if (adBlockerOwned) { onDone(); return; }
+  if (gamesPlayedTotal > 0 && gamesPlayedTotal % 5 === 0) {
+    showMandatoryAd(onDone);
+  } else {
+    onDone();
+  }
+}
+
+// ── AD BLOCKER PURCHASE ───────────────────────────────
+function updateAdBlockerUI() {
+  const box = document.getElementById('adBlockerBox');
+  const right = document.getElementById('adBlockerRight');
+  if (adBlockerOwned) {
+    box.classList.add('owned');
+    right.innerHTML = '<div class="ab-owned-badge">✓ ACTIF</div>';
+  } else {
+    box.classList.remove('owned');
+    right.innerHTML = '<button class="ab-price-btn" id="adBlockerBuyBtn">0,99 €</button>';
+    document.getElementById('adBlockerBuyBtn').addEventListener('click', purchaseAdBlocker);
+  }
+}
+
+function purchaseAdBlocker() {
+  // Simulation achat IAP
+  adBlockerOwned = true;
+  saveState();
+  updateAdBlockerUI();
+  showToast('🛡️ BLOQUEUR DE PUB ACTIVÉ!');
+}
+
+// ── RATING POPUP ──────────────────────────────────────
+const ratingOverlay = document.getElementById('ratingOverlay');
+
+function showRatingPopup() {
+  if (ratingDismissed) return;
+  ratingOverlay.style.display = 'flex';
+}
+
+document.getElementById('ratingYesBtn').addEventListener('click', () => {
+  ratingDismissed = true;
+  totalCoins += 100;
+  saveState();
+  ratingOverlay.style.display = 'none';
+  showToast('⭐ +100 PIÈCES — MERCI POUR VOTRE SOUTIEN!');
+});
+
+document.getElementById('ratingLaterBtn').addEventListener('click', () => {
+  ratingOverlay.style.display = 'none';
+});
+
+// ── SHARE POPUP ───────────────────────────────────────
+let shareRewarded = false;
+document.getElementById('shareYesBtn').addEventListener('click', () => {
+  document.getElementById('shareOverlay').style.display = 'none';
+  if (!shareRewarded) {
+    shareRewarded = true;
+    totalCoins += 100;
+    shopCoinsEl.textContent = totalCoins;
+    saveState();
+    showToast('🚀 +100 PIÈCES — MERCI DE PARTAGER!');
+  }
+  if (navigator.share) navigator.share({ title:'Floppy Neon', text:'Essaie ce jeu!', url: window.location.href });
+});
+document.getElementById('shareLaterBtn').addEventListener('click', () => {
+  document.getElementById('shareOverlay').style.display = 'none';
+});
+function showSharePopup() {
+  document.getElementById('shareOverlay').style.display = 'flex';
+}
+
+// ── DAILY LOGIN BONUS ────────────────────────────────
+let lastDailyLogin = parseInt(localStorage.getItem('floppyLastDaily') || '0');
+let dailyStreak    = parseInt(localStorage.getItem('floppyDailyStreak') || '0');
+const DAILY_REWARDS = [30, 40, 50, 60, 80, 100, 150]; // J1→J7+
+
+function checkDailyBonus() {
+  const now = Date.now();
+  const oneDay = 86400000;
+  const twoDays = oneDay * 2;
+  const sinceLast = now - lastDailyLogin;
+  if (sinceLast < oneDay) return; // déjà réclamé aujourd'hui
+  if (sinceLast >= twoDays) dailyStreak = 0; // streak cassé
+  const day = Math.min(dailyStreak, DAILY_REWARDS.length - 1);
+  const reward = DAILY_REWARDS[day];
+  dailyStreak++;
+  lastDailyLogin = now;
+  localStorage.setItem('floppyLastDaily', now.toString());
+  localStorage.setItem('floppyDailyStreak', dailyStreak.toString());
+  totalCoins += reward;
+  saveState();
+  showDailyBonusPopup(day + 1, reward);
+}
+
+function showDailyBonusPopup(day, reward) {
+  const overlay = document.getElementById('dailyBonusOverlay');
+  document.getElementById('dailyDay').textContent = `JOUR ${day}`;
+  document.getElementById('dailyReward').textContent = `+${reward}`;
+  document.getElementById('dailyStreak').textContent = `🔥 ${day > 1 ? day + ' jours de suite!' : 'Première connexion!'}`;
+  overlay.style.display = 'flex';
+}
+
+document.getElementById('dailyClaimBtn').addEventListener('click', () => {
+  document.getElementById('dailyBonusOverlay').style.display = 'none';
+  shopCoinsEl.textContent = totalCoins;
+});
+
+// Lancer le check daily au démarrage
+setTimeout(checkDailyBonus, 800);
+
+// ── HOOK triggerDeath pour compter les parties ────────
+function triggerDeath() {
+  if (score > best) { best = score; saveState(); }
+  spawnDeathParticles(); deathShake = 18;
+  BTNS.forEach(b => b.hovered = false);
+  BTN_REVIVE.hovered = BTN_SKIP.hovered = false;
+  onGameEnded();
+  if (!hasUsedRevive) { state = 'revive'; reviveCountdown = 5; reviveTimerStart = performance.now(); skipUnlocked = false; }
+  else state = 'dead';
+}
+
+// Surcharge de resetGame pour compter les parties
+function resetGame() {
+  score = 0; pipes = []; particles = []; coinObjects = []; coinLabels = [];
+  coins = 0; frames = 0; flashTimer = 0; coinFlashTimer = 0; deathShake = 0;
+  hasUsedRevive = false; reviveCountdown = 5; skipUnlocked = false;
+  adState = 'none'; adProgress = 0;
+  resetBird();
+}
+
+function doReplay() {
+  checkMandatoryAd(() => { resetGame(); state = 'playing'; });
+}
+
+function onGameEnded() {
+  gamesPlayedTotal++;
+  saveState();
+  if (!adBlockerOwned && gamesPlayedTotal % 10 === 0) {
+    setTimeout(() => {
+      if (shopScreen.style.display === 'none' && mandatoryAdOverlay.style.display === 'none') {
+        openShop();
+        showToast('🛡️ MARRE DES PUBS? BLOQUEUR DISPO!');
+      }
+    }, 2000);
+  }
+  if (!ratingDismissed && gamesPlayedTotal > 0 && gamesPlayedTotal % 7 === 0) {
+    setTimeout(showRatingPopup, 1500);
+  }
+  if (!shareRewarded && gamesPlayedTotal > 0 && gamesPlayedTotal % 12 === 0) {
+    setTimeout(showSharePopup, 2500);
+  }
+  // Popup offres spéciales — toutes les 15 parties, seulement si au moins une offre pas encore achetée
+  if (gamesPlayedTotal > 0 && gamesPlayedTotal % 15 === 0) {
+    setTimeout(showOffresPopup, 2000);
+  }
+}
+
+function showOffresPopup() {
+  if (adBlockerOwned && coinBoostIapOwned) return; // tout déjà acheté
+  const overlay = document.getElementById('offresOverlay');
+  // Masquer les offres déjà achetées
+  const o1 = document.getElementById('offre1Box');
+  const o2 = document.getElementById('offre2Box');
+  if (o1) o1.style.display = adBlockerOwned ? 'none' : '';
+  if (o2) o2.style.display = coinBoostIapOwned ? 'none' : '';
+  overlay.style.display = 'flex';
+}
+
+function purchaseAdBlockerFromPopup() {
+  document.getElementById('offresOverlay').style.display = 'none';
+  purchaseAdBlocker();
+}
+
+function purchaseCoinBoostIapFromPopup() {
+  document.getElementById('offresOverlay').style.display = 'none';
+  purchaseCoinBoostIap();
+}
+
+// Init UI
+updateAdBlockerUI();
+
+// ── RESULT OVERLAY ───────────────────────────────────
+const pCanvas = document.getElementById('particleCanvas');
+const pCtx = pCanvas.getContext('2d');
+let pParticles = [], pAnim = null;
+
+function showGachaResult(item, isNew) {
+  const r = RARITIES[item.rarity];
+  const panel = document.getElementById('resultPanel');
+  panel.className = 'result-panel ' + r.cls;
+
+  document.getElementById('resultRarity').textContent = r.label;
+  document.getElementById('resultRarity').style.color = r.color;
+
+  // Preview canvas dans le résultat
+  const rpc = document.getElementById('resultPreviewCanvas');
+  const rpc2 = rpc.getContext('2d');
+  rpc2.clearRect(0,0,80,80);
+  let previewImg;
+  if (item.type === 'skin' && item.subtype === 'bird') {
+    previewImg = renderBirdPreview(item.id, 80);
+  } else if (item.type === 'skin' && item.subtype === 'bg') {
+    previewImg = renderBgPreview(item.id, 80);
+  } else if (item.type === 'pipe') {
+    previewImg = renderPipePreview(item, 80);
+  } else {
+    // Accessoire — juste emoji
+    rpc.style.display = 'none';
+    const emojiDiv = document.getElementById('resultEmoji');
+    emojiDiv.style.display = 'block';
+    emojiDiv.textContent = item.emoji;
+  }
+  if (previewImg) {
+    rpc.style.display = 'block';
+    const emojiDiv = document.getElementById('resultEmoji');
+    if (emojiDiv) emojiDiv.style.display = 'none';
+    rpc2.drawImage(previewImg, 0, 0);
+  }
+
+  document.getElementById('resultName').textContent = item.name;
+  document.getElementById('resultName').style.color = r.color;
+  const typeLabel = item.type === 'acc' ? 'ACCESSOIRE' : item.type === 'pipe' ? 'SKIN TUYAU' : (item.subtype === 'bird' ? 'SKIN OISEAU' : 'SKIN DÉCOR');
+  document.getElementById('resultType').textContent = typeLabel;
+  document.getElementById('resultBadge').innerHTML = isNew
+    ? '<div class="result-new-badge">✨ NOUVEAU!</div>'
+    : `<div class="result-duplicate-badge">DOUBLON — +${item._dupBonus || 10} <span style="display:inline-block;width:10px;height:10px;background:radial-gradient(circle at 35% 35%,#fff9c4,#ffd700 40%,#b8860b);border-radius:50%;vertical-align:middle;margin-left:2px;"></span></div>`;
+
+  gachaOverlay.style.display = 'flex';
+
+  pCanvas.width = window.innerWidth;
+  pCanvas.height = window.innerHeight;
+  pCanvas.style.display = 'block';
+  pParticles = [];
+  const cx = window.innerWidth/2, cy = window.innerHeight/2;
+  const count = item.rarity === 'secret' ? 80 : item.rarity === 'legendary' ? 60 : item.rarity === 'epic' ? 40 : 20;
+  for (let i = 0; i < count; i++) {
+    const a = Math.random()*Math.PI*2, sp = Math.random()*8+2;
+    pParticles.push({ x: cx, y: cy, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp-3, life: 1, r: Math.random()*4+2, color: r.color, decay: 0.012+Math.random()*0.008 });
+  }
+  function animP() {
+    pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);
+    pParticles.forEach(p => {
+      pCtx.save(); pCtx.globalAlpha = p.life; pCtx.shadowColor = p.color; pCtx.shadowBlur = 12;
+      pCtx.fillStyle = p.color; pCtx.beginPath(); pCtx.arc(p.x, p.y, p.r*p.life, 0, Math.PI*2); pCtx.fill(); pCtx.restore();
+      p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= p.decay;
+    });
+    pParticles = pParticles.filter(p => p.life > 0);
+    if (pParticles.length > 0) pAnim = requestAnimationFrame(animP);
+    else { pCanvas.style.display = 'none'; }
+  }
+  pAnim = requestAnimationFrame(animP);
+}
+
+// Élément emoji result (pour accessoires)
+(function() {
+  const rp = document.getElementById('resultPanel');
+  const canvas80 = document.getElementById('resultPreviewCanvas');
+  // Ajouter un span emoji après canvas si pas déjà là
+  if (!document.getElementById('resultEmoji')) {
+    const em = document.createElement('span');
+    em.id = 'resultEmoji';
+    em.style.cssText = 'font-size:4rem;display:none;margin:8px 0;animation:resultBounce 0.6s ease 0.2s both';
+    canvas80.insertAdjacentElement('afterend', em);
+  }
+})();
+
+document.getElementById('resultCloseBtn').addEventListener('click', () => {
+  gachaOverlay.style.display = 'none';
+  if (pAnim) cancelAnimationFrame(pAnim);
+  pCanvas.style.display = 'none';
+});
+
+// ── TOAST ─────────────────────────────────────────────
+const toastEl = document.getElementById('toast');
+let toastTimeout;
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
