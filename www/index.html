@@ -3631,8 +3631,12 @@ document.getElementById('fixedAdBtn').addEventListener('click', () => {
     lastAdBonus = Date.now();
     totalCoins += 25;
     shopCoinsEl.textContent = totalCoins;
+    saveState(); updateFixedAdCd();
+    showToast('✨ +25 PIÈCES REÇUES!');
+  });
+}, { capture: true });
 
-
+  
 // ── OVERRIDE handleShopAdBonus (+25 pièces shop) ───
 function handleShopAdBonus() {
   const elapsed = Date.now() - lastAdBonus;
