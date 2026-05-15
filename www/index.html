@@ -3574,7 +3574,6 @@ const isNativeApp = () =>
 let AdMob = null;
 let admobReady = false;
 
-// ── REWARDED générique ─────────────────────────────
 async function showRewardedAd(onRewarded) {
   if (!isNativeApp() || !admobReady || !AdMob) {
     let t = 5;
@@ -3599,33 +3598,7 @@ async function showRewardedAd(onRewarded) {
   } catch(e) {
     console.warn('[AdMob] rewarded:', e);
   }
-}
-
-// ── REWARDED générique ─────────────────────────────
-async function showRewardedAd(onRewarded) {
-  if (!isNativeApp() || !admobReady || !AdMob) {
-    // Fallback simulation 5s
-    let t = 5;
-    showToast(`📺 PUB EN COURS... ${t}s`);
-    const iv = setInterval(() => {
-      t--;
-      if (t > 0) showToast(`📺 PUB EN COURS... ${t}s`);
-      else { clearInterval(iv); onRewarded(); }
-    }, 1000);
-    return;
-  }
-  try {
-    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
-    const listener = await AdMob.addListener('onRewardedVideoAdRewarded', () => {
-      listener.remove();
-      onRewarded();
-    });
-    await AdMob.showRewardVideoAd();
-  } catch(e) {
-    console.warn('[AdMob] rewarded échouée:', e);
-  }
-}
-
+}d
 // ── INTERSTITIELLE ─────────────────────────────────
 const _showMandatoryAdSim = showMandatoryAd;
 async function showMandatoryAd(onDone) {
