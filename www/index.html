@@ -3574,6 +3574,16 @@ const isNativeApp = () =>
 let AdMob = null;
 let admobReady = false;
 
+async function initAdMob() {
+  if (!isNativeApp()) return;
+  try {
+    AdMob = window.Capacitor.Plugins.AdMob;
+    await AdMob.initialize({ requestTrackingAuthorization: false });
+    admobReady = true;
+  } catch(e) { console.warn('[AdMob] init:', e); }
+}
+initAdMob();
+  
 async function showRewardedAd(onRewarded) {
   if (!isNativeApp() || !admobReady || !AdMob) {
     let t = 5;
@@ -3655,10 +3665,6 @@ function handleShopAdBonus() {
   });
 }
 
-saveState(); updateFixedAdCd();
-    showToast('✨ +25 PIÈCES REÇUES!');
-  });
-}, { capture: true });z
     
 // ── OVERRIDE handleCoinBoostAd (X2 5min) ──────────
 function handleCoinBoostAd() {
