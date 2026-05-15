@@ -23,6 +23,10 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
+          - name: Install dependencies
+  run: |
+    npm install
+    npm install --save-dev @capacitor/cli
       - uses: actions/upload-artifact@v4
         with:
           name: app-debug
