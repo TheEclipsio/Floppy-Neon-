@@ -3596,14 +3596,14 @@ async function showRewardedAd(onRewarded) {
     return;
   }
   try {
+    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
     const rewardListener = await AdMob.addListener(
-      'rewarded',
+      'onRewardedVideoAdRewarded',
       () => {
         rewardListener.remove();
         onRewarded();
       }
     );
-    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
     await AdMob.showRewardVideoAd();
   } catch(e) {
     console.warn('[AdMob] rewarded:', e);
