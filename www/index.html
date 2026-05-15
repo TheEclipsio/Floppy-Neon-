@@ -1188,7 +1188,13 @@ function resetGame() {
 }
 resetBird();
 
-function doRevive() { hasUsedRevive = true; adState = 'playing'; adStartTime = performance.now(); adProgress = 0; }
+function doRevive() {
+  showRewardedAd(() => {
+    hasUsedRevive = true;
+    adState = 'none';
+    finishRevive();
+  });
+}
 function finishRevive() {
   adState = 'none'; state = 'playing';
   bird.vy = 0; bird.y = H/2; bird.angle = 0;
