@@ -3549,30 +3549,35 @@ function showToast(msg) {
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
 }
-
 // ═══════════════════════════════════════════════════
 // ADMOB — VRAIES PUBLICITÉS CAPACITOR
 // ═══════════════════════════════════════════════════
 const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-1235003260250332/3993727693';
 const ADMOB_REWARDED_ID     = 'ca-app-pub-1235003260250332/4788768765';
 
-const isNativeApp = () => typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
+const isNativeApp = () =>
+  typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
+
+let AdMob = null;
 let admobReady = false;
 
 async function initAdMob() {
   if (!isNativeApp()) return;
   try {
-    const { AdMob } = await import('https://cdn.jsdelivr.net/npm/@capacitor-community/admob@6/dist/esm/index.js');
+    AdMob = window.Capacitor.Plugins.AdMob;
     await AdMob.initialize({ requestTrackingAuthorization: false });
     admobReady = true;
-  } catch(e) { console.warn('[AdMob] init:', e); }
+    console.log('[AdMob] ✅ Initialisé');
+  } catch(e) {
+    console.warn('[AdMob] init échouée:', e);
+  }
 }
 initAdMob();
 
 // ── REWARDED générique ─────────────────────────────
 async function showRewardedAd(onRewarded) {
-  if (!isNativeApp() || !admobReady) {
-    // Fallback navigateur — simulation 5s
+  if (!isNativeApp() || !admobReady || !AdMob) {
+    // Fallback simulation 5s
     let t = 5;
     showToast(`📺 PUB EN COURS... ${t}s`);
     const iv = setInterval(() => {
@@ -3583,30 +3588,35 @@ async function showRewardedAd(onRewarded) {
     return;
   }
   try {
-    const { AdMob, RewardAdPluginEvents } = await import('https://cdn.jsdelivr.net/npm/@capacitor-community/admob@6/dist/esm/index.js');
     await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
-    const listener = AdMob.addListener(RewardAdPluginEvents.Rewarded, () => {
-      listener.remove(); onRewarded();
+    const listener = await AdMob.addListener('onRewardedVideoAdRewarded', () => {
+      listener.remove();
+      onRewarded();
     });
     await AdMob.showRewardVideoAd();
-  } catch(e) { console.warn('[AdMob] rewarded:', e); }
+  } catch(e) {
+    console.warn('[AdMob] rewarded échouée:', e);
+  }
 }
 
-// ── INTERSTITIELLE — remplace showMandatoryAd ──────
-const _showMandatoryAdSim = showMandatoryAd; // garde le fallback simulé
+// ── INTERSTITIELLE ─────────────────────────────────
+const _showMandatoryAdSim = showMandatoryAd;
 async function showMandatoryAd(onDone) {
   if (adBlockerOwned) { onDone(); return; }
-  if (!isNativeApp() || !admobReady) {
+  if (!isNativeApp() || !admobReady || !AdMob) {
     _showMandatoryAdSim(onDone); return;
   }
   try {
-    const { AdMob, InterstitialAdPluginEvents } = await import('https://cdn.jsdelivr.net/npm/@capacitor-community/admob@6/dist/esm/index.js');
     await AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID });
-    const listener = AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
-      listener.remove(); onDone();
+    const listener = await AdMob.addListener('onInterstitialAdDismissed', () => {
+      listener.remove();
+      onDone();
     });
     await AdMob.showInterstitial();
-  } catch(e) { console.warn('[AdMob] interstitial:', e); onDone(); }
+  } catch(e) {
+    console.warn('[AdMob] interstitial échouée:', e);
+    onDone();
+  }
 }
 
 // ── OVERRIDE fixedAdBtn (+25 pièces top bar) ───────
@@ -3663,7 +3673,8 @@ function handleCoinBoostAd() {
     box.style.opacity = '1'; box.style.pointerEvents = '';
     updateCoinBoostAdCd(); showToast('⚡ PIÈCES X2 ACTIF — 5 MINUTES!');
   });
-}
+}2
+    
 </script>
 </body>
 </html>
