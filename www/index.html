@@ -3574,18 +3574,32 @@ const isNativeApp = () =>
 let AdMob = null;
 let admobReady = false;
 
-async function initAdMob() {
-  if (!isNativeApp()) return;
+// ── REWARDED générique ─────────────────────────────
+async function showRewardedAd(onRewarded) {
+  if (!isNativeApp() || !admobReady || !AdMob) {
+    let t = 5;
+    showToast(`📺 PUB EN COURS... ${t}s`);
+    const iv = setInterval(() => {
+      t--;
+      if (t > 0) showToast(`📺 PUB EN COURS... ${t}s`);
+      else { clearInterval(iv); onRewarded(); }
+    }, 1000);
+    return;
+  }
   try {
-    AdMob = window.Capacitor.Plugins.AdMob;
-    await AdMob.initialize({ requestTrackingAuthorization: false });
-    admobReady = true;
-    console.log('[AdMob] ✅ Initialisé');
+    const rewardListener = await AdMob.addListener(
+      'rewarded',
+      () => {
+        rewardListener.remove();
+        onRewarded();
+      }
+    );
+    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
+    await AdMob.showRewardVideoAd();
   } catch(e) {
-    console.warn('[AdMob] init échouée:', e);
+    console.warn('[AdMob] rewarded:', e);
   }
 }
-initAdMob();
 
 // ── REWARDED générique ─────────────────────────────
 async function showRewardedAd(onRewarded) {
