@@ -16,6 +16,10 @@ jobs:
           node-version: '20'
       - name: Install Capacitor
         run: npm install @capacitor/cli @capacitor/core @capacitor/android
+      - name: Install dependencies
+      run: |
+    npm install
+    npm install --save-dev @capacitor/clis
       - name: Capacitor sync
         run: npx cap sync android
       - name: Build APK
@@ -24,9 +28,6 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
           - name: Install dependencies
-  run: |
-    npm install
-    npm install --save-dev @capacitor/cli
       - uses: actions/upload-artifact@v4
         with:
           name: app-debug
