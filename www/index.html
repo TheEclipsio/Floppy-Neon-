@@ -3598,7 +3598,7 @@ async function showRewardedAd(onRewarded) {
   } catch(e) {
     console.warn('[AdMob] rewarded:', e);
   }
-}d
+}
 // ── INTERSTITIELLE ─────────────────────────────────
 const _showMandatoryAdSim = showMandatoryAd;
 async function showMandatoryAd(onDone) {
@@ -3632,91 +3632,6 @@ document.getElementById('fixedAdBtn').addEventListener('click', () => {
     totalCoins += 25;
     shopCoinsEl.textContent = totalCoins;
 
-// ═══════════════════════════════════════════════════
-// ADMOB — VRAIES PUBLICITÉS CAPACITOR
-// ═══════════════════════════════════════════════════
-const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-1235003260250332/3993727693';
-const ADMOB_REWARDED_ID     = 'ca-app-pub-1235003260250332/4788768765';
-
-const isNativeApp = () =>
-  typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
-
-let AdMob = null;
-let admobReady = false;
-
-async function initAdMob() {
-  if (!isNativeApp()) return;
-  try {
-    AdMob = window.Capacitor.Plugins.AdMob;
-    await AdMob.initialize({ requestTrackingAuthorization: false });
-    admobReady = true;
-    console.log('[AdMob] ✅ Initialisé');
-  } catch(e) {
-    console.warn('[AdMob] init échouée:', e);
-  }
-}
-initAdMob();
-
-// ── REWARDED générique ─────────────────────────────
-async function showRewardedAd(onRewarded) {
-  if (!isNativeApp() || !admobReady || !AdMob) {
-    let t = 5;
-    showToast(`📺 PUB EN COURS... ${t}s`);
-    const iv = setInterval(() => {
-      t--;
-      if (t > 0) showToast(`📺 PUB EN COURS... ${t}s`);
-      else { clearInterval(iv); onRewarded(); }
-    }, 1000);
-    return;
-  }
-  try {
-    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
-    const rewardListener = await AdMob.addListener('rewarded', () => {
-      rewardListener.remove();
-      onRewarded();
-    });
-    await AdMob.showRewardVideoAd();
-  } catch(e) {
-    console.warn('[AdMob] rewarded:', e);
-  }
-}
-
-// ── INTERSTITIELLE ─────────────────────────────────
-const _showMandatoryAdSim = showMandatoryAd;
-async function showMandatoryAd(onDone) {
-  if (adBlockerOwned) { onDone(); return; }
-  if (!isNativeApp() || !admobReady || !AdMob) {
-    _showMandatoryAdSim(onDone); return;
-  }
-  try {
-    await AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID });
-    const listener = await AdMob.addListener('onInterstitialAdDismissed', () => {
-      listener.remove();
-      onDone();
-    });
-    await AdMob.showInterstitial();
-  } catch(e) {
-    console.warn('[AdMob] interstitial échouée:', e);
-    onDone();
-  }
-}
-
-// ── OVERRIDE fixedAdBtn (+25 pièces top bar) ───────
-document.getElementById('fixedAdBtn').addEventListener('click', () => {
-  const elapsed = Date.now() - lastAdBonus;
-  if (lastAdBonus !== 0 && elapsed < AD_BONUS_COOLDOWN) {
-    const r = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
-    showToast(`PUB DISPONIBLE DANS ${Math.floor(r/60)}:${(r%60).toString().padStart(2,'0')}`);
-    return;
-  }
-  showRewardedAd(() => {
-    lastAdBonus = Date.now();
-    totalCoins += 25;
-    shopCoinsEl.textContent = totalCoins;
-    saveState(); updateFixedAdCd();
-    showToast('✨ +25 PIÈCES REÇUES!');
-  });
-}, { capture: true });
 
 // ── OVERRIDE handleShopAdBonus (+25 pièces shop) ───
 function handleShopAdBonus() {
@@ -3736,6 +3651,11 @@ function handleShopAdBonus() {
   });
 }
 
+saveState(); updateFixedAdCd();
+    showToast('✨ +25 PIÈCES REÇUES!');
+  });
+}, { capture: true });z
+    
 // ── OVERRIDE handleCoinBoostAd (X2 5min) ──────────
 function handleCoinBoostAd() {
   if (coinBoostIapOwned) { showToast('💰 X2 PERMANENT DÉJÀ ACTIF!'); return; }
