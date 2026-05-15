@@ -1,5 +1,11 @@
 {
   "appId": "com.theeclipsio.floppyneon",
   "appName": "Floppy Neon",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "AdMob": {
+      "appId": "ca-app-pub-1235003260250332~6426502654",
+      "initializeForTesting": false
+    }
+  }
 }
