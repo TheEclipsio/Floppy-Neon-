@@ -3256,19 +3256,27 @@ const madSkipBtn = document.getElementById('madSkipBtn');
 function showMandatoryAd(onDone) {
   if (adBlockerOwned) { onDone(); return; }
 
-  // ✅ Vraie pub interstitielle AdMob si disponible
+  showToast('🎬 showMandatoryAd() — ready=' + admobReady);
+
   if (admobReady && AdMob) {
+    showToast('✅ Préparation interstitielle...');
     AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID, isTesting: false })
-      .then(() => AdMob.showInterstitial())
-      .then(() => onDone())
+      .then(() => {
+        showToast('✅ Interstitielle prête — affichage...');
+        return AdMob.showInterstitial();
+      })
+      .then(() => {
+        showToast('✅ Interstitielle terminée');
+        onDone();
+      })
       .catch(e => {
-        console.warn('Interstitiel AdMob erreur:', e);
+        showToast('🔴 INTER ERR: ' + (e.message || JSON.stringify(e)));
         showMandatoryAdFallback(onDone);
       });
     return;
   }
 
-  // Fallback simulation si AdMob pas dispo (navigateur ou init échouée)
+  showToast('⚠️ AdMob KO — fallback simulation');
   showMandatoryAdFallback(onDone);
 }
 
@@ -3592,44 +3600,66 @@ let AdMob = null;
 let admobReady = false;
 
 async function initAdMob() {
-  if (!isNativeApp()) return;
+  if (!isNativeApp()) {
+    showToast('🔴 MODE NAVIGATEUR — AdMob désactivé');
+    return;
+  }
+  showToast('⏳ Initialisation AdMob...');
   try {
     AdMob = window.Capacitor.Plugins.AdMob;
-    if (!AdMob) { console.warn('AdMob plugin non trouvé'); return; }
+    if (!AdMob) {
+      showToast('🔴 ERREUR: Plugin AdMob introuvable!');
+      return;
+    }
+    showToast('✅ Plugin AdMob trouvé');
     await AdMob.initialize({ requestTrackingAuthorization: false, initializeForTesting: false });
     admobReady = true;
-    console.log('AdMob initialisé ✓');
-  } catch(e) { console.warn('AdMob init erreur:', e); }
+    showToast('✅ AdMob initialisé! Ready=true');
+  } catch(e) {
+    showToast('🔴 INIT ERR: ' + (e.message || JSON.stringify(e)));
+  }
 }
 setTimeout(initAdMob, 1500);
 
 function showRewardedAdFallback(onRewarded) {
+  showToast('⚠️ FALLBACK simulation (AdMob KO)');
   let t = 5;
-  showToast('PUB EN COURS... ' + t + 's');
   const iv = setInterval(() => {
     t--;
-    if (t > 0) showToast('PUB EN COURS... ' + t + 's');
+    if (t > 0) showToast('SIM PUB... ' + t + 's');
     else { clearInterval(iv); onRewarded(); }
   }, 1000);
 }
 
 async function showRewardedAd(onRewarded) {
-  if (!admobReady || !AdMob) { showRewardedAdFallback(onRewarded); return; }
+  showToast('🎬 showRewardedAd() appelé');
+  if (!admobReady || !AdMob) {
+    showToast('🔴 admobReady=' + admobReady + ' AdMob=' + (AdMob ? 'OK' : 'NULL'));
+    showRewardedAdFallback(onRewarded);
+    return;
+  }
+  showToast('✅ admobReady=true — préparation...');
   let rewarded = false;
   let listenerReward = null;
   let listenerClose  = null;
   try {
     await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false });
-    listenerReward = await AdMob.addListener('onRewardedVideoAdReward', () => { rewarded = true; });
-    listenerClose  = await AdMob.addListener('onRewardedVideoAdDismissed', () => {
+    showToast('✅ Rewarded préparée — ajout listeners...');
+    listenerReward = await AdMob.addListener('onRewardedVideoAdReward', () => {
+      showToast('🎁 Récompense reçue!');
+      rewarded = true;
+    });
+    listenerClose = await AdMob.addListener('onRewardedVideoAdDismissed', () => {
+      showToast('📴 Pub fermée — rewarded=' + rewarded);
       if (listenerReward) listenerReward.remove();
       if (listenerClose)  listenerClose.remove();
       if (rewarded) onRewarded();
       else showToast('⚠️ Regardez la pub jusqu\'à la fin!');
     });
+    showToast('✅ Listeners OK — affichage pub...');
     await AdMob.showRewardVideoAd();
   } catch(e) {
-    console.warn('AdMob rewarded erreur:', e);
+    showToast('🔴 REWARDED ERR: ' + (e.message || JSON.stringify(e)));
     if (listenerReward) listenerReward.remove();
     if (listenerClose)  listenerClose.remove();
     showRewardedAdFallback(onRewarded);
