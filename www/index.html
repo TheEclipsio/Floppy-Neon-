@@ -3620,8 +3620,8 @@ async function showRewardedAd(onRewarded) {
   let listenerClose  = null;
   try {
     await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false });
-    listenerReward = await AdMob.addListener('onRewardedVideoAdRewarded', () => { rewarded = true; });
-    listenerClose  = await AdMob.addListener('onRewardedVideoAdClosed', () => {
+    listenerReward = await AdMob.addListener('onRewardedVideoAdReward', () => { rewarded = true; });
+    listenerClose  = await AdMob.addListener('onRewardedVideoAdDismissed', () => {
       if (listenerReward) listenerReward.remove();
       if (listenerClose)  listenerClose.remove();
       if (rewarded) onRewarded();
@@ -3636,88 +3636,7 @@ async function showRewardedAd(onRewarded) {
   }
 }
 
-// ── PARAMÈTRES ────────────────────────────────────────
-let currentLang = localStorage.getItem('floppyLang') || 'fr';
-
-function setLanguage(lang) {
-  currentLang = lang;
-  localStorage.setItem('floppyLang', lang);
-  const fr = document.getElementById('btnLangFR');
-  const en = document.getElementById('btnLangEN');
-  if (!fr || !en) return;
-  if (lang === 'fr') {
-    fr.style.border = '2px solid #00f5ff'; fr.style.background = 'rgba(0,245,255,0.15)'; fr.style.color = '#00f5ff';
-    en.style.border = '2px solid rgba(255,255,255,0.2)'; en.style.background = 'transparent'; en.style.color = 'rgba(255,255,255,0.4)';
-  } else {
-    en.style.border = '2px solid #00f5ff'; en.style.background = 'rgba(0,245,255,0.15)'; en.style.color = '#00f5ff';
-    fr.style.border = '2px solid rgba(255,255,255,0.2)'; fr.style.background = 'transparent'; fr.style.color = 'rgba(255,255,255,0.4)';
-  }
-  showToast(lang === 'fr' ? '🇫🇷 Langue : Français' : '🇬🇧 Language: English');
-}
-
-function toggleMusic() {
-  musicEnabled = !musicEnabled;
-  localStorage.setItem('floppyMusicEnabled', musicEnabled);
-  const btn = document.getElementById('btnMusicToggle');
-  if (!btn) return;
-  if (musicEnabled) {
-    btn.textContent = '🔊 MUSIQUE ACTIVÉE';
-    btn.style.borderColor = '#a855f7'; btn.style.color = '#a855f7';
-    if (state === 'playing') playMusic();
-  } else {
-    btn.textContent = '🔇 MUSIQUE DÉSACTIVÉE';
-    btn.style.borderColor = 'rgba(255,255,255,0.2)'; btn.style.color = 'rgba(255,255,255,0.4)';
-    stopMusic();
-  }
-}
-
-function openSettings() {
-  stopMusic();
-  document.getElementById('settingsScreen').style.display = 'flex';
-  document.getElementById('fixedAdBtn').style.display = 'none';
-  setLanguage(currentLang);
-  const btn = document.getElementById('btnMusicToggle');
-  if (btn) {
-    btn.textContent = musicEnabled ? '🔊 MUSIQUE ACTIVÉE' : '🔇 MUSIQUE DÉSACTIVÉE';
-    btn.style.borderColor = musicEnabled ? '#a855f7' : 'rgba(255,255,255,0.2)';
-    btn.style.color = musicEnabled ? '#a855f7' : 'rgba(255,255,255,0.4)';
-  }
-}
-
-function closeSettings() {
-  document.getElementById('settingsScreen').style.display = 'none';
-  document.getElementById('fixedAdBtn').style.display = '';
-  if (state === 'playing') playMusic();
-}
 </script>
-
-<!-- ══════════ SETTINGS SCREEN ══════════ -->
-<div id="settingsScreen" style="display:none;position:fixed;inset:0;background:rgba(0,0,20,0.97);z-index:8000;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:20px;overflow-y:auto;">
-  <div style="width:100%;max-width:420px;padding:24px 20px 30px;">
-    <button onclick="closeSettings()" style="width:100%;padding:14px;margin-bottom:24px;background:rgba(0,245,255,0.1);border:2px solid rgba(0,245,255,0.4);border-radius:12px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.65rem;color:#00f5ff;cursor:pointer;">← RETOUR</button>
-    <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:1rem;color:#00f5ff;text-shadow:0 0 16px #00f5ff;text-align:center;letter-spacing:0.15em;margin-bottom:28px;">⚙️ PARAMÈTRES</div>
-
-    <!-- Langue -->
-    <div style="border:2px solid rgba(0,245,255,0.3);border-radius:14px;padding:18px 20px;margin-bottom:16px;background:rgba(0,245,255,0.04);">
-      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.65rem;color:#00f5ff;margin-bottom:14px;letter-spacing:0.1em;">🌐 LANGUE / LANGUAGE</div>
-      <div style="display:flex;gap:12px;">
-        <button id="btnLangFR" onclick="setLanguage('fr')" style="flex:1;padding:12px;border-radius:10px;border:2px solid #00f5ff;background:rgba(0,245,255,0.15);font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.6rem;color:#00f5ff;cursor:pointer;">🇫🇷 FRANÇAIS</button>
-        <button id="btnLangEN" onclick="setLanguage('en')" style="flex:1;padding:12px;border-radius:10px;border:2px solid rgba(255,255,255,0.2);background:transparent;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.6rem;color:rgba(255,255,255,0.4);cursor:pointer;">🇬🇧 ENGLISH</button>
-      </div>
-    </div>
-
-    <!-- Musique -->
-    <div style="border:2px solid rgba(168,85,247,0.3);border-radius:14px;padding:18px 20px;margin-bottom:16px;background:rgba(168,85,247,0.04);">
-      <div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.65rem;color:#a855f7;margin-bottom:14px;letter-spacing:0.1em;">🎵 MUSIQUE</div>
-      <button id="btnMusicToggle" onclick="toggleMusic()" style="width:100%;padding:14px;border-radius:10px;border:2px solid #a855f7;background:rgba(168,85,247,0.15);font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.6rem;color:#a855f7;cursor:pointer;">🔊 MUSIQUE ACTIVÉE</button>
-    </div>
-
-    <div style="text-align:center;margin-top:20px;font-family:'Press Start 2P',monospace;font-size:0.4rem;color:rgba(255,255,255,0.15);">FLOPPY NEON v1.0</div>
-  </div>
-</div>
-
-<!-- Bouton paramètres -->
-<button onclick="openSettings()" style="position:fixed;top:10px;right:10px;z-index:500;background:rgba(0,245,255,0.1);border:1.5px solid rgba(0,245,255,0.3);border-radius:8px;padding:8px 12px;font-size:1rem;cursor:pointer;color:#00f5ff;line-height:1;">⚙️</button>
 
 </body>
 </html>
