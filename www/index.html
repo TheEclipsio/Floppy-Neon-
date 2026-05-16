@@ -3358,6 +3358,17 @@ document.getElementById('ratingYesBtn').addEventListener('click', () => {
   saveState();
   ratingOverlay.style.display = 'none';
   showToast('⭐ +100 PIÈCES — MERCI POUR VOTRE SOUTIEN!');
+  // Ouvrir le Play Store sur la fiche du jeu
+  const appId = 'com.theeclipsio.floppyneon';
+  const storeUrl = 'market://details?id=' + appId;
+  const webUrl = 'https://play.google.com/store/apps/details?id=' + appId;
+  if (isNativeApp() && window.Capacitor.Plugins.AppLauncher) {
+    window.Capacitor.Plugins.AppLauncher.openUrl({ url: storeUrl }).catch(() => {
+      window.open(webUrl, '_blank');
+    });
+  } else {
+    window.open(webUrl, '_blank');
+  }
 });
 
 document.getElementById('ratingLaterBtn').addEventListener('click', () => {
@@ -3373,9 +3384,19 @@ document.getElementById('shareYesBtn').addEventListener('click', () => {
     totalCoins += 100;
     shopCoinsEl.textContent = totalCoins;
     saveState();
-    showToast('🚀 +100 PIÈCES — MERCI DE PARTAGER!');
+    showToast('\ud83d\ude80 +100 PIÈCES — MERCI DE PARTAGER!');
   }
-  if (navigator.share) navigator.share({ title:'Floppy Neon', text:'Essaie ce jeu!', url: window.location.href });
+  // Partage natif Capacitor ou fallback Web Share API
+  const shareData = {
+    title: 'Floppy Neon',
+    text: '🎮 Essaie Floppy Neon — le jeu néon addictif!',
+    url: 'https://play.google.com/store/apps/details?id=com.theeclipsio.floppyneon'
+  };
+  if (isNativeApp() && window.Capacitor.Plugins.Share) {
+    window.Capacitor.Plugins.Share.share(shareData).catch(() => {});
+  } else if (navigator.share) {
+    navigator.share(shareData).catch(() => {});
+  }
 });
 document.getElementById('shareLaterBtn').addEventListener('click', () => {
   document.getElementById('shareOverlay').style.display = 'none';
@@ -3596,37 +3617,8 @@ function showToast(msg) {
   toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
 }
 
-// ── DEBUG LOG PANEL (persistant — visible jusqu'au tap) ──
-(function() {
-  const panel = document.createElement('div');
-  panel.id = 'debugPanel';
-  panel.style.cssText = 'display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;background:rgba(0,0,0,0.92);border-top:2px solid #ff006e;padding:8px 10px 12px;max-height:45vh;overflow-y:auto;font-family:monospace;font-size:10px;color:#00ff99;';
-  const title = document.createElement('div');
-  title.style.cssText = 'color:#ff006e;font-weight:bold;margin-bottom:4px;display:flex;justify-content:space-between;';
-  title.innerHTML = '🔴 ADMOB DEBUG LOG <span onclick="document.getElementById(\'debugPanel\').style.display=\'none\'" style="cursor:pointer;color:#fff;padding:0 6px;">✕</span>';
-  panel.appendChild(title);
-  const log = document.createElement('div');
-  log.id = 'debugLog';
-  panel.appendChild(log);
-  document.body.appendChild(panel);
-})();
 
-function logDebug(msg) {
-  const panel = document.getElementById('debugPanel');
-  const log   = document.getElementById('debugLog');
-  if (!panel || !log) return;
-  panel.style.display = 'block';
-  const line = document.createElement('div');
-  const ts = new Date().toLocaleTimeString('fr-FR', { hour12: false });
-  line.style.cssText = 'border-bottom:1px solid rgba(255,255,255,0.08);padding:2px 0;';
-  const isErr = msg.startsWith('🔴') || msg.startsWith('❌');
-  line.style.color = isErr ? '#ff4444' : msg.startsWith('✅') ? '#00ff99' : '#ffdd00';
-  line.textContent = '[' + ts + '] ' + msg;
-  log.insertBefore(line, log.firstChild); // les derniers en haut
-  // aussi dans console native
-  console.log('[FLOPPY]', msg);
-  showToast(msg);
-}
+function logDebug(msg) { console.log('[FLOPPY]', msg); }
 
 // ── ADMOB ─────────────────────────────────────────────
 const ADMOB_REWARDED_ID     = 'ca-app-pub-1235003260250332/4788768765';
