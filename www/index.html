@@ -3548,12 +3548,9 @@ function showToast(msg) {
   toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
 }
 
-  
-  // ═══════════════════════════════════════════════════
-// ADMOB — VRAIES PUBLICITÉS CAPACITOR
-// ═══════════════════════════════════════════════════
-const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-1235003260250332/3993727693';
+  // ── ADMOB REWARDED ─────────────────────────────────────
 const ADMOB_REWARDED_ID = 'ca-app-pub-1235003260250332/4788768765';
+const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-1235003260250332/3993727693';
 
 const isNativeApp = () =>
   typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
@@ -3565,12 +3562,16 @@ async function initAdMob() {
   if (!isNativeApp()) return;
   try {
     AdMob = window.Capacitor.Plugins.AdMob;
-    if (!AdMob) return;
-    await AdMob.initialize({ requestTrackingAuthorization: false });
+    if (!AdMob) { console.warn('AdMob plugin non trouvé'); return; }
+    await AdMob.initialize({
+      requestTrackingAuthorization: false,
+      testingDevices: [],
+      initializeForTesting: false
+    });
     admobReady = true;
-  } catch(e) { console.warn('AdMob init:', e); }
+    console.log('AdMob initialisé');
+  } catch(e) { console.warn('AdMob init erreur:', e); }
 }
-document.addEventListener('deviceready', initAdMob, false);
 setTimeout(initAdMob, 2000);
 
 async function showRewardedAd(onRewarded) {
@@ -3585,19 +3586,18 @@ async function showRewardedAd(onRewarded) {
     return;
   }
   try {
-    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
-    // On donne la récompense à la fermeture — méthode fiable
-    const dl = await AdMob.addListener('onRewardedVideoAdDismissed', () => {
-      dl.remove(); onRewarded();
+    await AdMob.prepareRewardVideoAd({
+      adId: ADMOB_REWARDED_ID,
+      isTesting: false
     });
+    AdMob.addListener('onRewardedVideoAdClosed', () => { onRewarded(); });
     await AdMob.showRewardVideoAd();
   } catch(e) {
-    console.warn('AdMob rewarded:', e);
-    // Si erreur, on donne quand même la récompense
+    console.warn('AdMob rewarded erreur:', e);
     onRewarded();
   }
 }
-
+  
 const _simAd = showMandatoryAd;
 async function showMandatoryAd(onDone) {
   if (adBlockerOwned) { onDone(); return; }
