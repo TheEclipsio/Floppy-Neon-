@@ -3584,8 +3584,6 @@ async function initAdMob() {
 }
 initAdMob();
   
-async function showRewardedAd(onRewarded) {
-
 // ── INTERSTITIELLE ─────────────────────────────────
 const _showMandatoryAdSim = showMandatoryAd;
 async function showMandatoryAd(onDone) {
@@ -3600,7 +3598,7 @@ async function showMandatoryAd(onDone) {
       onDone();
     });
     await AdMob.showInterstitial();
-  } catch(e) 
+  } catch(e) {
     console.warn('[AdMob] interstitial échouée:', e);
     onDone();
   }
