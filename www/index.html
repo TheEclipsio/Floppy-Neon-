@@ -3604,7 +3604,7 @@ async function showMandatoryAd(onDone) {
   }
 }
   
-  async function showRewardedAd(onRewarded) {
+async function showRewardedAd(onRewarded) {
   if (!isNativeApp() || !admobReady || !AdMob) {
     let t = 5;
     showToast('PUB EN COURS... ' + t + 's');
@@ -3617,15 +3617,13 @@ async function showMandatoryAd(onDone) {
   }
   try {
     await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
-
-    // On écoute TOUS les événements possibles
+    let rewarded = false;
     const events = [
       'onRewardedVideoAdRewarded',
       'rewarded',
       'rewardedVideoAdRewarded',
       'onRewarded'
     ];
-    let rewarded = false;
     const listeners = await Promise.all(events.map(ev =>
       AdMob.addListener(ev, () => {
         if (!rewarded) {
@@ -3635,19 +3633,15 @@ async function showMandatoryAd(onDone) {
         }
       }).catch(() => null)
     ));
-
-    // Fallback : si pub fermée sans récompense détectée, on donne quand même
     const dismissListener = await AdMob.addListener(
       'onRewardedVideoAdDismissed', () => {
         dismissListener.remove();
-        if (!rewarded) { rewarded = true; onRewarded(); }
+        listeners.forEach(l => l && l.remove());
       }
     ).catch(() => null);
-
     await AdMob.showRewardVideoAd();
   } catch(e) {
     console.warn('[AdMob] rewarded:', e);
-    onRewarded(); // fallback si erreur
   }
 }
 
