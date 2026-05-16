@@ -1198,7 +1198,14 @@ function resetGame() {
 }
 resetBird();
 
-function doRevive() { hasUsedRevive = true; adState = 'playing'; adStartTime = performance.now(); adProgress = 0; }
+function doRevive() {
+  logDebug("🎬 doRevive() — appel showRewardedAd");
+  showRewardedAd(() => {
+    logDebug("✅ Revive récompensé — finishRevive()");
+    hasUsedRevive = true;
+    finishRevive();
+  });
+}
 function finishRevive() {
   playMusic();
   adState = 'none'; state = 'playing';
