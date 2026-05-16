@@ -725,6 +725,10 @@
 </head>
 <body>
 
+<audio id="bgMusic" loop preload="auto">
+  <source src="https://www.chosic.com/wp-content/uploads/2021/04/Cyber-Dude-ft-Doofus.mp3" type="audio/mpeg">
+</audio>
+  
 <div class="stars" id="stars"></div>
 <canvas id="particleCanvas"></canvas>
 
@@ -1179,6 +1183,12 @@ let hasUsedRevive = false, reviveCountdown = 5, reviveTimerStart = 0, skipUnlock
 let adState = 'none', adProgress = 0, adStartTime = 0;
 
 function resetBird() { bird = { x: 100, y: H/2-20, vy: 0, angle: 0, wingAngle: 0, wingDir: 1 }; }
+const bgMusic = document.getElementById('bgMusic');
+bgMusic.volume = 0.4;
+let musicEnabled = localStorage.getItem('floppyMusicEnabled') !== 'false';
+function playMusic() { if (musicEnabled) bgMusic.play().catch(()=>{}); }
+function stopMusic() { bgMusic.pause(); }
+
 function resetGame() {
   score = 0; pipes = []; particles = []; coinObjects = []; coinLabels = [];
   coins = 0; frames = 0; flashTimer = 0; coinFlashTimer = 0; deathShake = 0;
@@ -1190,6 +1200,7 @@ resetBird();
 
 function doRevive() { hasUsedRevive = true; adState = 'playing'; adStartTime = performance.now(); adProgress = 0; }
 function finishRevive() {
+  playMusic();
   adState = 'none'; state = 'playing';
   bird.vy = 0; bird.y = H/2; bird.angle = 0;
   pipes = pipes.filter(p => p.x > bird.x + 120);
@@ -1204,7 +1215,7 @@ function flap() {
 }
 
 function checkMandatoryAdAndFlap() {
-  checkMandatoryAd(() => { resetGame(); state = 'playing'; });
+  checkMandatoryAd(() => { resetGame(); state = 'playing'; playMusic(); });
 }
 
 function getCanvasPos(e) {
@@ -2820,6 +2831,7 @@ const gachaOverlay  = document.getElementById('gachaOverlay');
 let currentTab = 'skins';
 
 function openShop() {
+  stopMusic();
   shopScreen.style.display = 'flex';
   shopCoinsEl.textContent = totalCoins;
   document.getElementById('fixedAdBtn').style.display = 'none';
@@ -2837,8 +2849,11 @@ function closeShop() {
   pipes = []; coinObjects = []; particles = []; coinLabels = [];
 }
 
-document.getElementById('shopBackBtn').addEventListener('click', closeShop);
-
+document.getElementById('shopBackBtn').addEventListener('click', () => {
+  closeShop();
+  playMusic();
+});
+  
 // Tabs
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -3061,18 +3076,18 @@ function handleShopAdBonus() {
   const box = document.getElementById('adBonusBox');
   box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
   document.getElementById('adBonusCooldown').textContent = 'PUB EN COURS...';
-  let t = 5;
-  const iv = setInterval(() => {
-    t--;
-    const cd = document.getElementById('adBonusCooldown');
-    if (cd) cd.textContent = `${t}s...`;
-    if (t <= 0) {
-      clearInterval(iv); lastAdBonus = Date.now();
-      totalCoins += 25; shopCoinsEl.textContent = totalCoins; saveState();
-      box.style.opacity = '1'; box.style.pointerEvents = '';
-      updateAdBonusCooldown(); showToast('✨ +25 PIÈCES REÇUES!');
-    }
-  }, 1000);
+  logDebug('🎬 handleShopAdBonus() — appel showRewardedAd');
+  showRewardedAd(() => {
+    lastAdBonus = Date.now();
+    totalCoins += 25;
+    shopCoinsEl.textContent = totalCoins;
+    saveState();
+    box.style.opacity = '1'; box.style.pointerEvents = '';
+    updateAdBonusCooldown();
+    showToast('✨ +25 PIÈCES REÇUES!');
+  });
+  // Réactive le bouton si pub annulée/échouée après 500ms
+  setTimeout(() => { box.style.opacity = '1'; box.style.pointerEvents = ''; }, 500);
 }
 setInterval(() => { if (shopScreen && shopScreen.style.display !== 'none') updateAdBonusCooldown(); }, 1000);
 
@@ -3132,13 +3147,15 @@ document.getElementById('fixedAdBtn').addEventListener('click', () => {
     showToast(`PUB DISPONIBLE DANS ${m}:${s.toString().padStart(2,'0')}`);
     return;
   }
-  // Simule la pub
-  lastAdBonus = Date.now();
-  totalCoins += 25;
-  shopCoinsEl.textContent = totalCoins;
-  saveState();
-  updateFixedAdCd();
-  showToast('✨ +25 PIÈCES REÇUES!');
+  // ✅ Vraie rewarded AdMob (fallback simulation si pas dispo)
+  showRewardedAd(() => {
+    lastAdBonus = Date.now();
+    totalCoins += 25;
+    shopCoinsEl.textContent = totalCoins;
+    saveState();
+    updateFixedAdCd();
+    showToast('✨ +25 PIÈCES REÇUES!');
+  });
 });
 
 // ── COIN BOOST (X2) ──────────────────────────────────
@@ -3181,25 +3198,20 @@ function handleCoinBoostAd() {
     const r = Math.ceil((COIN_BOOST_AD_COOLDOWN - elapsed) / 1000);
     showToast(`CD: ${Math.floor(r/60)}:${(r%60).toString().padStart(2,'0')}`); return;
   }
-  // Simule pub 5s
+  // ✅ Vraie rewarded AdMob (fallback simulation si pas dispo)
   const box = document.getElementById('coinBoostAdBox');
   box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
   document.getElementById('coinBoostAdCd').textContent = 'PUB EN COURS...';
-  let t = 5;
-  const iv = setInterval(() => {
-    t--;
-    const cd = document.getElementById('coinBoostAdCd');
-    if (cd) cd.textContent = `${t}s...`;
-    if (t <= 0) {
-      clearInterval(iv);
-      coinBoostAdEnd = Date.now() + COIN_BOOST_AD_DURATION;
-      lastCoinBoostAd = Date.now();
-      localStorage.setItem('floppyLastBoostAd', lastCoinBoostAd.toString());
-      box.style.opacity = '1'; box.style.pointerEvents = '';
-      updateCoinBoostAdCd();
-      showToast('⚡ PIÈCES X2 ACTIF — 5 MINUTES!');
-    }
-  }, 1000);
+  showRewardedAd(() => {
+    coinBoostAdEnd = Date.now() + COIN_BOOST_AD_DURATION;
+    lastCoinBoostAd = Date.now();
+    localStorage.setItem('floppyLastBoostAd', lastCoinBoostAd.toString());
+    box.style.opacity = '1'; box.style.pointerEvents = '';
+    updateCoinBoostAdCd();
+    showToast('⚡ PIÈCES X2 ACTIF — 5 MINUTES!');
+  });
+  // Réactive le bouton si pub annulée/échouée
+  setTimeout(() => { box.style.opacity = '1'; box.style.pointerEvents = ''; }, 500);
 }
 
 function purchaseCoinBoostIap() {
@@ -3243,6 +3255,32 @@ const madSkipBtn = document.getElementById('madSkipBtn');
 
 function showMandatoryAd(onDone) {
   if (adBlockerOwned) { onDone(); return; }
+
+  logDebug('🎬 showMandatoryAd() — ready=' + admobReady);
+
+  if (admobReady && AdMob) {
+    logDebug('✅ Préparation interstitielle...');
+    AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID, isTesting: false })
+      .then(() => {
+        logDebug('✅ Interstitielle prête — affichage...');
+        return AdMob.showInterstitial();
+      })
+      .then(() => {
+        logDebug('✅ Interstitielle terminée');
+        onDone();
+      })
+      .catch(e => {
+        logDebug('🔴 INTER ERR: ' + (e.message || JSON.stringify(e)));
+        showMandatoryAdFallback(onDone);
+      });
+    return;
+  }
+
+  logDebug('⚠️ AdMob KO — fallback simulation');
+  showMandatoryAdFallback(onDone);
+}
+
+function showMandatoryAdFallback(onDone) {
   mandatoryAdOverlay.style.display = 'flex';
   madBarFill.style.width = '0%';
   madSkipBtn.classList.remove('ready');
@@ -3380,6 +3418,7 @@ setTimeout(checkDailyBonus, 800);
 
 // ── HOOK triggerDeath pour compter les parties ────────
 function triggerDeath() {
+  stopMusic();
   if (score > best) { best = score; saveState(); }
   spawnDeathParticles(); deathShake = 18;
   BTNS.forEach(b => b.hovered = false);
@@ -3399,7 +3438,7 @@ function resetGame() {
 }
 
 function doReplay() {
-  checkMandatoryAd(() => { resetGame(); state = 'playing'; });
+  checkMandatoryAd(() => { resetGame(); state = 'playing'; playMusic(); });
 }
 
 function onGameEnded() {
@@ -3549,6 +3588,121 @@ function showToast(msg) {
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
 }
+
+// ── DEBUG LOG PANEL (persistant — visible jusqu'au tap) ──
+(function() {
+  const panel = document.createElement('div');
+  panel.id = 'debugPanel';
+  panel.style.cssText = 'display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;background:rgba(0,0,0,0.92);border-top:2px solid #ff006e;padding:8px 10px 12px;max-height:45vh;overflow-y:auto;font-family:monospace;font-size:10px;color:#00ff99;';
+  const title = document.createElement('div');
+  title.style.cssText = 'color:#ff006e;font-weight:bold;margin-bottom:4px;display:flex;justify-content:space-between;';
+  title.innerHTML = '🔴 ADMOB DEBUG LOG <span onclick="document.getElementById(\'debugPanel\').style.display=\'none\'" style="cursor:pointer;color:#fff;padding:0 6px;">✕</span>';
+  panel.appendChild(title);
+  const log = document.createElement('div');
+  log.id = 'debugLog';
+  panel.appendChild(log);
+  document.body.appendChild(panel);
+})();
+
+function logDebug(msg) {
+  const panel = document.getElementById('debugPanel');
+  const log   = document.getElementById('debugLog');
+  if (!panel || !log) return;
+  panel.style.display = 'block';
+  const line = document.createElement('div');
+  const ts = new Date().toLocaleTimeString('fr-FR', { hour12: false });
+  line.style.cssText = 'border-bottom:1px solid rgba(255,255,255,0.08);padding:2px 0;';
+  const isErr = msg.startsWith('🔴') || msg.startsWith('❌');
+  line.style.color = isErr ? '#ff4444' : msg.startsWith('✅') ? '#00ff99' : '#ffdd00';
+  line.textContent = '[' + ts + '] ' + msg;
+  log.insertBefore(line, log.firstChild); // les derniers en haut
+  // aussi dans console native
+  console.log('[FLOPPY]', msg);
+  showToast(msg);
+}
+
+// ── ADMOB ─────────────────────────────────────────────
+const ADMOB_REWARDED_ID     = 'ca-app-pub-1235003260250332/4788768765';
+const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-1235003260250332/3993727693';
+
+const isNativeApp = () =>
+  typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
+
+let AdMob = null;
+let admobReady = false;
+
+async function initAdMob() {
+  if (!isNativeApp()) {
+    logDebug('🔴 MODE NAVIGATEUR — AdMob désactivé');
+    return;
+  }
+  logDebug('⏳ Initialisation AdMob...');
+  try {
+    AdMob = window.Capacitor.Plugins.AdMob;
+    if (!AdMob) {
+      logDebug('🔴 ERREUR: Plugin AdMob introuvable dans Plugins!');
+      logDebug('Plugins dispo: ' + Object.keys(window.Capacitor.Plugins || {}).join(', '));
+      return;
+    }
+    logDebug('✅ Plugin AdMob trouvé');
+    await AdMob.initialize({ requestTrackingAuthorization: false, initializeForTesting: false });
+    admobReady = true;
+    logDebug('✅ AdMob initialisé! Ready=true');
+  } catch(e) {
+    logDebug('🔴 INIT ERR: ' + (e.message || JSON.stringify(e)));
+  }
+}
+setTimeout(initAdMob, 1500);
+
+function showRewardedAdFallback(onRewarded) {
+  logDebug('⚠️ FALLBACK simulation (AdMob KO)');
+  let t = 5;
+  const iv = setInterval(() => {
+    t--;
+    if (t > 0) showToast('SIM PUB... ' + t + 's');
+    else { clearInterval(iv); onRewarded(); }
+  }, 1000);
+}
+
+async function showRewardedAd(onRewarded) {
+  logDebug('🎬 showRewardedAd() appelé');
+  if (!admobReady || !AdMob) {
+    logDebug('🔴 admobReady=' + admobReady + ' | AdMob=' + (AdMob ? 'OK' : 'NULL'));
+    showRewardedAdFallback(onRewarded);
+    return;
+  }
+  logDebug('✅ admobReady=true — prepareRewardVideoAd...');
+  let rewarded = false;
+  let listenerReward = null;
+  let listenerClose  = null;
+  try {
+    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false });
+    logDebug('✅ prepareRewardVideoAd OK — ajout listeners...');
+
+    listenerReward = await AdMob.addListener('onRewardedVideoAdReward', (info) => {
+      logDebug('🎁 onRewardedVideoAdReward! info=' + JSON.stringify(info));
+      rewarded = true;
+    });
+    listenerClose = await AdMob.addListener('onRewardedVideoAdDismissed', () => {
+      logDebug('📴 onRewardedVideoAdDismissed — rewarded=' + rewarded);
+      if (listenerReward) listenerReward.remove();
+      if (listenerClose)  listenerClose.remove();
+      if (rewarded) onRewarded();
+      else showToast('⚠️ Regardez la pub jusqu\'à la fin!');
+    });
+    logDebug('✅ Listeners OK — showRewardVideoAd...');
+    await AdMob.showRewardVideoAd();
+    logDebug('✅ showRewardVideoAd appelé sans erreur');
+  } catch(e) {
+    const errMsg = e.message || JSON.stringify(e);
+    logDebug('🔴 REWARDED ERR: ' + errMsg);
+    if (listenerReward) listenerReward.remove();
+    if (listenerClose)  listenerClose.remove();
+    showRewardedAdFallback(onRewarded);
+  }
+}
+
 </script>
+
 </body>
 </html>
