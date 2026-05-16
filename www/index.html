@@ -1188,20 +1188,7 @@ function resetGame() {
 }
 resetBird();
 
-function doRevive() {
-  showRewardedAd(() => {
-    hasUsedRevive = true;
-    adState = 'none';
-    state = 'playing';
-    bird.vy = 0;
-    bird.y = H / 2;
-    bird.angle = 0;
-    pipes = pipes.filter(p => p.x > bird.x + 120);
-    coinObjects = coinObjects.filter(c => c.x > bird.x + 120);
-    deathShake = 0;
-    spawnFlapParticles();
-  });
-}
+function doRevive() { hasUsedRevive = true; adState = 'playing'; adStartTime = performance.now(); adProgress = 0; }
 function finishRevive() {
   adState = 'none'; state = 'playing';
   bird.vy = 0; bird.y = H/2; bird.angle = 0;
@@ -3137,7 +3124,22 @@ function updateFixedAdCd() {
 setInterval(updateFixedAdCd, 1000);
 updateFixedAdCd();
 
-();
+document.getElementById('fixedAdBtn').addEventListener('click', () => {
+  const elapsed = Date.now() - lastAdBonus;
+  if (lastAdBonus !== 0 && elapsed < AD_BONUS_COOLDOWN) {
+    const remaining = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
+    const m = Math.floor(remaining / 60), s = remaining % 60;
+    showToast(`PUB DISPONIBLE DANS ${m}:${s.toString().padStart(2,'0')}`);
+    return;
+  }
+  // Simule la pub
+  lastAdBonus = Date.now();
+  totalCoins += 25;
+  shopCoinsEl.textContent = totalCoins;
+  saveState();
+  updateFixedAdCd();
+  showToast('✨ +25 PIÈCES REÇUES!');
+});
 
 // ── COIN BOOST (X2) ──────────────────────────────────
 let coinBoostIapOwned = false;
@@ -3547,7 +3549,7 @@ function showToast(msg) {
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
 }
-
+  
   // ── ADMOB REWARDED ─────────────────────────────────────
 const ADMOB_REWARDED_ID = 'ca-app-pub-1235003260250332/4788768765';
 const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-1235003260250332/3993727693';
@@ -3597,152 +3599,6 @@ async function showRewardedAd(onRewarded) {
     onRewarded();
   }
 }
-  
-const _simAd = showMandatoryAd;
-async function showMandatoryAd(onDone) {
-  if (adBlockerOwned) { onDone(); return; }
-  if (!admobReady || !AdMob) { _simAd(onDone); return; }
-  try {
-    await AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID });
-    const il = await AdMob.addListener('onInterstitialAdDismissed', () => {
-      il.remove(); onDone();
-    });
-    await AdMob.showInterstitial();
-  } catch(e) { console.warn('AdMob interstitial:', e); onDone(); }
-}
-
-// Override fixedAdBtn
-document.getElementById('fixedAdBtn').addEventListener('click', () => {
-  const elapsed = Date.now() - lastAdBonus;
-  if (lastAdBonus !== 0 && elapsed < AD_BONUS_COOLDOWN) {
-    const r = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
-    showToast('PUB DANS ' + Math.floor(r/60) + ':' + (r%60).toString().padStart(2,'0'));
-    return;
-  }
-  showRewardedAd(() => {
-    lastAdBonus = Date.now();
-    totalCoins += 25;
-    shopCoinsEl.textContent = totalCoins;
-    saveState(); updateFixedAdCd();
-    showToast('✨ +25 PIÈCES!');
-  });
-}, { capture: true });
-
-function handleShopAdBonus() {
-  const elapsed = Date.now() - lastAdBonus;
-  if (lastAdBonus !== 0 && elapsed < AD_BONUS_COOLDOWN) {
-    const r = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
-    showToast('CD: ' + Math.floor(r/60) + ':' + (r%60).toString().padStart(2,'0')); return;
-  }
-  const box = document.getElementById('adBonusBox');
-  box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
-  document.getElementById('adBonusCooldown').textContent = 'PUB EN COURS...';
-  showRewardedAd(() => {
-    lastAdBonus = Date.now();
-    totalCoins += 25; shopCoinsEl.textContent = totalCoins; saveState();
-    box.style.opacity = '1'; box.style.pointerEvents = '';
-    updateAdBonusCooldown(); showToast('✨ +25 PIÈCES!');
-  });
-}
-
-function handleCoinBoostAd() {
-  if (coinBoostIapOwned) { showToast('X2 PERMANENT ACTIF!'); return; }
-  if (Date.now() < coinBoostAdEnd) { showToast('X2 DÉJÀ EN COURS!'); return; }
-  const elapsed = Date.now() - lastCoinBoostAd;
-  if (lastCoinBoostAd > 0 && elapsed < COIN_BOOST_AD_COOLDOWN) {
-    const r = Math.ceil((COIN_BOOST_AD_COOLDOWN - elapsed) / 1000);
-    showToast('CD: ' + Math.floor(r/60) + ':' + (r%60).toString().padStart(2,'0')); return;
-  }
-  const box = document.getElementById('coinBoostAdBox');
-  box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
-  document.getElementById('coinBoostAdCd').textContent = 'PUB EN COURS...';
-  showRewardedAd(() => {
-    coinBoostAdEnd = Date.now() + COIN_BOOST_AD_DURATION;
-    lastCoinBoostAd = Date.now();
-    localStorage.setItem('floppyLastBoostAd', lastCoinBoostAd.toString());
-    box.style.opacity = '1'; box.style.pointerEvents = '';
-    updateCoinBoostAdCd(); showToast('X2 ACTIF - 5 MIN!');
-  });
-}
-
-function doRevive() {
-  showRewardedAd(() => {
-    hasUsedRevive = true;
-    adState = 'none';
-    state = 'playing';
-    bird.vy = 0; bird.y = H / 2; bird.angle = 0;
-    pipes = pipes.filter(p => p.x > bird.x + 120);
-    coinObjects = coinObjects.filter(c => c.x > bird.x + 120);
-    deathShake = 0; spawnFlapParticles();
-  });
-}
-
-document.getElementById('fixedAdBtn').addEventListener('click', () => {
-  const elapsed = Date.now() - lastAdBonus;
-  if (lastAdBonus !== 0 && elapsed < AD_BONUS_COOLDOWN) {
-    const r = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
-    showToast('PUB DANS ' + Math.floor(r/60) + ':' + (r%60).toString().padStart(2,'0'));
-    return;
-  }
-  showRewardedAd(() => {
-    lastAdBonus = Date.now();
-    totalCoins += 25;
-    shopCoinsEl.textContent = totalCoins;
-    saveState(); updateFixedAdCd();
-    showToast('✨ +25 PIÈCES!');
-  });
-}, { capture: true });
-
-function handleShopAdBonus() {
-  const elapsed = Date.now() - lastAdBonus;
-  if (lastAdBonus !== 0 && elapsed < AD_BONUS_COOLDOWN) {
-    const r = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
-    showToast('CD: ' + Math.floor(r/60) + ':' + (r%60).toString().padStart(2,'0')); return;
-  }
-  const box = document.getElementById('adBonusBox');
-  box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
-  document.getElementById('adBonusCooldown').textContent = 'PUB EN COURS...';
-  showRewardedAd(() => {
-    lastAdBonus = Date.now();
-    totalCoins += 25; shopCoinsEl.textContent = totalCoins; saveState();
-    box.style.opacity = '1'; box.style.pointerEvents = '';
-    updateAdBonusCooldown(); showToast('✨ +25 PIÈCES!');
-  });
-}
-
-function handleCoinBoostAd() {
-  if (coinBoostIapOwned) { showToast('X2 PERMANENT ACTIF!'); return; }
-  if (Date.now() < coinBoostAdEnd) { showToast('X2 DÉJÀ EN COURS!'); return; }
-  const elapsed = Date.now() - lastCoinBoostAd;
-  if (lastCoinBoostAd > 0 && elapsed < COIN_BOOST_AD_COOLDOWN) {
-    const r = Math.ceil((COIN_BOOST_AD_COOLDOWN - elapsed) / 1000);
-    showToast('CD: ' + Math.floor(r/60) + ':' + (r%60).toString().padStart(2,'0')); return;
-  }
-  const box = document.getElementById('coinBoostAdBox');
-  box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
-  document.getElementById('coinBoostAdCd').textContent = 'PUB EN COURS...';
-  showRewardedAd(() => {
-    coinBoostAdEnd = Date.now() + COIN_BOOST_AD_DURATION;
-    lastCoinBoostAd = Date.now();
-    localStorage.setItem('floppyLastBoostAd', lastCoinBoostAd.toString());
-    box.style.opacity = '1'; box.style.pointerEvents = '';
-    updateCoinBoostAdCd(); showToast('X2 ACTIF - 5 MIN!');
-  });
-}
-
-function doRevive() {
-  showRewardedAd(() => {
-    hasUsedRevive = true;
-    adState = 'none';
-    state = 'playing';
-    bird.vy = 0; bird.y = H / 2; bird.angle = 0;
-    pipes = pipes.filter(p => p.x > bird.x + 120);
-    coinObjects = coinObjects.filter(c => c.x > bird.x + 120);
-    deathShake = 0; spawnFlapParticles();
-  });
-}
-
-  
 </script>
 </body>
 </html>
