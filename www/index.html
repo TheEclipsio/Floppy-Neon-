@@ -3612,7 +3612,7 @@ async function showMandatoryAd(onDone) {
 }
   
 async function showRewardedAd(onRewarded) {
-  if (!isNativeApp() || !admobReady || !AdMob) {
+  if (!isNativeApp()) {
     let t = 5;
     showToast('PUB EN COURS... ' + t + 's');
     const iv = setInterval(() => {
@@ -3622,34 +3622,17 @@ async function showRewardedAd(onRewarded) {
     }, 1000);
     return;
   }
-  try {
-    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
-    let rewarded = false;
-    const events = [
-      'onRewardedVideoAdRewarded',
-      'rewarded',
-      'rewardedVideoAdRewarded',
-      'onRewarded'
-    ];
-    const listeners = await Promise.all(events.map(ev =>
-      AdMob.addListener(ev, () => {
-        if (!rewarded) {
-          rewarded = true;
-          listeners.forEach(l => l && l.remove());
-          onRewarded();
-        }
-      }).catch(() => null)
-    ));
-    const dismissListener = await AdMob.addListener(
-      'onRewardedVideoAdDismissed', () => {
-        dismissListener.remove();
-        listeners.forEach(l => l && l.remove());
-      }
-    ).catch(() => null);
-    await AdMob.showRewardVideoAd();
-  } catch(e) {
-    console.warn('[AdMob] rewarded:', e);
-  }
+  window.addEventListener('rewardEarned', () => onRewarded(), { once: true });
+  window.addEventListener('rewardFailed', () => {
+    let t = 5;
+    showToast('PUB EN COURS... ' + t + 's');
+    const iv = setInterval(() => {
+      t--;
+      if (t > 0) showToast('PUB EN COURS... ' + t + 's');
+      else { clearInterval(iv); onRewarded(); }
+    }, 1000);
+  }, { once: true });
+  window.Capacitor.toNative('MainActivity', 'showRewardedAd', {});
 }
 
 // ── OVERRIDE fixedAdBtn (+25 pièces top bar) ───────
