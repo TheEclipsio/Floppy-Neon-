@@ -3606,8 +3606,8 @@ async function showMandatoryAd(onDone) {
     });
     await AdMob.showInterstitial();
   } catch(e) {
-    console.warn('[AdMob] interstitial échouée:', e);
-    onDone();
+    showToast('ERR: ' + (e.message || e.code || JSON.stringify(e)));
+    console.warn('[AdMob] rewarded:', e);
   }
 }
   
