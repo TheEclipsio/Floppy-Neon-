@@ -3582,7 +3582,8 @@ async function initAdMob() {
     admobReady = true;
   } catch(e) { console.warn('[AdMob] init:', e); }
 }
-initAdMob();
+document.addEventListener('deviceready', initAdMob, false);
+setTimeout(initAdMob, 1000);
   
 // ── INTERSTITIELLE ─────────────────────────────────
 const _showMandatoryAdSim = showMandatoryAd;
