@@ -3612,7 +3612,7 @@ async function showMandatoryAd(onDone) {
 }
   
 async function showRewardedAd(onRewarded) {
-  if (!isNativeApp() || !admobReady || !AdMob) {
+  if ( !admobReady || !AdMob) {
     let t = 5;
     showToast('PUB EN COURS... ' + t + 's');
     const iv = setInterval(() => {
