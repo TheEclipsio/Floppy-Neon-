@@ -3575,12 +3575,18 @@ let AdMob = null;
 let admobReady = false;
 
 async function initAdMob() {
-  if (!isNativeApp()) return;
+  if (!isNativeApp()) { showToast('PAS NATIF'); return; }
   try {
+    showToast('INIT ADMOB...');
     AdMob = window.Capacitor.Plugins.AdMob;
+    if (!AdMob) { showToast('PLUGIN INTROUVABLE'); return; }
     await AdMob.initialize({ requestTrackingAuthorization: false });
     admobReady = true;
-  } catch(e) { console.warn('[AdMob] init:', e); }
+    showToast('ADMOB OK');
+  } catch(e) {
+    showToast('ERREUR: ' + e.message);
+    console.warn('[AdMob] init:', e);
+  }
 }
 document.addEventListener('deviceready', initAdMob, false);
 setTimeout(initAdMob, 1000);
