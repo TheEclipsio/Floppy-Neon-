@@ -725,10 +725,6 @@
 </head>
 <body>
 
-<audio id="bgMusic" loop preload="auto">
-  <source src="https://www.chosic.com/wp-content/uploads/2021/04/Cyber-Dude-ft-Doofus.mp3" type="audio/mpeg">
-</audio>
-  
 <div class="stars" id="stars"></div>
 <canvas id="particleCanvas"></canvas>
 
@@ -1183,12 +1179,6 @@ let hasUsedRevive = false, reviveCountdown = 5, reviveTimerStart = 0, skipUnlock
 let adState = 'none', adProgress = 0, adStartTime = 0;
 
 function resetBird() { bird = { x: 100, y: H/2-20, vy: 0, angle: 0, wingAngle: 0, wingDir: 1 }; }
-const bgMusic = document.getElementById('bgMusic');
-bgMusic.volume = 0.4;
-let musicEnabled = localStorage.getItem('floppyMusicEnabled') !== 'false';
-function playMusic() { if (musicEnabled) bgMusic.play().catch(()=>{}); }
-function stopMusic() { bgMusic.pause(); }
-
 function resetGame() {
   score = 0; pipes = []; particles = []; coinObjects = []; coinLabels = [];
   coins = 0; frames = 0; flashTimer = 0; coinFlashTimer = 0; deathShake = 0;
@@ -1200,7 +1190,6 @@ resetBird();
 
 function doRevive() { hasUsedRevive = true; adState = 'playing'; adStartTime = performance.now(); adProgress = 0; }
 function finishRevive() {
-  playMusic();
   adState = 'none'; state = 'playing';
   bird.vy = 0; bird.y = H/2; bird.angle = 0;
   pipes = pipes.filter(p => p.x > bird.x + 120);
@@ -1215,7 +1204,7 @@ function flap() {
 }
 
 function checkMandatoryAdAndFlap() {
-  checkMandatoryAd(() => { resetGame(); state = 'playing'; playMusic(); });
+  checkMandatoryAd(() => { resetGame(); state = 'playing'; });
 }
 
 function getCanvasPos(e) {
@@ -2831,7 +2820,6 @@ const gachaOverlay  = document.getElementById('gachaOverlay');
 let currentTab = 'skins';
 
 function openShop() {
-  stopMusic();
   shopScreen.style.display = 'flex';
   shopCoinsEl.textContent = totalCoins;
   document.getElementById('fixedAdBtn').style.display = 'none';
@@ -2849,11 +2837,8 @@ function closeShop() {
   pipes = []; coinObjects = []; particles = []; coinLabels = [];
 }
 
-document.getElementById('shopBackBtn').addEventListener('click', () => {
-  closeShop();
-  playMusic();
-});
-  
+document.getElementById('shopBackBtn').addEventListener('click', closeShop);
+
 // Tabs
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -3147,15 +3132,13 @@ document.getElementById('fixedAdBtn').addEventListener('click', () => {
     showToast(`PUB DISPONIBLE DANS ${m}:${s.toString().padStart(2,'0')}`);
     return;
   }
-  // ✅ Vraie rewarded AdMob (fallback simulation si pas dispo)
-  showRewardedAd(() => {
-    lastAdBonus = Date.now();
-    totalCoins += 25;
-    shopCoinsEl.textContent = totalCoins;
-    saveState();
-    updateFixedAdCd();
-    showToast('✨ +25 PIÈCES REÇUES!');
-  });
+  // Simule la pub
+  lastAdBonus = Date.now();
+  totalCoins += 25;
+  shopCoinsEl.textContent = totalCoins;
+  saveState();
+  updateFixedAdCd();
+  showToast('✨ +25 PIÈCES REÇUES!');
 });
 
 // ── COIN BOOST (X2) ──────────────────────────────────
@@ -3198,20 +3181,25 @@ function handleCoinBoostAd() {
     const r = Math.ceil((COIN_BOOST_AD_COOLDOWN - elapsed) / 1000);
     showToast(`CD: ${Math.floor(r/60)}:${(r%60).toString().padStart(2,'0')}`); return;
   }
-  // ✅ Vraie rewarded AdMob (fallback simulation si pas dispo)
+  // Simule pub 5s
   const box = document.getElementById('coinBoostAdBox');
   box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
   document.getElementById('coinBoostAdCd').textContent = 'PUB EN COURS...';
-  showRewardedAd(() => {
-    coinBoostAdEnd = Date.now() + COIN_BOOST_AD_DURATION;
-    lastCoinBoostAd = Date.now();
-    localStorage.setItem('floppyLastBoostAd', lastCoinBoostAd.toString());
-    box.style.opacity = '1'; box.style.pointerEvents = '';
-    updateCoinBoostAdCd();
-    showToast('⚡ PIÈCES X2 ACTIF — 5 MINUTES!');
-  });
-  // Réactive le bouton si pub annulée/échouée
-  setTimeout(() => { box.style.opacity = '1'; box.style.pointerEvents = ''; }, 500);
+  let t = 5;
+  const iv = setInterval(() => {
+    t--;
+    const cd = document.getElementById('coinBoostAdCd');
+    if (cd) cd.textContent = `${t}s...`;
+    if (t <= 0) {
+      clearInterval(iv);
+      coinBoostAdEnd = Date.now() + COIN_BOOST_AD_DURATION;
+      lastCoinBoostAd = Date.now();
+      localStorage.setItem('floppyLastBoostAd', lastCoinBoostAd.toString());
+      box.style.opacity = '1'; box.style.pointerEvents = '';
+      updateCoinBoostAdCd();
+      showToast('⚡ PIÈCES X2 ACTIF — 5 MINUTES!');
+    }
+  }, 1000);
 }
 
 function purchaseCoinBoostIap() {
@@ -3255,32 +3243,6 @@ const madSkipBtn = document.getElementById('madSkipBtn');
 
 function showMandatoryAd(onDone) {
   if (adBlockerOwned) { onDone(); return; }
-
-  showToast('🎬 showMandatoryAd() — ready=' + admobReady);
-
-  if (admobReady && AdMob) {
-    showToast('✅ Préparation interstitielle...');
-    AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID, isTesting: false })
-      .then(() => {
-        showToast('✅ Interstitielle prête — affichage...');
-        return AdMob.showInterstitial();
-      })
-      .then(() => {
-        showToast('✅ Interstitielle terminée');
-        onDone();
-      })
-      .catch(e => {
-        showToast('🔴 INTER ERR: ' + (e.message || JSON.stringify(e)));
-        showMandatoryAdFallback(onDone);
-      });
-    return;
-  }
-
-  showToast('⚠️ AdMob KO — fallback simulation');
-  showMandatoryAdFallback(onDone);
-}
-
-function showMandatoryAdFallback(onDone) {
   mandatoryAdOverlay.style.display = 'flex';
   madBarFill.style.width = '0%';
   madSkipBtn.classList.remove('ready');
@@ -3418,7 +3380,6 @@ setTimeout(checkDailyBonus, 800);
 
 // ── HOOK triggerDeath pour compter les parties ────────
 function triggerDeath() {
-  stopMusic();
   if (score > best) { best = score; saveState(); }
   spawnDeathParticles(); deathShake = 18;
   BTNS.forEach(b => b.hovered = false);
@@ -3438,7 +3399,7 @@ function resetGame() {
 }
 
 function doReplay() {
-  checkMandatoryAd(() => { resetGame(); state = 'playing'; playMusic(); });
+  checkMandatoryAd(() => { resetGame(); state = 'playing'; });
 }
 
 function onGameEnded() {
@@ -3588,85 +3549,6 @@ function showToast(msg) {
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
 }
-  
-// ── ADMOB ─────────────────────────────────────────────
-const ADMOB_REWARDED_ID     = 'ca-app-pub-1235003260250332/4788768765';
-const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-1235003260250332/3993727693';
-
-const isNativeApp = () =>
-  typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
-
-let AdMob = null;
-let admobReady = false;
-
-async function initAdMob() {
-  if (!isNativeApp()) {
-    showToast('🔴 MODE NAVIGATEUR — AdMob désactivé');
-    return;
-  }
-  showToast('⏳ Initialisation AdMob...');
-  try {
-    AdMob = window.Capacitor.Plugins.AdMob;
-    if (!AdMob) {
-      showToast('🔴 ERREUR: Plugin AdMob introuvable!');
-      return;
-    }
-    showToast('✅ Plugin AdMob trouvé');
-    await AdMob.initialize({ requestTrackingAuthorization: false, initializeForTesting: false });
-    admobReady = true;
-    showToast('✅ AdMob initialisé! Ready=true');
-  } catch(e) {
-    showToast('🔴 INIT ERR: ' + (e.message || JSON.stringify(e)));
-  }
-}
-setTimeout(initAdMob, 1500);
-
-function showRewardedAdFallback(onRewarded) {
-  showToast('⚠️ FALLBACK simulation (AdMob KO)');
-  let t = 5;
-  const iv = setInterval(() => {
-    t--;
-    if (t > 0) showToast('SIM PUB... ' + t + 's');
-    else { clearInterval(iv); onRewarded(); }
-  }, 1000);
-}
-
-async function showRewardedAd(onRewarded) {
-  showToast('🎬 showRewardedAd() appelé');
-  if (!admobReady || !AdMob) {
-    showToast('🔴 admobReady=' + admobReady + ' AdMob=' + (AdMob ? 'OK' : 'NULL'));
-    showRewardedAdFallback(onRewarded);
-    return;
-  }
-  showToast('✅ admobReady=true — préparation...');
-  let rewarded = false;
-  let listenerReward = null;
-  let listenerClose  = null;
-  try {
-    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false });
-    showToast('✅ Rewarded préparée — ajout listeners...');
-    listenerReward = await AdMob.addListener('onRewardedVideoAdReward', () => {
-      showToast('🎁 Récompense reçue!');
-      rewarded = true;
-    });
-    listenerClose = await AdMob.addListener('onRewardedVideoAdDismissed', () => {
-      showToast('📴 Pub fermée — rewarded=' + rewarded);
-      if (listenerReward) listenerReward.remove();
-      if (listenerClose)  listenerClose.remove();
-      if (rewarded) onRewarded();
-      else showToast('⚠️ Regardez la pub jusqu\'à la fin!');
-    });
-    showToast('✅ Listeners OK — affichage pub...');
-    await AdMob.showRewardVideoAd();
-  } catch(e) {
-    showToast('🔴 REWARDED ERR: ' + (e.message || JSON.stringify(e)));
-    if (listenerReward) listenerReward.remove();
-    if (listenerClose)  listenerClose.remove();
-    showRewardedAdFallback(onRewarded);
-  }
-}
-
 </script>
-
 </body>
 </html>
