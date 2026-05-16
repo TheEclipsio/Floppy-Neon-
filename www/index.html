@@ -3612,7 +3612,7 @@ async function showMandatoryAd(onDone) {
 }
   
 async function showRewardedAd(onRewarded) {
-  if (!isNativeApp()) {
+  if (!isNativeApp() || !admobReady || !AdMob) {
     let t = 5;
     showToast('PUB EN COURS... ' + t + 's');
     const iv = setInterval(() => {
@@ -3622,36 +3622,32 @@ async function showRewardedAd(onRewarded) {
     }, 1000);
     return;
   }
-  window.addEventListener('rewardEarned', () => onRewarded(), { once: true });
-  window.addEventListener('rewardFailed', () => {
-    let t = 5;
-    showToast('PUB EN COURS... ' + t + 's');
-    const iv = setInterval(() => {
-      t--;
-      if (t > 0) showToast('PUB EN COURS... ' + t + 's');
-      else { clearInterval(iv); onRewarded(); }
-    }, 1000);
-  }, { once: true });
-  window.Capacitor.toNative('MainActivity', 'showRewardedAd', {});
+  try {
+    // Les listeners AVANT prepare (version B qui donnait la récompense)
+    let rewarded = false;
+    const events = [
+      'onRewardedVideoAdRewarded',
+      'rewarded',
+      'rewardedVideoAdRewarded',
+      'onRewarded'
+    ];
+    const listeners = await Promise.all(events.map(ev =>
+      AdMob.addListener(ev, () => {
+        if (!rewarded) {
+          rewarded = true;
+          listeners.forEach(l => l && l.remove());
+          onRewarded();
+        }
+      }).catch(() => null)
+    ));
+
+    // Prepare et show APRÈS (version A qui affichait la pub)
+    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
+    await AdMob.showRewardVideoAd();
+  } catch(e) {
+    console.warn('[AdMob] rewarded:', e);
+  }
 }
-
-// ── OVERRIDE fixedAdBtn (+25 pièces top bar) ───────
-document.getElementById('fixedAdBtn').addEventListener('click', () => {
-  const elapsed = Date.now() - lastAdBonus;
-  if (lastAdBonus !== 0 && elapsed < AD_BONUS_COOLDOWN) {
-    const r = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
-    showToast(`PUB DISPONIBLE DANS ${Math.floor(r/60)}:${(r%60).toString().padStart(2,'0')}`);
-    return;
-  }
-  showRewardedAd(() => {
-    lastAdBonus = Date.now();
-    totalCoins += 25;
-    shopCoinsEl.textContent = totalCoins;
-    saveState(); updateFixedAdCd();
-    showToast('✨ +25 PIÈCES REÇUES!');
-  });
-}, { capture: true });
-
   
 // ── OVERRIDE handleShopAdBonus (+25 pièces shop) ───
 function handleShopAdBonus() {
