@@ -1198,14 +1198,7 @@ function resetGame() {
 }
 resetBird();
 
-function doRevive() {
-  logDebug("🎬 doRevive() — appel showRewardedAd");
-  showRewardedAd(() => {
-    logDebug("✅ Revive récompensé — finishRevive()");
-    hasUsedRevive = true;
-    finishRevive();
-  });
-}
+function doRevive() { hasUsedRevive = true; adState = 'playing'; adStartTime = performance.now(); adProgress = 0; }
 function finishRevive() {
   playMusic();
   adState = 'none'; state = 'playing';
@@ -3358,17 +3351,6 @@ document.getElementById('ratingYesBtn').addEventListener('click', () => {
   saveState();
   ratingOverlay.style.display = 'none';
   showToast('⭐ +100 PIÈCES — MERCI POUR VOTRE SOUTIEN!');
-  // Ouvrir le Play Store sur la fiche du jeu
-  const appId = 'com.theeclipsio.floppyneon';
-  const storeUrl = 'market://details?id=' + appId;
-  const webUrl = 'https://play.google.com/store/apps/details?id=' + appId;
-  if (isNativeApp() && window.Capacitor.Plugins.AppLauncher) {
-    window.Capacitor.Plugins.AppLauncher.openUrl({ url: storeUrl }).catch(() => {
-      window.open(webUrl, '_blank');
-    });
-  } else {
-    window.open(webUrl, '_blank');
-  }
 });
 
 document.getElementById('ratingLaterBtn').addEventListener('click', () => {
@@ -3384,17 +3366,9 @@ document.getElementById('shareYesBtn').addEventListener('click', () => {
     totalCoins += 100;
     shopCoinsEl.textContent = totalCoins;
     saveState();
-    showToast('\ud83d\ude80 +100 PIÈCES — MERCI DE PARTAGER!');
+    showToast('🚀 +100 PIÈCES — MERCI DE PARTAGER!');
   }
-  // Partage natif Capacitor ou fallback Web Share API
-  const shareData = {
-    title: 'Floppy Neon',
-    text: '🎮 Essaie Floppy Neon — le jeu néon addictif!',
-    url: 'https://play.google.com/store/apps/details?id=com.theeclipsio.floppyneon'
-  };
-  if (navigator.share) {
-    navigator.share(shareData).catch(() => {});
-  }
+  if (navigator.share) navigator.share({ title:'Floppy Neon', text:'Essaie ce jeu!', url: window.location.href });
 });
 document.getElementById('shareLaterBtn').addEventListener('click', () => {
   document.getElementById('shareOverlay').style.display = 'none';
@@ -3615,8 +3589,37 @@ function showToast(msg) {
   toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
 }
 
+// ── DEBUG LOG PANEL (persistant — visible jusqu'au tap) ──
+(function() {
+  const panel = document.createElement('div');
+  panel.id = 'debugPanel';
+  panel.style.cssText = 'display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;background:rgba(0,0,0,0.92);border-top:2px solid #ff006e;padding:8px 10px 12px;max-height:45vh;overflow-y:auto;font-family:monospace;font-size:10px;color:#00ff99;';
+  const title = document.createElement('div');
+  title.style.cssText = 'color:#ff006e;font-weight:bold;margin-bottom:4px;display:flex;justify-content:space-between;';
+  title.innerHTML = '🔴 ADMOB DEBUG LOG <span onclick="document.getElementById(\'debugPanel\').style.display=\'none\'" style="cursor:pointer;color:#fff;padding:0 6px;">✕</span>';
+  panel.appendChild(title);
+  const log = document.createElement('div');
+  log.id = 'debugLog';
+  panel.appendChild(log);
+  document.body.appendChild(panel);
+})();
 
-function logDebug(msg) { console.log('[FLOPPY]', msg); }
+function logDebug(msg) {
+  const panel = document.getElementById('debugPanel');
+  const log   = document.getElementById('debugLog');
+  if (!panel || !log) return;
+  panel.style.display = 'block';
+  const line = document.createElement('div');
+  const ts = new Date().toLocaleTimeString('fr-FR', { hour12: false });
+  line.style.cssText = 'border-bottom:1px solid rgba(255,255,255,0.08);padding:2px 0;';
+  const isErr = msg.startsWith('🔴') || msg.startsWith('❌');
+  line.style.color = isErr ? '#ff4444' : msg.startsWith('✅') ? '#00ff99' : '#ffdd00';
+  line.textContent = '[' + ts + '] ' + msg;
+  log.insertBefore(line, log.firstChild); // les derniers en haut
+  // aussi dans console native
+  console.log('[FLOPPY]', msg);
+  showToast(msg);
+}
 
 // ── ADMOB ─────────────────────────────────────────────
 const ADMOB_REWARDED_ID     = 'ca-app-pub-1235003260250332/4788768765';
@@ -3629,51 +3632,70 @@ let AdMob = null;
 let admobReady = false;
 
 async function initAdMob() {
-  if (!isNativeApp()) return;
+  if (!isNativeApp()) {
+    logDebug('🔴 MODE NAVIGATEUR — AdMob désactivé');
+    return;
+  }
+  logDebug('⏳ Initialisation AdMob...');
   try {
     AdMob = window.Capacitor.Plugins.AdMob;
-    if (!AdMob) return;
+    if (!AdMob) {
+      logDebug('🔴 ERREUR: Plugin AdMob introuvable dans Plugins!');
+      logDebug('Plugins dispo: ' + Object.keys(window.Capacitor.Plugins || {}).join(', '));
+      return;
+    }
+    logDebug('✅ Plugin AdMob trouvé');
     await AdMob.initialize({ requestTrackingAuthorization: false, initializeForTesting: false });
     admobReady = true;
-    // Pre-charge la 1ère rewarded dès le démarrage
-    AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false }).catch(() => {});
-  } catch(e) {}
+    logDebug('✅ AdMob initialisé! Ready=true');
+  } catch(e) {
+    logDebug('🔴 INIT ERR: ' + (e.message || JSON.stringify(e)));
+  }
 }
 setTimeout(initAdMob, 1500);
 
 function showRewardedAdFallback(onRewarded) {
+  logDebug('⚠️ FALLBACK simulation (AdMob KO)');
   let t = 5;
   const iv = setInterval(() => {
     t--;
-    if (t <= 0) { clearInterval(iv); onRewarded(); }
+    if (t > 0) showToast('SIM PUB... ' + t + 's');
+    else { clearInterval(iv); onRewarded(); }
   }, 1000);
 }
 
 async function showRewardedAd(onRewarded) {
+  logDebug('🎬 showRewardedAd() appelé');
   if (!admobReady || !AdMob) {
+    logDebug('🔴 admobReady=' + admobReady + ' | AdMob=' + (AdMob ? 'OK' : 'NULL'));
     showRewardedAdFallback(onRewarded);
     return;
   }
+  logDebug('✅ admobReady=true — prepareRewardVideoAd...');
   let rewarded = false;
   let listenerReward = null;
   let listenerClose  = null;
   try {
     await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false });
+    logDebug('✅ prepareRewardVideoAd OK — ajout listeners...');
 
-    listenerReward = await AdMob.addListener('onRewardedVideoAdReward', () => {
+    listenerReward = await AdMob.addListener('onRewardedVideoAdReward', (info) => {
+      logDebug('🎁 onRewardedVideoAdReward! info=' + JSON.stringify(info));
       rewarded = true;
     });
     listenerClose = await AdMob.addListener('onRewardedVideoAdDismissed', () => {
+      logDebug('📴 onRewardedVideoAdDismissed — rewarded=' + rewarded);
       if (listenerReward) listenerReward.remove();
       if (listenerClose)  listenerClose.remove();
-      // Pre-charge la suivante
-      AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false }).catch(() => {});
       if (rewarded) onRewarded();
       else showToast('⚠️ Regardez la pub jusqu\'à la fin!');
     });
-
+    logDebug('✅ Listeners OK — showRewardVideoAd...');
     await AdMob.showRewardVideoAd();
+    logDebug('✅ showRewardVideoAd appelé sans erreur');
   } catch(e) {
+    const errMsg = e.message || JSON.stringify(e);
+    logDebug('🔴 REWARDED ERR: ' + errMsg);
     if (listenerReward) listenerReward.remove();
     if (listenerClose)  listenerClose.remove();
     showRewardedAdFallback(onRewarded);
