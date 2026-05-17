@@ -3392,9 +3392,7 @@ document.getElementById('shareYesBtn').addEventListener('click', () => {
     text: '🎮 Essaie Floppy Neon — le jeu néon addictif!',
     url: 'https://play.google.com/store/apps/details?id=com.theeclipsio.floppyneon'
   };
-  if (isNativeApp() && window.Capacitor.Plugins.Share) {
-    window.Capacitor.Plugins.Share.share(shareData).catch(() => {});
-  } else if (navigator.share) {
+  if (navigator.share) {
     navigator.share(shareData).catch(() => {});
   }
 });
