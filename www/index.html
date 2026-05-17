@@ -3627,128 +3627,55 @@ const isNativeApp = () =>
 
 let AdMob = null;
 let admobReady = false;
-let admobListenersReady = false;
-let currentRewardedCallback = null; // callback actif en attente de récompense
 
 async function initAdMob() {
-  if (!isNativeApp()) {
-    logDebug('🔴 MODE NAVIGATEUR — AdMob désactivé');
-    return;
-  }
-  logDebug('⏳ Initialisation AdMob...');
+  if (!isNativeApp()) return;
   try {
     AdMob = window.Capacitor.Plugins.AdMob;
-    if (!AdMob) {
-      logDebug('🔴 ERREUR: Plugin AdMob introuvable dans Plugins!');
-      logDebug('Plugins dispo: ' + Object.keys(window.Capacitor.Plugins || {}).join(', '));
-      return;
-    }
-    logDebug('✅ Plugin AdMob trouvé');
+    if (!AdMob) return;
     await AdMob.initialize({ requestTrackingAuthorization: false, initializeForTesting: false });
     admobReady = true;
-    logDebug('✅ AdMob initialisé! Ready=true');
-    setupRewardedListeners();
-    preloadNextRewardedAd(); // Pre-charge la 1ère rewarded dès le démarrage
-  } catch(e) {
-    logDebug('🔴 INIT ERR: ' + (e.message || JSON.stringify(e)));
-  }
+    // Pre-charge la 1ère rewarded dès le démarrage
+    AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false }).catch(() => {});
+  } catch(e) {}
 }
-
-// Listeners créés UNE SEULE FOIS après initialize()
-function setupRewardedListeners() {
-  if (admobListenersReady || !AdMob) return;
-
-  let rewardReceived = false; // flag local pour cette session de pub
-
-  AdMob.addListener('onRewardedVideoAdReward', (info) => {
-    logDebug('🎁 onRewardedVideoAdReward! info=' + JSON.stringify(info));
-    rewardReceived = true;
-    // On exécute le callback immédiatement
-    if (currentRewardedCallback) {
-      const cb = currentRewardedCallback;
-      currentRewardedCallback = null;
-      cb();
-    }
-  });
-
-  AdMob.addListener('onRewardedVideoAdDismissed', () => {
-    logDebug('📴 onRewardedVideoAdDismissed — rewardReceived=' + rewardReceived);
-    // Si onReward ne s'est pas déclenché avant onDismissed (timing v6)
-    // mais qu'un callback attend → on lui donne quand même la récompense
-    if (!rewardReceived && currentRewardedCallback) {
-      logDebug('⚠️ onReward pas reçu avant Dismissed — reward accordé quand même');
-      const cb = currentRewardedCallback;
-      currentRewardedCallback = null;
-      cb();
-    } else if (rewardReceived) {
-      // Déjà traité dans onReward, on remet juste le flag à zéro
-      currentRewardedCallback = null;
-    } else {
-      // Pub fermée sans récompense ET sans callback (fermée trop tôt)
-      showToast('⚠️ Regardez la pub jusqu\'à la fin!');
-    }
-    rewardReceived = false;
-    // Pre-charger la prochaine pub
-    preloadNextRewardedAd();
-  });
-
-  admobListenersReady = true;
-  logDebug('✅ Listeners persistants installés');
-}
-
-// Pre-charge la prochaine rewarded en arrière-plan
-let rewardedAdPreloaded = false;
-function preloadNextRewardedAd() {
-  if (!admobReady || !AdMob) return;
-  rewardedAdPreloaded = false;
-  logDebug('⏳ Pre-chargement prochaine rewarded...');
-  AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false })
-    .then(() => {
-      rewardedAdPreloaded = true;
-      logDebug('✅ Rewarded pre-chargée et prête!');
-    })
-    .catch(e => {
-      logDebug('⚠️ Pre-chargement échoué: ' + (e.message || JSON.stringify(e)));
-    });
-}
-
 setTimeout(initAdMob, 1500);
 
 function showRewardedAdFallback(onRewarded) {
-  logDebug('⚠️ FALLBACK simulation (AdMob KO)');
   let t = 5;
   const iv = setInterval(() => {
     t--;
-    if (t > 0) showToast('SIM PUB... ' + t + 's');
-    else { clearInterval(iv); onRewarded(); }
+    if (t <= 0) { clearInterval(iv); onRewarded(); }
   }, 1000);
 }
 
 async function showRewardedAd(onRewarded) {
-  logDebug('🎬 showRewardedAd() appelé — preloaded=' + rewardedAdPreloaded);
   if (!admobReady || !AdMob) {
-    logDebug('🔴 admobReady=' + admobReady + ' | AdMob=' + (AdMob ? 'OK' : 'NULL'));
     showRewardedAdFallback(onRewarded);
     return;
   }
-  currentRewardedCallback = onRewarded;
+  let rewarded = false;
+  let listenerReward = null;
+  let listenerClose  = null;
   try {
-    if (!rewardedAdPreloaded) {
-      // Pas de pub pre-chargée → on prepare maintenant
-      logDebug('⏳ Pas de pub pre-chargée — prepareRewardVideoAd...');
-      await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false });
-      logDebug('✅ prepareRewardVideoAd OK');
-    } else {
-      // Pub déjà prête en mémoire → on affiche directement
-      logDebug('⚡ Pub pre-chargée — affichage direct!');
-      rewardedAdPreloaded = false;
-    }
+    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false });
+
+    listenerReward = await AdMob.addListener('onRewardedVideoAdReward', () => {
+      rewarded = true;
+    });
+    listenerClose = await AdMob.addListener('onRewardedVideoAdDismissed', () => {
+      if (listenerReward) listenerReward.remove();
+      if (listenerClose)  listenerClose.remove();
+      // Pre-charge la suivante
+      AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false }).catch(() => {});
+      if (rewarded) onRewarded();
+      else showToast('⚠️ Regardez la pub jusqu\'à la fin!');
+    });
+
     await AdMob.showRewardVideoAd();
-    logDebug('✅ showRewardVideoAd lancé');
   } catch(e) {
-    const errMsg = e.message || JSON.stringify(e);
-    logDebug('🔴 REWARDED ERR: ' + errMsg);
-    currentRewardedCallback = null;
+    if (listenerReward) listenerReward.remove();
+    if (listenerClose)  listenerClose.remove();
     showRewardedAdFallback(onRewarded);
   }
 }
