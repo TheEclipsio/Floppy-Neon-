@@ -22,6 +22,8 @@ jobs:
 
       - name: Install Capacitor
         run: npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor-community/admob
+
+      - name: Install Capacitor
         run: npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor-community/admob @capacitor-community/in-app-purchases-2
 
       - name: Capacitor sync
