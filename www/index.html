@@ -3263,26 +3263,9 @@ const madTimerEl = document.getElementById('madTimer');
 const madSkipBtn = document.getElementById('madSkipBtn');
 
 function showMandatoryAdFallback(onDone) {
-  mandatoryAdOverlay.style.display = 'flex';
-  madBarFill.style.width = '0%';
-  madSkipBtn.classList.remove('ready');
-  madTimerEl.textContent = '5s...';
-  let elapsed = 0;
-  const duration = 5000;
-  madInterval = setInterval(() => {
-    elapsed += 100;
-    const pct = Math.min(100, (elapsed/duration)*100);
-    madBarFill.style.width = pct + '%';
-    const remaining = Math.max(0, Math.ceil((duration - elapsed)/1000));
-    madTimerEl.textContent = remaining > 0 ? remaining + 's...' : 'Terminé!';
-    if (elapsed >= duration) { clearInterval(madInterval); madSkipBtn.classList.add('ready'); }
-  }, 100);
-  madSkipBtn.onclick = () => {
-    if (!madSkipBtn.classList.contains('ready')) return;
-    clearInterval(madInterval);
-    mandatoryAdOverlay.style.display = 'none';
-    onDone();
-  };
+  // AdMob pas dispo (test/navigateur) → on passe directement, sans overlay
+  logDebug('⚠️ FALLBACK interstitielle (AdMob KO) — passage direct');
+  setTimeout(() => { onDone(); }, 300);
 }
 
 async function showMandatoryAd(onDone) {
@@ -3312,7 +3295,8 @@ async function showMandatoryAd(onDone) {
 
 function checkMandatoryAd(onDone) {
   if (adBlockerOwned) { onDone(); return; }
-  if (gamesPlayedTotal > 0 && gamesPlayedTotal % 5 === 0) {
+  // Pub obligatoire toutes les 10 parties (au lieu de 5)
+  if (gamesPlayedTotal > 0 && gamesPlayedTotal % 10 === 0) {
     showMandatoryAd(onDone);
   } else {
     onDone();
@@ -3642,27 +3626,30 @@ async function initAdMob() {
 function setupAdMobListeners() {
   if (admobListenersReady || !AdMob) return;
 
-  // REWARDED — récompense accordée (avant fermeture)
+  // REWARDED — flag : la récompense a été gagnée (pub vue jusqu'au bout)
+  let _rewardEarned = false;
   AdMob.addListener('onRewardedVideoAdReward', () => {
-    logDebug('🎁 Récompense gagnée');
-    if (currentRewardedCallback) {
-      const cb = currentRewardedCallback;
-      currentRewardedCallback = null;
-      cb();
-    }
+    logDebug('🎁 Récompense gagnée (flag)');
+    _rewardEarned = true;
   });
 
-  // REWARDED — pub fermée (avec ou sans récompense)
+  // REWARDED — pub fermée : c'est ICI qu'on accorde la récompense
+  // (l'événement Reward arrive toujours AVANT Dismissed)
   AdMob.addListener('onRewardedVideoAdDismissed', () => {
-    logDebug('📴 Rewarded fermée');
-    if (currentRewardedCallback) {
-      // Fermée sans regarder jusqu'au bout
+    logDebug('📴 Rewarded fermée — earned=' + _rewardEarned);
+    if (_rewardEarned && currentRewardedCallback) {
+      const cb = currentRewardedCallback;
+      currentRewardedCallback = null;
+      _rewardEarned = false;
+      cb(); // ✅ Revive / bonus accordé ici
+    } else if (!_rewardEarned && currentRewardedCallback) {
       currentRewardedCallback = null;
       showToast("⚠️ Regardez la pub jusqu'à la fin!");
     }
+    _rewardEarned = false;
     // Recharge immédiate pour la prochaine fois
-    rewardedAdPreloaded  = false;
-    rewardedAdPreparing  = false;
+    rewardedAdPreloaded = false;
+    rewardedAdPreparing = false;
     preloadRewardedAd();
   });
 
@@ -3717,12 +3704,9 @@ setTimeout(initAdMob, 1500);
 // ── REWARDED ──────────────────────────────────────────
 function showRewardedAdFallback(onRewarded) {
   logDebug('⚠️ FALLBACK rewarded (AdMob KO)');
-  let t = 5;
-  const iv = setInterval(() => {
-    t--;
-    if (t > 0) showToast('SIM PUB... ' + t + 's');
-    else { clearInterval(iv); onRewarded(); }
-  }, 1000);
+  // Fallback silencieux : on accorde directement sans animation gênante
+  // (AdMob n'est pas encore actif = app en test, pas en prod)
+  setTimeout(() => { onRewarded(); }, 500);
 }
 
 async function showRewardedAd(onRewarded) {
