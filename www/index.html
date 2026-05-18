@@ -3750,76 +3750,142 @@ async function showRewardedAd(onRewarded) {
   }
 }
 
-// ── IAP ENGINE (Google Play Billing via Capacitor) ────
-// SKUs à créer dans Google Play Console (type: achat unique) :
-//   adblocker_099 | coinboost_x2_099
-//   coins_100 | coins_500 | coins_1200 | coins_3000 | coins_7000 | coins_10000
-// (les coins_XXX sont de type "consommable")
+// ── IAP ENGINE — capacitor-plugin-cdv-purchase v13 ───
+// Plugin : npm install capacitor-plugin-cdv-purchase
+// Compatible Capacitor 6 — Google Play Billing
+//
+// Produits à créer dans Play Console :
+//   NON_CONSUMABLE : adblocker_099 | coinboost_x2_099
+//   CONSUMABLE     : coins_100 | coins_500 | coins_1200 | coins_3000 | coins_7000 | coins_10000
 
-let IAP = null;
+const IAP_PRODUCTS_DEF = [
+  { id: 'adblocker_099',   type: 'NON_CONSUMABLE' },
+  { id: 'coinboost_x2_099',type: 'NON_CONSUMABLE' },
+  { id: 'coins_100',       type: 'CONSUMABLE' },
+  { id: 'coins_500',       type: 'CONSUMABLE' },
+  { id: 'coins_1200',      type: 'CONSUMABLE' },
+  { id: 'coins_3000',      type: 'CONSUMABLE' },
+  { id: 'coins_7000',      type: 'CONSUMABLE' },
+  { id: 'coins_10000',     type: 'CONSUMABLE' },
+];
+
+// Callbacks en attente : skuId -> onSuccess
+const _iapPendingCallbacks = {};
+
 let iapReady = false;
-const _iapPendingCallbacks = {}; // skuId -> callback
-
-async function initIAP() {
-  if (!isNativeApp()) { logDebug('🔴 IAP — mode navigateur, simulation activée'); return; }
-  try {
-    IAP = window.Capacitor.Plugins.InAppPurchases2 || window.Capacitor.Plugins.CapacitorInAppPurchase2;
-    if (!IAP) { logDebug('🔴 Plugin IAP introuvable'); return; }
-
-    // Écouter les mises à jour d'achats
-    IAP.addListener('onPurchaseUpdated', async (data) => {
-      if (!data || !data.purchase) return;
-      const pid = data.purchase.productIdentifier || data.purchase.productId || '';
-      logDebug('💳 Achat reçu: ' + pid);
-
-      // Appeler le bon callback
-      if (_iapPendingCallbacks[pid]) {
-        const cb = _iapPendingCallbacks[pid];
-        delete _iapPendingCallbacks[pid];
-        cb(pid);
-      }
-
-      // Gérer les achats restaurés (restore purchases)
-      _handleRestoredPurchase(pid);
-
-      // Confirmer l'achat (OBLIGATOIRE sinon remboursement automatique sous 3 jours)
-      try { await IAP.finishTransaction({ purchase: data.purchase }); }
-      catch(fe) { logDebug('⚠️ finishTransaction err: ' + (fe.message||'')); }
-    });
-
-    iapReady = true;
-    logDebug('✅ IAP prêt');
-
-    // Restaurer les achats existants au démarrage (important si réinstallation)
-    try { await IAP.restorePurchases(); } catch(e) { /* silencieux */ }
-
-  } catch(e) { logDebug('🔴 IAP INIT ERR: ' + (e.message||JSON.stringify(e))); }
-}
+let _iapStore = null;
 
 function _handleRestoredPurchase(pid) {
-  if (pid === 'adblocker_099' && !adBlockerOwned)   { _activateAdBlocker();   }
+  if (pid === 'adblocker_099'    && !adBlockerOwned)    { _activateAdBlocker();   }
   if (pid === 'coinboost_x2_099' && !coinBoostIapOwned) { _activateCoinBoostIap(); }
 }
 
-// Fonction centrale d'achat IAP
-async function iapPurchase(skuId, onSuccess) {
-  if (!isNativeApp() || !iapReady || !IAP) {
-    // Fallback dev/navigateur : simulation
-    logDebug('⚠️ IAP fallback simulation pour: ' + skuId);
-    if (confirm('(SIMULATION DEV)\nAcheter: ' + skuId + ' ?')) { onSuccess(skuId); }
+function _iapGrantReward(productId) {
+  // Callback explicite (achat initié par l'utilisateur)
+  if (_iapPendingCallbacks[productId]) {
+    const cb = _iapPendingCallbacks[productId];
+    delete _iapPendingCallbacks[productId];
+    cb(productId);
     return;
   }
+  // Achat restauré au démarrage
+  _handleRestoredPurchase(productId);
+}
+
+function initIAP() {
+  if (!isNativeApp()) {
+    logDebug('🔴 IAP — mode navigateur, simulation activée');
+    return;
+  }
+
+  // CdvPurchase est injecté par capacitor-plugin-cdv-purchase
+  if (typeof CdvPurchase === 'undefined') {
+    logDebug('🔴 CdvPurchase introuvable — plugin non installé?');
+    return;
+  }
+
+  const store = CdvPurchase.store;
+  _iapStore = store;
+
+  // 1. Enregistrement des produits
+  IAP_PRODUCTS_DEF.forEach(p => {
+    store.register({
+      id: p.id,
+      type: p.type === 'CONSUMABLE'
+        ? CdvPurchase.ProductType.CONSUMABLE
+        : CdvPurchase.ProductType.NON_CONSUMABLE,
+      platform: CdvPurchase.Platform.GOOGLE_PLAY,
+    });
+  });
+
+  // 2. Listeners
+  store.when()
+    .approved(transaction => {
+      logDebug('💳 Transaction approuvée: ' + JSON.stringify(transaction.products.map(p=>p.id)));
+      // Accorder la récompense pour chaque produit
+      transaction.products.forEach(p => _iapGrantReward(p.id));
+      // Finaliser OBLIGATOIRE (acknowledge Google Play / consume consommable)
+      transaction.finish();
+    })
+    .finished(transaction => {
+      logDebug('✅ Transaction finalisée: ' + JSON.stringify(transaction.products.map(p=>p.id)));
+    })
+    .receiptUpdated(receipt => {
+      // Restaure les non-consommables au démarrage (réinstallation, changement appareil)
+      if (!receipt) return;
+      receipt.transactions.forEach(t => {
+        t.products.forEach(p => _handleRestoredPurchase(p.id));
+      });
+    });
+
+  // 3. Initialisation
+  store.initialize([CdvPurchase.Platform.GOOGLE_PLAY])
+    .then(() => {
+      iapReady = true;
+      logDebug('✅ IAP store initialisé (CdvPurchase v13)');
+    })
+    .catch(e => {
+      logDebug('🔴 IAP init err: ' + (e.message || JSON.stringify(e)));
+    });
+}
+
+// Fonction centrale d'achat — appelée depuis buyCoinPack, purchaseAdBlocker, purchaseCoinBoostIap
+async function iapPurchase(skuId, onSuccess) {
+  // ── Mode navigateur / simulation ──────────────────
+  if (!isNativeApp() || !iapReady || !_iapStore) {
+    logDebug('⚠️ IAP fallback simulation pour: ' + skuId);
+    if (confirm('(SIMULATION DEV)\nAcheter : ' + skuId + ' ?')) {
+      onSuccess(skuId);
+    }
+    return;
+  }
+
+  // ── Achat réel Google Play ─────────────────────────
+  const product = _iapStore.get(skuId, CdvPurchase.Platform.GOOGLE_PLAY);
+  if (!product) {
+    logDebug('🔴 Produit introuvable: ' + skuId);
+    showToast('❌ Produit non disponible');
+    return;
+  }
+  const offer = product.getOffer();
+  if (!offer) {
+    logDebug('🔴 Pas d\'offre pour: ' + skuId);
+    showToast('❌ Offre non disponible');
+    return;
+  }
+
+  _iapPendingCallbacks[skuId] = onSuccess;
   try {
-    _iapPendingCallbacks[skuId] = onSuccess;
-    await IAP.purchase({ productIdentifier: skuId });
+    await _iapStore.order(offer);
   } catch(e) {
     delete _iapPendingCallbacks[skuId];
-    logDebug('🔴 Achat annulé/échoué [' + skuId + ']: ' + (e.message||JSON.stringify(e)));
+    logDebug('🔴 Achat annulé/échoué [' + skuId + ']: ' + (e.message || JSON.stringify(e)));
     showToast('❌ Achat annulé');
   }
 }
 
-setTimeout(initIAP, 2000);
+// Init IAP après AdMob (délai 2500ms pour laisser deviceready se terminer)
+setTimeout(initIAP, 2500);
 </script>
 
 </body>
