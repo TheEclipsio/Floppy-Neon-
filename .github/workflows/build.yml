@@ -22,6 +22,7 @@ jobs:
 
       - name: Install Capacitor
         run: npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor-community/admob
+        run: npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor-community/admob @capacitor-community/in-app-purchases-2
 
       - name: Capacitor sync
         run: npx cap sync android
@@ -29,7 +30,20 @@ jobs:
       - name: Decode keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/floppy-neon.keystore
+          - name: Build AAB release
+          - run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android/app/floppy-neon.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
       - name: Build APK release
         run: |
           cd android
