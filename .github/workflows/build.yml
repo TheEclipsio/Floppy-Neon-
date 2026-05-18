@@ -41,7 +41,7 @@ jobs:
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
             
             - name: Build AAB release
-        run: |
+            run: |
           cd android
           ./gradlew bundleRelease \
             -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android/app/floppy-neon.keystore \
