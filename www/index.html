@@ -3098,14 +3098,15 @@ function handleShopAdBonus() {
 }
 setInterval(() => { if (shopScreen && shopScreen.style.display !== 'none') updateAdBonusCooldown(); }, 1000);
 
-// ── COIN PACKS ────────────────────────────────────────
+
+// ── COIN PACKS (IAP réels via Google Play Billing) ────
 const COIN_PACKS = [
-  { id:'cp1', coins:100,   price:'0,05 €', bonus:'',      highlight:false },
-  { id:'cp2', coins:500,   price:'0,20 €', bonus:'+50',   highlight:false },
-  { id:'cp3', coins:1200,  price:'0,45 €', bonus:'+200',  highlight:false },
-  { id:'cp4', coins:3000,  price:'0,99 €', bonus:'+500',  highlight:true  },
-  { id:'cp5', coins:7000,  price:'1,99 €', bonus:'+2000', highlight:false },
-  { id:'cp6', coins:10000, price:'2,99 €', bonus:'+5000', highlight:true  },
+  { id:'cp1', skuId:'coins_100',   coins:100,   price:'0,05 €', bonus:'',      highlight:false },
+  { id:'cp2', skuId:'coins_500',   coins:500,   price:'0,20 €', bonus:'+50',   highlight:false },
+  { id:'cp3', skuId:'coins_1200',  coins:1200,  price:'0,45 €', bonus:'+200',  highlight:false },
+  { id:'cp4', skuId:'coins_3000',  coins:3000,  price:'0,99 €', bonus:'+500',  highlight:true  },
+  { id:'cp5', skuId:'coins_7000',  coins:7000,  price:'1,99 €', bonus:'+2000', highlight:false },
+  { id:'cp6', skuId:'coins_10000', coins:10000, price:'2,99 €', bonus:'+5000', highlight:true  },
 ];
 function renderCoinPacks() {
   const grid = document.getElementById('coinPackGrid');
@@ -3122,12 +3123,13 @@ function renderCoinPacks() {
 function buyCoinPack(id) {
   const pack = COIN_PACKS.find(p => p.id === id);
   if (!pack) return;
-  if (confirm(`Acheter ${pack.coins.toLocaleString()} pièces pour ${pack.price} ?`)) {
+  iapPurchase(pack.skuId, (skuId) => {
+    // Callback appelé après achat confirmé
     totalCoins += pack.coins;
     shopCoinsEl.textContent = totalCoins;
     saveState();
     showToast(`💳 +${pack.coins.toLocaleString()} PIÈCES!`);
-  }
+  });
 }
 
 
@@ -3154,7 +3156,6 @@ document.getElementById('fixedAdBtn').addEventListener('click', () => {
     showToast(`PUB DISPONIBLE DANS ${m}:${s.toString().padStart(2,'0')}`);
     return;
   }
-  // ✅ Vraie rewarded AdMob (fallback simulation si pas dispo)
   showRewardedAd(() => {
     lastAdBonus = Date.now();
     totalCoins += 25;
@@ -3168,8 +3169,8 @@ document.getElementById('fixedAdBtn').addEventListener('click', () => {
 // ── COIN BOOST (X2) ──────────────────────────────────
 let coinBoostIapOwned = false;
 let coinBoostAdEnd = 0;
-const COIN_BOOST_AD_DURATION = 5 * 60 * 1000; // 5 min
-const COIN_BOOST_AD_COOLDOWN = 30 * 60 * 1000; // 30 min cooldown
+const COIN_BOOST_AD_DURATION = 5 * 60 * 1000;
+const COIN_BOOST_AD_COOLDOWN = 30 * 60 * 1000;
 let lastCoinBoostAd = parseInt(localStorage.getItem('floppyLastBoostAd') || '0');
 
 function isCoinBoostActive() {
@@ -3205,7 +3206,6 @@ function handleCoinBoostAd() {
     const r = Math.ceil((COIN_BOOST_AD_COOLDOWN - elapsed) / 1000);
     showToast(`CD: ${Math.floor(r/60)}:${(r%60).toString().padStart(2,'0')}`); return;
   }
-  // ✅ Vraie rewarded AdMob (fallback simulation si pas dispo)
   const box = document.getElementById('coinBoostAdBox');
   box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
   document.getElementById('coinBoostAdCd').textContent = 'PUB EN COURS...';
@@ -3217,24 +3217,25 @@ function handleCoinBoostAd() {
     updateCoinBoostAdCd();
     showToast('⚡ PIÈCES X2 ACTIF — 5 MINUTES!');
   });
-  // Réactive le bouton si pub annulée/échouée
   setTimeout(() => { box.style.opacity = '1'; box.style.pointerEvents = ''; }, 500);
 }
 
 function purchaseCoinBoostIap() {
   if (coinBoostIapOwned) { showToast('💰 X2 DÉJÀ ACTIF!'); return; }
-  if (confirm('Activer Pièces X2 permanent pour 0,99 € ?')) {
-    coinBoostIapOwned = true;
-    coinBoostAdEnd = 0;
-    localStorage.setItem('floppyCoinBoostIap', '1');
-    updateCoinBoostIapUI();
-    showToast('💰 PIÈCES X2 PERMANENT ACTIVÉ!');
-  }
+  iapPurchase('coinboost_x2_099', () => {
+    _activateCoinBoostIap();
+  });
 }
 
-function purchaseCoinBoostIapFromAd() {
-  purchaseCoinBoostIap();
+function _activateCoinBoostIap() {
+  coinBoostIapOwned = true;
+  coinBoostAdEnd = 0;
+  localStorage.setItem('floppyCoinBoostIap', '1');
+  updateCoinBoostIapUI();
+  showToast('💰 PIÈCES X2 PERMANENT ACTIVÉ!');
 }
+
+function purchaseCoinBoostIapFromAd() { purchaseCoinBoostIap(); }
 
 function updateCoinBoostIapUI() {
   const right = document.getElementById('coinBoostIapRight');
@@ -3254,38 +3255,12 @@ if (localStorage.getItem('floppyCoinBoostIap') === '1') {
 setInterval(() => {
   if (shopScreen && shopScreen.style.display !== 'none') updateCoinBoostAdCd();
 }, 1000);
+
 let madTimer = null, madInterval = null;
 const mandatoryAdOverlay = document.getElementById('mandatoryAdOverlay');
 const madBarFill = document.getElementById('madBarFill');
 const madTimerEl = document.getElementById('madTimer');
 const madSkipBtn = document.getElementById('madSkipBtn');
-
-function showMandatoryAd(onDone) {
-  if (adBlockerOwned) { onDone(); return; }
-
-  logDebug('🎬 showMandatoryAd() — ready=' + admobReady);
-
-  if (admobReady && AdMob) {
-    logDebug('✅ Préparation interstitielle...');
-    AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID, isTesting: false })
-      .then(() => {
-        logDebug('✅ Interstitielle prête — affichage...');
-        return AdMob.showInterstitial();
-      })
-      .then(() => {
-        logDebug('✅ Interstitielle terminée');
-        onDone();
-      })
-      .catch(e => {
-        logDebug('🔴 INTER ERR: ' + (e.message || JSON.stringify(e)));
-        showMandatoryAdFallback(onDone);
-      });
-    return;
-  }
-
-  logDebug('⚠️ AdMob KO — fallback simulation');
-  showMandatoryAdFallback(onDone);
-}
 
 function showMandatoryAdFallback(onDone) {
   mandatoryAdOverlay.style.display = 'flex';
@@ -3300,10 +3275,7 @@ function showMandatoryAdFallback(onDone) {
     madBarFill.style.width = pct + '%';
     const remaining = Math.max(0, Math.ceil((duration - elapsed)/1000));
     madTimerEl.textContent = remaining > 0 ? remaining + 's...' : 'Terminé!';
-    if (elapsed >= duration) {
-      clearInterval(madInterval);
-      madSkipBtn.classList.add('ready');
-    }
+    if (elapsed >= duration) { clearInterval(madInterval); madSkipBtn.classList.add('ready'); }
   }, 100);
   madSkipBtn.onclick = () => {
     if (!madSkipBtn.classList.contains('ready')) return;
@@ -3311,6 +3283,31 @@ function showMandatoryAdFallback(onDone) {
     mandatoryAdOverlay.style.display = 'none';
     onDone();
   };
+}
+
+async function showMandatoryAd(onDone) {
+  if (adBlockerOwned) { onDone(); return; }
+  logDebug('🎬 showMandatoryAd() — interPreloaded=' + interstitialPreloaded);
+  if (!admobReady || !AdMob) { showMandatoryAdFallback(onDone); return; }
+  try {
+    if (!interstitialPreloaded) {
+      logDebug('⏳ Interstitielle pas prête — préparation...');
+      interstitialPreparing = true;
+      await AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID, isTesting: false });
+      interstitialPreloaded = true;
+      interstitialPreparing = false;
+    }
+    interstitialPreloaded = false; // consommée
+    await AdMob.showInterstitial();
+    logDebug('✅ Interstitielle affichée');
+    onDone();
+  } catch(e) {
+    logDebug('🔴 INTER ERR: ' + (e.message || JSON.stringify(e)));
+    interstitialPreloaded = false;
+    interstitialPreparing = false;
+    showMandatoryAdFallback(onDone);
+    setTimeout(preloadInterstitialAd, 5000);
+  }
 }
 
 function checkMandatoryAd(onDone) {
@@ -3337,7 +3334,13 @@ function updateAdBlockerUI() {
 }
 
 function purchaseAdBlocker() {
-  // Simulation achat IAP
+  if (adBlockerOwned) return;
+  iapPurchase('adblocker_099', () => {
+    _activateAdBlocker();
+  });
+}
+
+function _activateAdBlocker() {
   adBlockerOwned = true;
   saveState();
   updateAdBlockerUI();
@@ -3599,6 +3602,7 @@ function showToast(msg) {
 function logDebug(msg) { console.log('[FLOPPY]', msg); }
 
 
+
 // ── ADMOB ─────────────────────────────────────────────
 const ADMOB_REWARDED_ID     = 'ca-app-pub-1235003260250332/4788768765';
 const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-1235003260250332/3993727693';
@@ -3609,38 +3613,38 @@ const isNativeApp = () =>
 let AdMob = null;
 let admobReady = false;
 let admobListenersReady = false;
-let currentRewardedCallback = null; // callback actif en attente de récompense
+let currentRewardedCallback = null;
+
+// États pré-chargement
+let rewardedAdPreloaded  = false;
+let rewardedAdPreparing  = false;
+let interstitialPreloaded = false;
+let interstitialPreparing = false;
 
 async function initAdMob() {
-  if (!isNativeApp()) {
-    logDebug('🔴 MODE NAVIGATEUR — AdMob désactivé');
-    return;
-  }
+  if (!isNativeApp()) { logDebug('🔴 MODE NAVIGATEUR — AdMob désactivé'); return; }
   logDebug('⏳ Initialisation AdMob...');
   try {
     AdMob = window.Capacitor.Plugins.AdMob;
     if (!AdMob) {
-      logDebug('🔴 ERREUR: Plugin AdMob introuvable dans Plugins!');
-      logDebug('Plugins dispo: ' + Object.keys(window.Capacitor.Plugins || {}).join(', '));
+      logDebug('🔴 Plugin AdMob introuvable. Plugins: ' + Object.keys(window.Capacitor.Plugins||{}).join(', '));
       return;
     }
-    logDebug('✅ Plugin AdMob trouvé');
     await AdMob.initialize({ requestTrackingAuthorization: false, initializeForTesting: false });
     admobReady = true;
-    logDebug('✅ AdMob initialisé! Ready=true');
-    setupRewardedListeners();
-    preloadNextRewardedAd(); // Pre-charge la 1ère rewarded dès le démarrage
-  } catch(e) {
-    logDebug('🔴 INIT ERR: ' + (e.message || JSON.stringify(e)));
-  }
+    logDebug('✅ AdMob initialisé');
+    setupAdMobListeners();
+    preloadRewardedAd();
+    preloadInterstitialAd();
+  } catch(e) { logDebug('🔴 INIT ERR: ' + (e.message||JSON.stringify(e))); }
 }
 
-// Listeners créés UNE SEULE FOIS après initialize()
-function setupRewardedListeners() {
+function setupAdMobListeners() {
   if (admobListenersReady || !AdMob) return;
 
-  AdMob.addListener('onRewardedVideoAdReward', (info) => {
-    logDebug('🎁 onRewardedVideoAdReward! info=' + JSON.stringify(info));
+  // REWARDED — récompense accordée (avant fermeture)
+  AdMob.addListener('onRewardedVideoAdReward', () => {
+    logDebug('🎁 Récompense gagnée');
     if (currentRewardedCallback) {
       const cb = currentRewardedCallback;
       currentRewardedCallback = null;
@@ -3648,40 +3652,71 @@ function setupRewardedListeners() {
     }
   });
 
+  // REWARDED — pub fermée (avec ou sans récompense)
   AdMob.addListener('onRewardedVideoAdDismissed', () => {
-    logDebug('📴 onRewardedVideoAdDismissed — callback restant=' + (currentRewardedCallback ? 'OUI (pub fermée trop tôt)' : 'NON (récompense déjà donnée)'));
+    logDebug('📴 Rewarded fermée');
     if (currentRewardedCallback) {
+      // Fermée sans regarder jusqu'au bout
       currentRewardedCallback = null;
-      showToast('⚠️ Regardez la pub jusqu\'à la fin!');
+      showToast("⚠️ Regardez la pub jusqu'à la fin!");
     }
-    // Pre-charger la prochaine pub immédiatement en arrière-plan
-    preloadNextRewardedAd();
+    // Recharge immédiate pour la prochaine fois
+    rewardedAdPreloaded  = false;
+    rewardedAdPreparing  = false;
+    preloadRewardedAd();
+  });
+
+  // INTERSTITIELLE — fermée → recharger
+  AdMob.addListener('onInterstitialAdDismiss', () => {
+    logDebug('📴 Interstitielle fermée');
+    interstitialPreloaded = false;
+    interstitialPreparing = false;
+    preloadInterstitialAd();
   });
 
   admobListenersReady = true;
-  logDebug('✅ Listeners persistants installés');
+  logDebug('✅ Listeners AdMob installés');
 }
 
-// Pre-charge la prochaine rewarded en arrière-plan
-let rewardedAdPreloaded = false;
-function preloadNextRewardedAd() {
-  if (!admobReady || !AdMob) return;
-  rewardedAdPreloaded = false;
-  logDebug('⏳ Pre-chargement prochaine rewarded...');
+function preloadRewardedAd() {
+  if (!admobReady || !AdMob || rewardedAdPreloaded || rewardedAdPreparing) return;
+  rewardedAdPreparing = true;
+  logDebug('⏳ Préchargement rewarded...');
   AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false })
     .then(() => {
       rewardedAdPreloaded = true;
-      logDebug('✅ Rewarded pre-chargée et prête!');
+      rewardedAdPreparing = false;
+      logDebug('✅ Rewarded prête');
     })
     .catch(e => {
-      logDebug('⚠️ Pre-chargement échoué: ' + (e.message || JSON.stringify(e)));
+      rewardedAdPreparing = false;
+      logDebug('⚠️ Rewarded preload échoué: ' + (e.message||JSON.stringify(e)));
+      setTimeout(preloadRewardedAd, 30000); // retry dans 30s
+    });
+}
+
+function preloadInterstitialAd() {
+  if (!admobReady || !AdMob || interstitialPreloaded || interstitialPreparing) return;
+  interstitialPreparing = true;
+  logDebug('⏳ Préchargement interstitielle...');
+  AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID, isTesting: false })
+    .then(() => {
+      interstitialPreloaded = true;
+      interstitialPreparing = false;
+      logDebug('✅ Interstitielle prête');
+    })
+    .catch(e => {
+      interstitialPreparing = false;
+      logDebug('⚠️ Interstitielle preload échoué: ' + (e.message||JSON.stringify(e)));
+      setTimeout(preloadInterstitialAd, 30000); // retry dans 30s
     });
 }
 
 setTimeout(initAdMob, 1500);
 
+// ── REWARDED ──────────────────────────────────────────
 function showRewardedAdFallback(onRewarded) {
-  logDebug('⚠️ FALLBACK simulation (AdMob KO)');
+  logDebug('⚠️ FALLBACK rewarded (AdMob KO)');
   let t = 5;
   const iv = setInterval(() => {
     t--;
@@ -3691,34 +3726,100 @@ function showRewardedAdFallback(onRewarded) {
 }
 
 async function showRewardedAd(onRewarded) {
-  logDebug('🎬 showRewardedAd() appelé — preloaded=' + rewardedAdPreloaded);
-  if (!admobReady || !AdMob) {
-    logDebug('🔴 admobReady=' + admobReady + ' | AdMob=' + (AdMob ? 'OK' : 'NULL'));
-    showRewardedAdFallback(onRewarded);
-    return;
-  }
+  logDebug('🎬 showRewardedAd() — preloaded=' + rewardedAdPreloaded);
+  if (!admobReady || !AdMob) { showRewardedAdFallback(onRewarded); return; }
   currentRewardedCallback = onRewarded;
   try {
     if (!rewardedAdPreloaded) {
-      // Pas de pub pre-chargée → on prepare maintenant
-      logDebug('⏳ Pas de pub pre-chargée — prepareRewardVideoAd...');
+      logDebug('⏳ Rewarded pas prête — préparation...');
+      rewardedAdPreparing = true;
       await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false });
-      logDebug('✅ prepareRewardVideoAd OK');
-    } else {
-      // Pub déjà prête en mémoire → on affiche directement
-      logDebug('⚡ Pub pre-chargée — affichage direct!');
-      rewardedAdPreloaded = false;
+      rewardedAdPreloaded = true;
+      rewardedAdPreparing = false;
     }
+    rewardedAdPreloaded = false; // consommée
     await AdMob.showRewardVideoAd();
-    logDebug('✅ showRewardVideoAd lancé');
+    logDebug('✅ Rewarded affichée');
   } catch(e) {
-    const errMsg = e.message || JSON.stringify(e);
-    logDebug('🔴 REWARDED ERR: ' + errMsg);
+    logDebug('🔴 REWARDED ERR: ' + (e.message||JSON.stringify(e)));
     currentRewardedCallback = null;
+    rewardedAdPreloaded  = false;
+    rewardedAdPreparing  = false;
     showRewardedAdFallback(onRewarded);
+    setTimeout(preloadRewardedAd, 5000);
   }
 }
 
+// ── IAP ENGINE (Google Play Billing via Capacitor) ────
+// SKUs à créer dans Google Play Console (type: achat unique) :
+//   adblocker_099 | coinboost_x2_099
+//   coins_100 | coins_500 | coins_1200 | coins_3000 | coins_7000 | coins_10000
+// (les coins_XXX sont de type "consommable")
+
+let IAP = null;
+let iapReady = false;
+const _iapPendingCallbacks = {}; // skuId -> callback
+
+async function initIAP() {
+  if (!isNativeApp()) { logDebug('🔴 IAP — mode navigateur, simulation activée'); return; }
+  try {
+    IAP = window.Capacitor.Plugins.InAppPurchases2 || window.Capacitor.Plugins.CapacitorInAppPurchase2;
+    if (!IAP) { logDebug('🔴 Plugin IAP introuvable'); return; }
+
+    // Écouter les mises à jour d'achats
+    IAP.addListener('onPurchaseUpdated', async (data) => {
+      if (!data || !data.purchase) return;
+      const pid = data.purchase.productIdentifier || data.purchase.productId || '';
+      logDebug('💳 Achat reçu: ' + pid);
+
+      // Appeler le bon callback
+      if (_iapPendingCallbacks[pid]) {
+        const cb = _iapPendingCallbacks[pid];
+        delete _iapPendingCallbacks[pid];
+        cb(pid);
+      }
+
+      // Gérer les achats restaurés (restore purchases)
+      _handleRestoredPurchase(pid);
+
+      // Confirmer l'achat (OBLIGATOIRE sinon remboursement automatique sous 3 jours)
+      try { await IAP.finishTransaction({ purchase: data.purchase }); }
+      catch(fe) { logDebug('⚠️ finishTransaction err: ' + (fe.message||'')); }
+    });
+
+    iapReady = true;
+    logDebug('✅ IAP prêt');
+
+    // Restaurer les achats existants au démarrage (important si réinstallation)
+    try { await IAP.restorePurchases(); } catch(e) { /* silencieux */ }
+
+  } catch(e) { logDebug('🔴 IAP INIT ERR: ' + (e.message||JSON.stringify(e))); }
+}
+
+function _handleRestoredPurchase(pid) {
+  if (pid === 'adblocker_099' && !adBlockerOwned)   { _activateAdBlocker();   }
+  if (pid === 'coinboost_x2_099' && !coinBoostIapOwned) { _activateCoinBoostIap(); }
+}
+
+// Fonction centrale d'achat IAP
+async function iapPurchase(skuId, onSuccess) {
+  if (!isNativeApp() || !iapReady || !IAP) {
+    // Fallback dev/navigateur : simulation
+    logDebug('⚠️ IAP fallback simulation pour: ' + skuId);
+    if (confirm('(SIMULATION DEV)\nAcheter: ' + skuId + ' ?')) { onSuccess(skuId); }
+    return;
+  }
+  try {
+    _iapPendingCallbacks[skuId] = onSuccess;
+    await IAP.purchase({ productIdentifier: skuId });
+  } catch(e) {
+    delete _iapPendingCallbacks[skuId];
+    logDebug('🔴 Achat annulé/échoué [' + skuId + ']: ' + (e.message||JSON.stringify(e)));
+    showToast('❌ Achat annulé');
+  }
+}
+
+setTimeout(initIAP, 2000);
 </script>
 
 </body>
