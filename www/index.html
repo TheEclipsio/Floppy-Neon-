@@ -3296,11 +3296,11 @@ async function showMandatoryAd(onDone) {
 function checkMandatoryAd(onDone) {
   if (adBlockerOwned) { onDone(); return; }
   // Pub obligatoire toutes les 10 parties (au lieu de 5)
-  if (gamesPlayedTotal > 0 && gamesPlayedTotal % 10 === 0) {
+  if (gamesPlayedTotal > 0 && gamesPlayedTotal % 2 === 0) {
     showMandatoryAd(onDone);
   } else {
     onDone();
-  }
+  }s
 }
 
 // ── AD BLOCKER PURCHASE ───────────────────────────────
@@ -3438,7 +3438,7 @@ function doReplay() {
 function onGameEnded() {
   gamesPlayedTotal++;
   saveState();
-  if (!adBlockerOwned && gamesPlayedTotal % 10 === 0) {
+  if (!adBlockerOwned && gamesPlayedTotal % 3 === 0) {
     setTimeout(() => {
       if (shopScreen.style.display === 'none' && mandatoryAdOverlay.style.display === 'none') {
         openShop();
