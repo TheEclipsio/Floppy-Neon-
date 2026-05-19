@@ -3101,7 +3101,6 @@ setInterval(() => { if (shopScreen && shopScreen.style.display !== 'none') updat
 
 // ── COIN PACKS (IAP réels via Google Play Billing) ────
 const COIN_PACKS = [
-  { id:'cp1', skuId:'coins_100',   coins:100,   price:'0,05 €', bonus:'',      highlight:false },
   { id:'cp2', skuId:'coins_500',   coins:500,   price:'0,20 €', bonus:'+50',   highlight:false },
   { id:'cp3', skuId:'coins_1200',  coins:1200,  price:'0,45 €', bonus:'+200',  highlight:false },
   { id:'cp4', skuId:'coins_3000',  coins:3000,  price:'0,99 €', bonus:'+500',  highlight:true  },
@@ -3222,7 +3221,7 @@ function handleCoinBoostAd() {
 
 function purchaseCoinBoostIap() {
   if (coinBoostIapOwned) { showToast('💰 X2 DÉJÀ ACTIF!'); return; }
-  iapPurchase('coinboost_x2_099', () => {
+  iapPurchase('coins_x2_permanent', () => {
     _activateCoinBoostIap();
   });
 }
@@ -3319,7 +3318,7 @@ function updateAdBlockerUI() {
 
 function purchaseAdBlocker() {
   if (adBlockerOwned) return;
-  iapPurchase('adblocker_099', () => {
+  iapPurchase('remove_ads', () => {
     _activateAdBlocker();
   });
 }
@@ -3739,18 +3738,17 @@ async function showRewardedAd(onRewarded) {
 // Compatible Capacitor 6 — Google Play Billing
 //
 // Produits à créer dans Play Console :
-//   NON_CONSUMABLE : adblocker_099 | coinboost_x2_099
-//   CONSUMABLE     : coins_100 | coins_500 | coins_1200 | coins_3000 | coins_7000 | coins_10000
+//   NON_CONSUMABLE : remove_ads | coins_x2_permanent
+//   CONSUMABLE     : coins_500 | coins_1200 | coins_3000 | coins_7000 | coins_10000
 
 const IAP_PRODUCTS_DEF = [
-  { id: 'adblocker_099',   type: 'NON_CONSUMABLE' },
-  { id: 'coinboost_x2_099',type: 'NON_CONSUMABLE' },
-  { id: 'coins_100',       type: 'CONSUMABLE' },
-  { id: 'coins_500',       type: 'CONSUMABLE' },
-  { id: 'coins_1200',      type: 'CONSUMABLE' },
-  { id: 'coins_3000',      type: 'CONSUMABLE' },
-  { id: 'coins_7000',      type: 'CONSUMABLE' },
-  { id: 'coins_10000',     type: 'CONSUMABLE' },
+  { id: 'remove_ads',         type: 'NON_CONSUMABLE' },
+  { id: 'coins_x2_permanent', type: 'NON_CONSUMABLE' },
+  { id: 'coins_500',          type: 'CONSUMABLE' },
+  { id: 'coins_1200',         type: 'CONSUMABLE' },
+  { id: 'coins_3000',         type: 'CONSUMABLE' },
+  { id: 'coins_7000',         type: 'CONSUMABLE' },
+  { id: 'coins_10000',        type: 'CONSUMABLE' },
 ];
 
 // Callbacks en attente : skuId -> onSuccess
@@ -3760,10 +3758,10 @@ let iapReady = false;
 let _iapStore = null;
 
 function _handleRestoredPurchase(pid) {
-  if (pid === 'adblocker_099'    && !adBlockerOwned)    { _activateAdBlocker();   }
-  if (pid === 'coinboost_x2_099' && !coinBoostIapOwned) { _activateCoinBoostIap(); }
+  if (pid === 'remove_ads'         && !adBlockerOwned)    { _activateAdBlocker();   }
+if (pid === 'coins_x2_permanent' && !coinBoostIapOwned) { _activateCoinBoostIap(); }
 }
-
+  
 function _iapGrantReward(productId) {
   // Callback explicite (achat initié par l'utilisateur)
   if (_iapPendingCallbacks[productId]) {
