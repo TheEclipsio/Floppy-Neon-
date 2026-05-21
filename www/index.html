@@ -3625,10 +3625,26 @@ async function initAdMob() {
       return;
     }
     await AdMob.initialize({ requestTrackingAuthorization: false, initializeForTesting: false });
+
+    // ── UMP SDK — consentement RGPD ──
+    try {
+      await AdMob.requestConsentInfo({ debugGeography: 0 });
+      const consent = await AdMob.getConsentStatus();
+      logDebug('📋 Consent status: ' + JSON.stringify(consent));
+      if (consent && (consent.status === 1 || consent.status === 2)) {
+        await AdMob.showConsentForm();
+        logDebug('✅ Formulaire RGPD affiché');
+      }
+    } catch(ump) {
+      logDebug('⚠️ UMP err (ignoré): ' + (ump.message||JSON.stringify(ump)));
+    }
+    // ────────────────────────────────
+
     admobReady = true;
     logDebug('✅ AdMob initialisé');
     setupAdMobListeners();
     preloadRewardedAd();
+    preloadInterstitialAd();
     preloadInterstitialAd();
   } catch(e) { logDebug('🔴 INIT ERR: ' + (e.message||JSON.stringify(e))); }
 }
