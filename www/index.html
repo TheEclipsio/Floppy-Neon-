@@ -3629,34 +3629,27 @@ async function initAdMob() {
 
     // ── UMP SDK — consentement RGPD ──
     try {
-      await AdMob.requestConsentInfo({ debugGeography: 0 });
-      const consent = await AdMob.getConsentStatus();
-
-      // ── UMP SDK — consentement RGPD ──
-try {
-  const consentInfo = await AdMob.requestConsentInfoUpdate({
-    debugGeography: 0,
-    testDeviceIdentifiers: []
-  });
-  logDebug('📋 Consent info: ' + JSON.stringify(consentInfo));
-  if (consentInfo.isConsentFormAvailable) {
-    const formResult = await AdMob.showConsentForm();
-    logDebug('✅ RGPD form result: ' + JSON.stringify(formResult));
-  }
-} catch(ump) {
-  logDebug('⚠️ UMP err (ignoré): ' + (ump.message||JSON.stringify(ump)));
-}
-// ────────────────────────────────
+      const consentInfo = await AdMob.requestConsentInfoUpdate({
+        debugGeography: 0,
+        testDeviceIdentifiers: []
+      });
+      logDebug('📋 Consent info: ' + JSON.stringify(consentInfo));
+      if (consentInfo.isConsentFormAvailable) {
+        const formResult = await AdMob.showConsentForm();
+        logDebug('✅ RGPD form result: ' + JSON.stringify(formResult));
+      }
+    } catch(ump) {
+      logDebug('⚠️ UMP err (ignoré): ' + (ump.message||JSON.stringify(ump)));
+    }
+    // ────────────────────────────────
 
     admobReady = true;
     logDebug('✅ AdMob initialisé');
     setupAdMobListeners();
     preloadRewardedAd();
     preloadInterstitialAd();
-    preloadInterstitialAd();
   } catch(e) { logDebug('🔴 INIT ERR: ' + (e.message||JSON.stringify(e))); }
 }
-
 function setupAdMobListeners() {
   if (admobListenersReady || !AdMob) return;
 
