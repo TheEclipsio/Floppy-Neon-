@@ -3123,11 +3123,12 @@ function buyCoinPack(id) {
   const pack = COIN_PACKS.find(p => p.id === id);
   if (!pack) return;
   iapPurchase(pack.skuId, (skuId) => {
-    // Callback appelé après achat confirmé
-    totalCoins += pack.coins;
+    const bonusCoins = pack.bonus ? parseInt(pack.bonus.replace(/[^0-9]/g, '')) : 0;
+    const total = pack.coins + bonusCoins;
+    totalCoins += total;
     shopCoinsEl.textContent = totalCoins;
     saveState();
-    showToast(`💳 +${pack.coins.toLocaleString()} PIÈCES!`);
+    showToast(`💳 +${total.toLocaleString()} PIÈCES!`);
   });
 }
 
