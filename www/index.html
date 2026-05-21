@@ -3631,15 +3631,22 @@ async function initAdMob() {
     try {
       await AdMob.requestConsentInfo({ debugGeography: 0 });
       const consent = await AdMob.getConsentStatus();
-      logDebug('📋 Consent status: ' + JSON.stringify(consent));
-      if (consent && (consent.status === 1 || consent.status === 2)) {
-        await AdMob.showConsentForm();
-        logDebug('✅ Formulaire RGPD affiché');
-      }
-    } catch(ump) {
-      logDebug('⚠️ UMP err (ignoré): ' + (ump.message||JSON.stringify(ump)));
-    }
-    // ────────────────────────────────
+
+      // ── UMP SDK — consentement RGPD ──
+try {
+  const consentInfo = await AdMob.requestConsentInfoUpdate({
+    debugGeography: 0,
+    testDeviceIdentifiers: []
+  });
+  logDebug('📋 Consent info: ' + JSON.stringify(consentInfo));
+  if (consentInfo.isConsentFormAvailable) {
+    const formResult = await AdMob.showConsentForm();
+    logDebug('✅ RGPD form result: ' + JSON.stringify(formResult));
+  }
+} catch(ump) {
+  logDebug('⚠️ UMP err (ignoré): ' + (ump.message||JSON.stringify(ump)));
+}
+// ────────────────────────────────
 
     admobReady = true;
     logDebug('✅ AdMob initialisé');
