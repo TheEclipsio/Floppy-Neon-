@@ -2479,15 +2479,49 @@ function drawAdScreen() {
 }
 
 // ── Main game loop ──────────────────────────────────
-function gameLoop() {
-  requestAnimationFrame(gameLoop);
-  frames++;
-  let sx = 0, sy = 0;
-  if (deathShake > 0) { sx=(Math.random()-0.5)*deathShake*0.6; sy=(Math.random()-0.5)*deathShake*0.6; deathShake*=0.82; if(deathShake<0.5) deathShake=0; }
-  ctx.save(); ctx.translate(sx, sy);
+const FIXED_TIMESTEP = 1000 / 60;
+let _glLastTime = 0;
+let _glAccum = 0;
 
+function gameLoop(timestamp) {
+  requestAnimationFrame(gameLoop);
+  if (!_glLastTime) _glLastTime = timestamp;
+  let delta = timestamp - _glLastTime;
+  _glLastTime = timestamp;
+  if (delta > 100) delta = 100;
+  _glAccum += delta;
+
+  while (_glAccum >= FIXED_TIMESTEP) {
+    _gameUpdate();
+    _glAccum -= FIXED_TIMESTEP;
+  }
+
+  // Rendu
+  let sx = 0, sy = 0;
+  if (deathShake > 0) { sx=(Math.random()-0.5)*deathShake*0.6; sy=(Math.random()-0.5)*deathShake*0.6; }
+  ctx.save(); ctx.translate(sx, sy);
   drawGradientBg();
   drawGrid();
+  pipes.forEach(p => drawPipe(p));
+  coinObjects.forEach(c => drawCoin(c));
+  drawGround();
+  drawParticles();
+  drawCoinLabels();
+  drawBird();
+  if (state === 'playing') drawScore();
+  drawCoinHUD();
+  if (state === 'idle') drawIdleScreen();
+  if (state === 'revive' && adState === 'none') drawReviveScreen();
+  if (state === 'dead' && adState === 'none') drawDeadScreen();
+  if (adState === 'playing') drawAdScreen();
+  ctx.restore();
+}
+
+function _gameUpdate() {
+  frames++;
+  if (deathShake > 0) { deathShake*=0.82; if(deathShake<0.5) deathShake=0; }
+  if (flashTimer > 0) flashTimer--;
+  if (coinFlashTimer > 0) coinFlashTimer--;
 
   if (state === 'playing') {
     groundOffset += PIPE_SPEED;
@@ -2526,8 +2560,11 @@ function gameLoop() {
     });
     pipes = pipes.filter(p => p.x > -PIPE_W-20);
     coinObjects = coinObjects.filter(c => c.x > -20);
+    particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.life-=0.025; });
+    particles = particles.filter(p => p.life > 0);
+    coinLabels.forEach(l => { l.y+=l.vy; l.life-=0.025; });
+    coinLabels = coinLabels.filter(l => l.life > 0);
 
-    // Collisions
     if (bird.y+BIRD_R > H-GROUND_H || bird.y-BIRD_R < 0) { triggerDeath(); }
     for (const p of pipes) {
       const botY = p.topH+PIPE_GAP;
@@ -2536,33 +2573,8 @@ function gameLoop() {
       }
     }
   }
-
-  pipes.forEach(p => drawPipe(p));
-  coinObjects.forEach(c => drawCoin(c));
-  drawGround();
-  drawParticles();
-  particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.life-=0.025; });
-  particles = particles.filter(p => p.life > 0);
-
-  drawCoinLabels();
-  coinLabels.forEach(l => { l.y+=l.vy; l.life-=0.025; });
-  coinLabels = coinLabels.filter(l => l.life > 0);
-
-  drawBird();
-  if (state === 'playing') drawScore();
-  drawCoinHUD();
-  if (flashTimer > 0) { flashTimer--; }
-  if (coinFlashTimer > 0) coinFlashTimer--;
-
-  if (state === 'idle') drawIdleScreen();
-  if (state === 'revive' && adState === 'none') drawReviveScreen();
-  if (state === 'dead' && adState === 'none') drawDeadScreen();
-  if (adState === 'playing') drawAdScreen();
-
-  ctx.restore();
 }
-gameLoop();
-
+gameLoop(0);
 // ═══════════════════════════════════════════════════
 // PREVIEW HELPERS — dessin réel dans mini canvas
 // ═══════════════════════════════════════════════════
@@ -3356,6 +3368,13 @@ document.getElementById('ratingYesBtn').addEventListener('click', () => {
   saveState();
   ratingOverlay.style.display = 'none';
   showToast('⭐ +100 PIÈCES — MERCI POUR VOTRE SOUTIEN!');
+  const pkg = 'com.theeclipsio.floppyneon';
+  if (isNativeApp() && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+    window.Capacitor.Plugins.App.openUrl({ url: 'market://details?id=' + pkg })
+      .catch(() => window.Capacitor.Plugins.App.openUrl({ url: 'https://play.google.com/store/apps/details?id=' + pkg }));
+  } else {
+    window.open('https://play.google.com/store/apps/details?id=' + pkg, '_blank');
+  }
 });
 
 document.getElementById('ratingLaterBtn').addEventListener('click', () => {
@@ -3373,7 +3392,14 @@ document.getElementById('shareYesBtn').addEventListener('click', () => {
     saveState();
     showToast('🚀 +100 PIÈCES — MERCI DE PARTAGER!');
   }
-  if (navigator.share) navigator.share({ title:'Floppy Neon', text:'Essaie ce jeu!', url: window.location.href });
+  const shareUrl = 'https://play.google.com/store/apps/details?id=com.theeclipsio.floppyneon';
+  if (isNativeApp() && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share) {
+    window.Capacitor.Plugins.Share.share({ title: 'Floppy Neon', text: 'Essaie de battre mon score sur Floppy Neon! 🎮', url: shareUrl, dialogTitle: 'Partager Floppy Neon' });
+  } else if (navigator.share) {
+    navigator.share({ title: 'Floppy Neon', text: 'Essaie de battre mon score sur Floppy Neon! 🎮', url: shareUrl });
+  } else {
+    window.open(shareUrl, '_blank');
+  }
 });
 document.getElementById('shareLaterBtn').addEventListener('click', () => {
   document.getElementById('shareOverlay').style.display = 'none';
