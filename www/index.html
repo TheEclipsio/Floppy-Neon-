@@ -1071,18 +1071,18 @@ const PIPE_ITEMS = [
 
 const ACC_ITEMS = [
   { id:'a1',  type:'acc',    name:'Chapeau de Cowboy', emoji:'🤠', rarity:'common'    },
-  { id:'a2',  type:'acc',    name:'Casquette Rouge',   emoji:'🧢', rarity:'common'    },
+  { id:'a2',  type:'acc',    name:'Casquette Bleu',   emoji:'🧢', rarity:'common'    },
   { id:'a3',  type:'acc',    name:'Lunettes Solaires', emoji:'😎', rarity:'common'    },
   { id:'a4',  type:'acc',    name:'Nœud Papillon',     emoji:'🎀', rarity:'rare'      },
   { id:'a5',  type:'acc',    name:'Couronne Néon',     emoji:'👑', rarity:'rare'      },
   { id:'a6',  type:'acc',    name:'Ailes de Fée',      emoji:'🧚', rarity:'epic'      },
   { id:'a7',  type:'acc',    name:'Halo Doré',         emoji:'😇', rarity:'epic'      },
-  { id:'a8',  type:'acc',    name:'Masque Cyber',      emoji:'🥷', rarity:'legendary' },
+  { id:'a8',  type:'acc',    name:'Bandeau Ninja',      emoji:'🥷', rarity:'legendary' },
   { id:'a9',  type:'acc',    name:'SKULL CROWN',       emoji:'💀', rarity:'secret'    },
   // NOUVEAUX ACCESSOIRES
   { id:'a10', type:'acc',    name:'Étoile de Shérif',  emoji:'⭐', rarity:'common'    },
-  { id:'a11', type:'acc',    name:'Chapeau de Mage',   emoji:'🎩', rarity:'rare'      },
-  { id:'a12', type:'acc',    name:'Casque Astronaute', emoji:'🪖', rarity:'rare'      },
+  { id:'a11', type:'acc',    name:'Chapeau Haut-de-Forme',   emoji:'🎩', rarity:'rare'      },
+  { id:'a12', type:'acc',    name:'Casque De Soldat', emoji:'🪖', rarity:'rare'      },
   { id:'a13', type:'acc',    name:'Épée Héroïque',     emoji:'⚔️', rarity:'epic'      },
   { id:'a14', type:'acc',    name:'Arc-en-ciel',       emoji:'🌈', rarity:'epic'      },
   { id:'a15', type:'acc',    name:'Flamme Éternelle',  emoji:'🔥', rarity:'legendary' },
@@ -2532,11 +2532,11 @@ function drawBird() {
       ctx.fillStyle = '#c8860a';
       ctx.fillRect(-r * 0.65, -r * 1.6, r * 1.3, r * 0.15); // ruban
     } else if (id === 'a2') {
-      // Casquette Rouge
-      ctx.fillStyle = '#cc0000';
-      ctx.shadowColor = '#880000'; ctx.shadowBlur = 4;
+      // Casquette Bleue
+      ctx.fillStyle = '#1a3dcc';
+      ctx.shadowColor = '#0022aa'; ctx.shadowBlur = 4;
       ctx.beginPath(); ctx.ellipse(0, -r * 1.1, r * 0.8, r * 0.5, 0, Math.PI, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#aa0000';
+      ctx.fillStyle = '#1122aa';
       ctx.fillRect(-r * 0.1, -r * 1.05, r * 0.9, r * 0.15); // visière
     } else if (id === 'a3') {
       // Lunettes Solaires
@@ -2568,16 +2568,19 @@ function drawBird() {
       ctx.lineTo(r * 0.65, -r * 1.1);
       ctx.closePath(); ctx.fill(); ctx.stroke();
     } else if (id === 'a8') {
-      // Masque Cyber
-      ctx.fillStyle = '#001a33';
-      ctx.shadowColor = '#00aaff'; ctx.shadowBlur = 10;
-      ctx.fillRect(r * 0.05, -r * 0.45, r * 0.7, r * 0.5);
-      ctx.strokeStyle = '#00aaff'; ctx.lineWidth = 1.5;
-      ctx.strokeRect(r * 0.05, -r * 0.45, r * 0.7, r * 0.5);
-      ctx.fillStyle = '#00ffff'; ctx.globalAlpha = 0.8;
-      ctx.fillRect(r * 0.1, -r * 0.35, r * 0.55, r * 0.1);
-      ctx.fillRect(r * 0.1, -r * 0.18, r * 0.55, r * 0.07);
-      ctx.globalAlpha = 1;
+      // Bandeau Ninja style Naruto
+      ctx.fillStyle = '#111111';
+      ctx.shadowColor = '#444'; ctx.shadowBlur = 4;
+      ctx.fillRect(-r * 0.9, -r * 0.58, r * 1.8, r * 0.32);
+      ctx.fillStyle = '#aaaacc';
+      ctx.shadowColor = '#aaaaff'; ctx.shadowBlur = 8;
+      ctx.fillRect(-r * 0.38, -r * 0.55, r * 0.76, r * 0.28);
+      ctx.strokeStyle = '#333355'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(0, -r * 0.41, r * 0.11, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, -r * 0.41); ctx.lineTo(r * 0.11, -r * 0.3); ctx.stroke();
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(r * 0.38, -r * 0.52, r * 0.16, r * 0.2);
+      ctx.fillRect(-r * 0.54, -r * 0.52, r * 0.16, r * 0.2);
     } else if (id === 'a9') {
       // SKULL CROWN
       ctx.fillStyle = '#cccccc';
@@ -2596,29 +2599,28 @@ function drawBird() {
       ctx.fillText('⭐', 0, -r * 1.2);
       ctx.restore();
     } else if (id === 'a11') {
-      // Chapeau de Mage — cône pointu avec bord
-      ctx.fillStyle = '#220066';
-      ctx.shadowColor = '#aa00ff'; ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.moveTo(0, -r * 2.0);
-      ctx.lineTo(-r * 0.7, -r * 1.1);
-      ctx.lineTo(r * 0.7, -r * 1.1);
-      ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#5500aa';
-      ctx.beginPath(); ctx.ellipse(0, -r * 1.1, r * 0.75, r * 0.2, 0, 0, Math.PI * 2); ctx.fill();
-      // Étoiles sur le chapeau
-      ctx.fillStyle = '#ffee00'; ctx.font = (r * 0.3) + 'px serif'; ctx.textAlign = 'center';
-      ctx.fillText('★', -r * 0.25, -r * 1.55);
-      ctx.fillText('✦', r * 0.2, -r * 1.3);
+      // Haut-de-Forme noir élégant
+      ctx.fillStyle = '#111111';
+      ctx.shadowColor = '#555'; ctx.shadowBlur = 6;
+      ctx.fillRect(-r * 0.62, -r * 2.0, r * 1.24, r * 0.95);
+      ctx.fillStyle = '#222222';
+      ctx.fillRect(-r * 0.85, -r * 1.1, r * 1.7, r * 0.18);
+      ctx.fillStyle = '#cc0000';
+      ctx.fillRect(-r * 0.62, -r * 1.22, r * 1.24, r * 0.1);
+      ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+      ctx.strokeRect(-r * 0.62, -r * 2.0, r * 1.24, r * 0.95);
+      
     } else if (id === 'a12') {
-      // Casque Astronaute
-      ctx.fillStyle = 'rgba(200,230,255,0.25)';
-      ctx.strokeStyle = '#aaddff'; ctx.lineWidth = 2;
-      ctx.shadowColor = '#aaddff'; ctx.shadowBlur = 8;
-      ctx.beginPath(); ctx.arc(0, -r * 0.1, r * 1.05, Math.PI, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.globalAlpha = 0.4;
-      ctx.beginPath(); ctx.arc(-r * 0.2, -r * 0.35, r * 0.35, -0.5, 0.5); ctx.stroke();
-      ctx.globalAlpha = 1;
+      // Casque Soldat militaire
+      ctx.fillStyle = '#3a4a2a';
+      ctx.shadowColor = '#2a3a1a'; ctx.shadowBlur = 4;
+      ctx.beginPath();
+      ctx.ellipse(0, -r * 1.05, r * 0.85, r * 0.6, 0, Math.PI, Math.PI * 2); ctx.fill();
+      ctx.fillRect(-r * 0.85, -r * 1.05, r * 1.7, r * 0.22);
+      ctx.fillStyle = '#2a3a1a';
+      ctx.beginPath(); ctx.ellipse(0, -r * 1.05, r * 0.6, r * 0.35, 0, Math.PI, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#4a5a3a';
+      ctx.fillRect(-r * 0.25, -r * 1.38, r * 0.5, r * 0.18);
     } else if (id === 'a13') {
       // Épée Héroïque — pointe vers le haut au saut, vers le bas en chute
       const swordAngle = -bird.vel * 0.08;
@@ -2639,13 +2641,28 @@ function drawBird() {
       ctx.fillStyle = '#8b4513';
       ctx.fillRect(r * 0.35, r * 0.55, r * 0.2, r * 0.35);
       ctx.restore();
+      
     } else if (id === 'a16') {
-      // Œil du Dragon — dragon miniature qui suit
-      const bob = Math.sin(t * 4) * r * 0.15;
-      ctx.font = (r * 1.3) + 'px serif';
+      // Dragon miniature animé — vol sinusoïdal + souffle de feu
+      const bob = Math.sin(t * 3.5) * r * 0.4;
+      const dragonX = -r * 2.1;
+      const dragonY = -r * 0.2 + bob;
+      ctx.save();
+      ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 20;
+      ctx.font = (r * 1.5) + 'px serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 18;
-      ctx.fillText('🐉', -r * 1.8, -r * 0.3 + bob);
+      ctx.fillText('🐉', dragonX, dragonY);
+      // Souffle de feu vers l'oiseau
+      const fireAlpha = 0.5 + Math.sin(t * 8) * 0.3;
+      ctx.globalAlpha = fireAlpha;
+      ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 12;
+      ctx.font = (r * 0.65) + 'px serif';
+      ctx.fillText('🔥', dragonX + r * 1.1, dragonY + r * 0.1);
+      ctx.globalAlpha = fireAlpha * 0.6;
+      ctx.font = (r * 0.45) + 'px serif';
+      ctx.fillText('🔥', dragonX + r * 1.6, dragonY + r * 0.05);
+      ctx.globalAlpha = 1;
+      ctx.restore();
     }
 
     ctx.restore();
