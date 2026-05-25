@@ -2582,12 +2582,31 @@ function drawBird() {
       ctx.fillRect(r * 0.38, -r * 0.52, r * 0.16, r * 0.2);
       ctx.fillRect(-r * 0.54, -r * 0.52, r * 0.16, r * 0.2);
     } else if (id === 'a9') {
-      // SKULL CROWN
-      ctx.fillStyle = '#cccccc';
-      ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 16;
-      ctx.font = (r * 1.1) + 'px serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.fillText('💀', 0, -r * 0.95);
+      // SKULL CROWN — couronne vectorielle + crânes + gemme pulsante
+      const pulse = 0.5 + Math.sin(t * 4) * 0.5;
+      ctx.shadowColor = `rgba(255,0,0,${pulse})`; ctx.shadowBlur = 20 + pulse * 10;
+      ctx.fillStyle = '#8b0000';
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.75, -r * 1.05);
+      ctx.lineTo(-r * 0.75, -r * 1.5);
+      ctx.lineTo(-r * 0.45, -r * 1.25);
+      ctx.lineTo(0,          -r * 1.62);
+      ctx.lineTo(r * 0.45,  -r * 1.25);
+      ctx.lineTo(r * 0.75,  -r * 1.5);
+      ctx.lineTo(r * 0.75,  -r * 1.05);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2;
+      ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 8;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.font = (r * 0.38) + 'px serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('☠', 0,          -r * 1.62);
+      ctx.fillText('☠', -r * 0.75,  -r * 1.5);
+      ctx.fillText('☠', r * 0.75,   -r * 1.5);
+      ctx.fillStyle = `rgba(255,${Math.floor(pulse * 80)},0,0.9)`;
+      ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(0, -r * 1.12, r * 0.13, 0, Math.PI * 2); ctx.fill();
     } else if (id === 'a10') {
       // Étoile de Shérif — tourne sur elle-même
       ctx.save();
@@ -2643,24 +2662,43 @@ function drawBird() {
       ctx.restore();
       
     } else if (id === 'a16') {
-      // Dragon miniature animé — vol sinusoïdal + souffle de feu
-      const bob = Math.sin(t * 3.5) * r * 0.4;
-      const dragonX = -r * 2.1;
-      const dragonY = -r * 0.2 + bob;
-      ctx.save();
-      ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 20;
-      ctx.font = (r * 1.5) + 'px serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('🐉', dragonX, dragonY);
-      // Souffle de feu vers l'oiseau
-      const fireAlpha = 0.5 + Math.sin(t * 8) * 0.3;
-      ctx.globalAlpha = fireAlpha;
-      ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 12;
-      ctx.font = (r * 0.65) + 'px serif';
-      ctx.fillText('🔥', dragonX + r * 1.1, dragonY + r * 0.1);
-      ctx.globalAlpha = fireAlpha * 0.6;
-      ctx.font = (r * 0.45) + 'px serif';
-      ctx.fillText('🔥', dragonX + r * 1.6, dragonY + r * 0.05);
+      // Dragon vectoriel miniature
+      const bob = Math.sin(t * 3) * r * 0.45;
+      ctx.save(); ctx.translate(-r * 2.2, -r * 0.1 + bob);
+      const wingFlap = Math.sin(t * 10) * 0.5;
+      ctx.fillStyle = 'rgba(180,0,60,0.75)';
+      ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 8;
+      ctx.save(); ctx.rotate(-0.3 + wingFlap);
+      ctx.beginPath(); ctx.moveTo(0,-r*0.1); ctx.lineTo(-r*0.9,-r*0.6); ctx.lineTo(-r*0.5,r*0.2); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.save(); ctx.rotate(0.3 - wingFlap);
+      ctx.beginPath(); ctx.moveTo(0,-r*0.1); ctx.lineTo(r*0.6,-r*0.55); ctx.lineTo(r*0.3,r*0.2); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      const dg = ctx.createRadialGradient(-r*0.05,0,r*0.05,0,0,r*0.45);
+      dg.addColorStop(0,'#cc2200'); dg.addColorStop(1,'#550000');
+      ctx.fillStyle = dg; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.ellipse(0,0,r*0.45,r*0.3,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#cc2200';
+      ctx.beginPath(); ctx.ellipse(r*0.42,-r*0.08,r*0.22,r*0.18,0.3,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffee00'; ctx.shadowColor = '#ffee00'; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.arc(r*0.52,-r*0.14,r*0.07,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ff0000';
+      ctx.beginPath(); ctx.arc(r*0.54,-r*0.14,r*0.04,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#990000'; ctx.lineWidth = r*0.12; ctx.lineCap = 'round'; ctx.shadowBlur = 4;
+      ctx.beginPath();
+      ctx.moveTo(-r*0.4,r*0.05);
+      ctx.quadraticCurveTo(-r*0.8,r*0.3+Math.sin(t*6)*r*0.15,-r*1.0,Math.sin(t*4)*r*0.2);
+      ctx.stroke();
+      ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = r*0.07;
+      ctx.beginPath(); ctx.moveTo(r*0.48,-r*0.24); ctx.lineTo(r*0.58,-r*0.42); ctx.stroke();
+      const fa = 0.4 + Math.sin(t * 9) * 0.4;
+      ctx.globalAlpha = fa;
+      ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 14;
+      for (let fi = 0; fi < 3; fi++) {
+        const fs = r * (0.22 - fi * 0.05);
+        ctx.fillStyle = fi===0 ? '#ffee00' : fi===1 ? '#ff6600' : '#ff2200';
+        ctx.beginPath(); ctx.arc(r*(0.72+fi*0.18),-r*0.06+Math.sin(t*12+fi)*r*0.06,fs,0,Math.PI*2); ctx.fill();
+      }
       ctx.globalAlpha = 1;
       ctx.restore();
     }
