@@ -1632,7 +1632,9 @@ function drawPipeStyled(x, topH, pipeStyle) {
     colors.forEach((c,i)=>{ctx.fillStyle=c;ctx.globalAlpha=1;ctx.fillRect(x,botY+10+i*bH2,PIPE_W,bH2);});
     ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
     ctx.fillRect(x-5, botY, PIPE_W+10, 18);
+  } else if (pid === 'p17') {
     // Mur de Château — blocs de pierre avec créneaux
+    ctx.fillStyle = pg;
     ctx.fillRect(x, 0, PIPE_W, topH-10);
     ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
     ctx.fillRect(x, botY+10, PIPE_W, botH);
@@ -1654,12 +1656,12 @@ function drawPipeStyled(x, topH, pipeStyle) {
     ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
     ctx.fillRect(x, botY+10, PIPE_W, botH);
     ctx.fillRect(x-5, botY, PIPE_W+10, 18);
-    ctx.fillStyle = 'rgba(180,0,255,0.2)';
-    ctx.globalAlpha = 0.6;
-    for (let y2 = 0; y2 < topH-10; y2 += 20) {
-      ctx.beginPath();
-      ctx.arc(x+PIPE_W*0.5, y2, PIPE_W*0.6, 0, Math.PI*2);
-      ctx.fill();
+    ctx.strokeStyle = '#cc44ff'; ctx.lineWidth = 2; ctx.globalAlpha = 0.9;
+    for (let y2 = 8; y2 < topH-10; y2 += 18) {
+      ctx.beginPath(); ctx.moveTo(x+6, y2); ctx.lineTo(x+PIPE_W-6, y2); ctx.stroke();
+    }
+    for (let y2 = botY+18; y2 < botY+botH; y2 += 18) {
+      ctx.beginPath(); ctx.moveTo(x+6, y2); ctx.lineTo(x+PIPE_W-6, y2); ctx.stroke();
     }
     ctx.globalAlpha = 1;
   } else {
