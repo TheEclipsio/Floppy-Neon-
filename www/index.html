@@ -1633,23 +1633,38 @@ function drawPipeStyled(x, topH, pipeStyle) {
     ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
     ctx.fillRect(x-5, botY, PIPE_W+10, 18);
   } else if (pid === 'p17') {
-    // Mur de Château — blocs de pierre avec créneaux
-    ctx.fillStyle = pg;
-    ctx.fillRect(x, 0, PIPE_W, topH-10);
-    ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
-    ctx.fillRect(x, botY+10, PIPE_W, botH);
-    ctx.fillRect(x-5, botY, PIPE_W+10, 18);
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    for (let y2 = 8; y2 < topH-10; y2 += 18) {
-      ctx.fillRect(x+2, y2, PIPE_W*0.45, 10);
-      ctx.fillRect(x+PIPE_W*0.55, y2+9, PIPE_W*0.4, 10);
-    }
-    const crenH = 10, crenW = 8;
-    for (let cx2 = x; cx2 < x+PIPE_W; cx2 += crenW*2) {
+    // Mur de Château — briques décalées comme la preview
+    const bh = 12, bw = PIPE_W / 2;
+    // Tuyau haut
+    for (let y2 = 0; y2 < topH-10; y2 += bh) {
+      const off = (Math.floor(y2/bh) % 2 === 0) ? 0 : bw/2;
       ctx.fillStyle = pipeStyle.pipeColor[1];
-      ctx.fillRect(cx2, topH-18-crenH, crenW, crenH);
-      ctx.fillRect(cx2, botY, crenW, crenH);
+      ctx.fillRect(x+off,       y2, bw-1, bh-1);
+      ctx.fillRect(x+off+bw,    y2, bw-1, bh-1);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(x+off,       y2+bh-1, bw-1, 1);
+      ctx.fillRect(x+off+bw,    y2+bh-1, bw-1, 1);
     }
+    // Rebord haut
+    ctx.fillStyle = pipeStyle.pipeColor[2];
+    ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(x-5, topH-18, PIPE_W+10, 4);
+    // Tuyau bas
+    for (let y2 = botY+10; y2 < botY+botH; y2 += bh) {
+      const off = (Math.floor(y2/bh) % 2 === 0) ? 0 : bw/2;
+      ctx.fillStyle = pipeStyle.pipeColor[1];
+      ctx.fillRect(x+off,       y2, bw-1, bh-1);
+      ctx.fillRect(x+off+bw,    y2, bw-1, bh-1);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(x+off,       y2+bh-1, bw-1, 1);
+      ctx.fillRect(x+off+bw,    y2+bh-1, bw-1, 1);
+    }
+    // Rebord bas
+    ctx.fillStyle = pipeStyle.pipeColor[2];
+    ctx.fillRect(x-5, botY, PIPE_W+10, 18);
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(x-5, botY, PIPE_W+10, 4);
   } else if (pid === 'p18') {
     // Tour Maudite — violet avec aura mystique
     ctx.fillRect(x, 0, PIPE_W, topH-10);
