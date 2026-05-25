@@ -1637,7 +1637,7 @@ function drawPipeStyled(x, topH, pipeStyle) {
     const bh = 12, bw = PIPE_W / 2;
     // Tuyau haut
     for (let y2 = 0; y2 < topH-10; y2 += bh) {
-      const off = (Math.floor(y2/bh) % 2 === 0) ? 0 : bw/2;
+      const off = (Math.floor(y2/bh) % 2 === 0) ? -bw/4 : bw/4;
       ctx.fillStyle = pipeStyle.pipeColor[1];
       ctx.fillRect(x+off,       y2, bw-1, bh-1);
       ctx.fillRect(x+off+bw,    y2, bw-1, bh-1);
@@ -1652,7 +1652,7 @@ function drawPipeStyled(x, topH, pipeStyle) {
     ctx.fillRect(x-5, topH-18, PIPE_W+10, 4);
     // Tuyau bas
     for (let y2 = botY+10; y2 < botY+botH; y2 += bh) {
-      const off = (Math.floor(y2/bh) % 2 === 0) ? 0 : bw/2;
+      const off = (Math.floor(y2/bh) % 2 === 0) ? -bw/4 : bw/4;
       ctx.fillStyle = pipeStyle.pipeColor[1];
       ctx.fillRect(x+off,       y2, bw-1, bh-1);
       ctx.fillRect(x+off+bw,    y2, bw-1, bh-1);
