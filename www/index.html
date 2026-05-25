@@ -111,7 +111,7 @@
 
   .btn-back-fixed {
     position: fixed;
-    top: 16px;
+    top: 48px;
     left: 16px;
     z-index: 110;
     background: rgba(2,0,20,0.9);
@@ -1443,13 +1443,55 @@ const bgColors = {
     ctx.strokeStyle = 'rgba(255,215,0,0.12)'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(W/2, H*0.3, 100, 0, Math.PI*2); ctx.stroke();
   } else if (bgItem.id === 's14') {
-    // ABYSSAL VOID — portail
+    } else if (bgItem.id === 's14') {
     const vg = ctx.createRadialGradient(W/2, H*0.4, 10, W/2, H*0.4, 80);
     vg.addColorStop(0,'rgba(100,0,150,0.2)'); vg.addColorStop(1,'rgba(0,0,0,0)');
     ctx.fillStyle = vg; ctx.beginPath(); ctx.arc(W/2, H*0.4, 80, 0, Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's33') {
+    // Canyon Rouge
+    ctx.fillStyle='rgba(200,50,0,0.5)'; ctx.beginPath(); ctx.arc(W*0.5,60,W*0.13,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(180,60,20,0.4)'; ctx.fillRect(0,H*0.55,W*0.25,H*0.45); ctx.fillRect(W*0.38,H*0.45,W*0.28,H*0.55); ctx.fillRect(W*0.76,H*0.5,W*0.24,H*0.5);
+  } else if (bgItem.id === 's34') {
+    // Mine d'Or
+    ctx.fillStyle='rgba(100,70,0,0.4)'; ctx.fillRect(W*0.3,H*0.45,W*0.4,H*0.55);
+    ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.beginPath(); ctx.arc(W*0.5,H*0.6,30,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,200,0,0.5)'; [[W*0.2,H*0.65],[W*0.75,H*0.72],[W*0.55,H*0.8]].forEach(([rx,ry])=>{ctx.beginPath();ctx.arc(rx,ry,10,0,Math.PI*2);ctx.fill();});
+  } else if (bgItem.id === 's35') {
+    // Ghost Town
+    ctx.fillStyle='rgba(80,60,80,0.4)'; [[W*0.05,H*0.25,W*0.22,H*0.75],[W*0.35,H*0.3,W*0.25,H*0.7],[W*0.68,H*0.2,W*0.22,H*0.8]].forEach(([rx,ry,rw,rh])=>{ctx.fillRect(rx,ry,rw,rh);});
+    ctx.fillStyle='rgba(200,180,255,0.15)'; ctx.beginPath(); ctx.arc(W*0.5,50,30,0,Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's36') {
+    // Monde Bonbon
+    ctx.fillStyle='rgba(255,100,200,0.35)'; ctx.beginPath(); ctx.arc(W*0.5,H*0.3,55,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,100,0.3)'; [[W*0.15,H*0.65,28],[W*0.55,H*0.6,25],[W*0.8,H*0.7,20]].forEach(([rx,ry,cr])=>{ctx.beginPath();ctx.arc(rx,ry,cr,0,Math.PI*2);ctx.fill();});
+  } else if (bgItem.id === 's37') {
+    // Jardin Magique
+    ctx.fillStyle='rgba(0,200,80,0.25)'; for(let i=0;i<5;i++){const tx=W*(0.04+i*0.22);ctx.fillRect(tx,H*0.5,W*0.1,H*0.5);ctx.beginPath();ctx.arc(tx+W*0.05,H*0.5,W*0.1,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle='rgba(255,200,0,0.35)'; ctx.beginPath(); ctx.arc(W*0.5,55,28,0,Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's38') {
+    // Rainbow World
+    ['#ff0044aa','#ff6600aa','#ffee00aa','#00ff88aa','#0088ffaa','#cc00ffaa'].forEach((c,i)=>{ctx.strokeStyle=c;ctx.lineWidth=12;ctx.beginPath();ctx.arc(W/2,H-GROUND_H,80+i*30,Math.PI,0);ctx.stroke();});
+  } else if (bgItem.id === 's39') {
+    // Nébuleuse Rouge
+    const ng=ctx.createRadialGradient(W*0.4,H*0.35,5,W*0.4,H*0.35,120); ng.addColorStop(0,'rgba(255,50,0,0.4)'); ng.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=ng; ctx.beginPath(); ctx.arc(W*0.4,H*0.35,120,0,Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's40') {
+    // Singularité
+    const sg=ctx.createRadialGradient(W/2,H*0.4,0,W/2,H*0.4,100); sg.addColorStop(0,'rgba(0,0,0,1)'); sg.addColorStop(0.5,'rgba(80,0,120,0.6)'); sg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(W/2,H*0.4,100,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(180,0,255,0.4)'; ctx.lineWidth=1.5; for(let r=25;r<110;r+=25){ctx.beginPath();ctx.arc(W/2,H*0.4,r,0,Math.PI*2);ctx.stroke();}
+  } else if (bgItem.id === 's41') {
+    // Forêt Enchantée
+    ctx.fillStyle='rgba(0,150,60,0.25)'; for(let i=0;i<4;i++){const tx=W*(0.06+i*0.26);ctx.fillRect(tx,H*0.4,W*0.12,H*0.6);ctx.beginPath();ctx.arc(tx+W*0.06,H*0.4,W*0.12,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle='rgba(100,255,100,0.15)'; ctx.beginPath(); ctx.arc(W*0.5,55,25,0,Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's42') {
+    // Donjon Maudit
+    ctx.fillStyle='rgba(60,0,100,0.4)'; ctx.fillRect(W*0.35,H*0.15,W*0.3,H*0.85);
+    for(let i=0;i<3;i++) ctx.fillRect(W*(0.35+i*0.1),H*0.08,W*0.08,H*0.1);
+    ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.beginPath(); ctx.arc(W*0.5,H*0.5,18,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(150,0,255,0.3)'; ctx.beginPath(); ctx.arc(W*0.5,H*0.15,18,0,Math.PI*2); ctx.fill();
   }
   ctx.restore();
-}
 
 function drawGrid() {
   ctx.save(); ctx.strokeStyle = 'rgba(0,245,255,0.04)'; ctx.lineWidth = 1;
