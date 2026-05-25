@@ -1625,15 +1625,45 @@ function drawPipeStyled(x, topH, pipeStyle) {
     }
   } else if (pid === 'p22') {
     // Arc-en-ciel — bandes colorées
+    const colors = ['#ff0044','#ff6600','#ffee00','#00ff88','#0088ff','#cc00ff'];
+    const bH = Math.floor((topH-10)/colors.length);
+    colors.forEach((c,i)=>{ctx.fillStyle=c;ctx.globalAlpha=1;ctx.fillRect(x,i*bH,PIPE_W,bH);});
+    const bH2 = Math.floor(botH/colors.length);
+    colors.forEach((c,i)=>{ctx.fillStyle=c;ctx.globalAlpha=1;ctx.fillRect(x,botY+10+i*bH2,PIPE_W,bH2);});
+    ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
+    ctx.fillRect(x-5, botY, PIPE_W+10, 18);
+    // Mur de Château — blocs de pierre avec créneaux
     ctx.fillRect(x, 0, PIPE_W, topH-10);
     ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
     ctx.fillRect(x, botY+10, PIPE_W, botH);
     ctx.fillRect(x-5, botY, PIPE_W+10, 18);
-    const colors = ['#ff0044','#ff6600','#ffee00','#00ff88','#0088ff','#cc00ff'];
-    const bH = Math.floor((topH-10)/colors.length);
-    colors.forEach((c,i)=>{ctx.fillStyle=c;ctx.globalAlpha=0.6;ctx.fillRect(x,i*bH,PIPE_W,bH);});
-    ctx.globalAlpha=1;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    for (let y2 = 8; y2 < topH-10; y2 += 18) {
+      ctx.fillRect(x+2, y2, PIPE_W*0.45, 10);
+      ctx.fillRect(x+PIPE_W*0.55, y2+9, PIPE_W*0.4, 10);
+    }
+    const crenH = 10, crenW = 8;
+    for (let cx2 = x; cx2 < x+PIPE_W; cx2 += crenW*2) {
+      ctx.fillStyle = pipeStyle.pipeColor[1];
+      ctx.fillRect(cx2, topH-18-crenH, crenW, crenH);
+      ctx.fillRect(cx2, botY, crenW, crenH);
+    }
+  } else if (pid === 'p18') {
+    // Tour Maudite — violet avec aura mystique
+    ctx.fillRect(x, 0, PIPE_W, topH-10);
+    ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
+    ctx.fillRect(x, botY+10, PIPE_W, botH);
+    ctx.fillRect(x-5, botY, PIPE_W+10, 18);
+    ctx.fillStyle = 'rgba(180,0,255,0.2)';
+    ctx.globalAlpha = 0.6;
+    for (let y2 = 0; y2 < topH-10; y2 += 20) {
+      ctx.beginPath();
+      ctx.arc(x+PIPE_W*0.5, y2, PIPE_W*0.6, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
   } else {
+    // Style par défaut (tous les autres pipes)
     // Style par défaut (tous les autres pipes)
     ctx.fillRect(x, 0, PIPE_W, topH-10);
     ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
