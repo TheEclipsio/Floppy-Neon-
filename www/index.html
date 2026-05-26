@@ -1157,6 +1157,8 @@ const BTN_SKIP   = { x: W/2-80,  y: H/2+58,  w: 160, h: 34, label: 'NON MERCI', 
 const BTN_SHOP_IDLE = { x: W/2-75, y: H/2+56, w: 150, h: 34, label: '🛒 BOUTIQUE', color: '#ff9100', hovered: false };
 // Bouton boutique sur l'écran game over
 const BTN_SHOP_DEAD = { x: W/2-60, y: H/2+115, w: 120, h: 30, label: '🛒 SHOP', color: '#ff9100', hovered: false };
+  const BTN_INFINI = { x: W/2-155, y: H/2+10,  w: 145, h: 42, label: '∞ INFINI',  color: '#00f5ff', hovered: false };
+const BTN_ARCADE = { x: W/2+10,  y: H/2+10,  w: 145, h: 42, label: '⚡ ARCADE', color: '#ff9100', hovered: false };
 const BTNS = [BTN_REPLAY, BTN_HOME];
 
 function ptInBtn(b, mx, my) { return mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h; }
@@ -1266,7 +1268,9 @@ canvas.addEventListener('click', e => {
   const pos = getCanvasPos(e);
   if (state === 'idle') {
     if (ptInBtn(BTN_SHOP_IDLE, pos.x, pos.y)) { openShop(); return; }
-    checkMandatoryAdAndFlap(); return;
+    if (ptInBtn(BTN_INFINI, pos.x, pos.y)) { arcadeMode = false; checkMandatoryAdAndFlap(); return; }
+    if (ptInBtn(BTN_ARCADE, pos.x, pos.y)) { arcadeMode = true; checkMandatoryAdAndFlap(); return; }
+    return;
   }
   if (state === 'revive') {
     if (ptInBtn(BTN_REVIVE, pos.x, pos.y)) { doRevive(); return; }
@@ -1311,7 +1315,9 @@ canvas.addEventListener('touchstart', e => {
   const pos = getCanvasPos(e);
   if (state === 'idle') {
     if (ptInBtn(BTN_SHOP_IDLE, pos.x, pos.y)) { openShop(); return; }
-    checkMandatoryAdAndFlap(); return;
+    if (ptInBtn(BTN_INFINI, pos.x, pos.y)) { arcadeMode = false; checkMandatoryAdAndFlap(); return; }
+    if (ptInBtn(BTN_ARCADE, pos.x, pos.y)) { arcadeMode = true; checkMandatoryAdAndFlap(); return; }
+    return;
   }
   if (state === 'revive') {
     if (ptInBtn(BTN_REVIVE, pos.x, pos.y)) { doRevive(); return; }
@@ -2975,26 +2981,30 @@ function drawCoinHUD() {
 function drawIdleScreen() {
   ctx.save();
   ctx.fillStyle='rgba(2,0,20,0.85)';
-  roundRectPath(W/2-155, H/2-110, 310, 200, 12); ctx.fill();
+  roundRectPath(W/2-155, H/2-120, 310, 230, 12); ctx.fill();
   ctx.strokeStyle='#00f5ff'; ctx.shadowColor='#00f5ff'; ctx.shadowBlur=20; ctx.lineWidth=2;
-  roundRectPath(W/2-155, H/2-110, 310, 200, 12); ctx.stroke();
-  ctx.shadowBlur=0; ctx.fillStyle='#00f5ff'; ctx.font='13px "Press Start 2P",monospace';
+  roundRectPath(W/2-155, H/2-120, 310, 230, 12); ctx.stroke();
+  ctx.shadowBlur=0; ctx.fillStyle='#00f5ff'; ctx.font='11px "Press Start 2P",monospace';
   ctx.textAlign='center'; ctx.textBaseline='alphabetic';
-  ctx.fillText('APPUYEZ POUR', W/2, H/2-68);
+  ctx.fillText('CHOISISSEZ UN MODE', W/2, H/2-82);
   ctx.fillStyle='#ffbe0b'; ctx.shadowColor='#ffbe0b'; ctx.shadowBlur=16;
-  ctx.font='18px "Press Start 2P",monospace'; ctx.fillText('JOUER', W/2, H/2-36);
+  ctx.font='16px "Press Start 2P",monospace'; ctx.fillText('FLOPPY NEON', W/2, H/2-52);
+  ctx.shadowBlur=0;
   if (best > 0) {
-    ctx.shadowBlur=0; ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font='8px "Press Start 2P",monospace';
-    ctx.fillText('MEILLEUR SCORE: '+best, W/2, H/2-8);
+    ctx.fillStyle='rgba(0,245,255,0.5)'; ctx.font='7px "Press Start 2P",monospace';
+    ctx.fillText('INFINI: '+best, W/2-50, H/2-26);
+  }
+  if (arcadeBest > 0) {
+    ctx.fillStyle='rgba(255,145,0,0.6)'; ctx.font='7px "Press Start 2P",monospace';
+    ctx.fillText('ARCADE: '+arcadeBest, W/2+50, H/2-26);
   }
   ctx.fillStyle='#ffd700'; ctx.shadowColor=COIN_GLOW; ctx.shadowBlur=10;
   ctx.font='8px "Press Start 2P",monospace';
-  ctx.fillText('PIECES: '+totalCoins, W/2, H/2+14);
+  ctx.fillText('PIECES: '+totalCoins, W/2, H/2-6);
   ctx.shadowBlur=0;
-  ctx.fillStyle='rgba(0,245,255,0.6)'; ctx.font='7px "Press Start 2P",monospace';
-  ctx.fillText('ESPACE / CLIC / TAP', W/2, H/2+34);
   ctx.restore();
-  // Bouton boutique
+  drawBtn(BTN_INFINI);
+  drawBtn(BTN_ARCADE);
   drawBtn(BTN_SHOP_IDLE);
 }
 
@@ -3043,13 +3053,15 @@ function drawDeadScreen() {
   ctx.fillText('SCORE: '+score, W/2, H/2-32);
   ctx.fillStyle='rgba(255,215,0,0.8)'; ctx.font='8px "Press Start 2P",monospace';
   ctx.fillText('PIECES: +'+coins, W/2, H/2-14);
-  if (score >= best && score > 0) {
+  const currentBest = arcadeMode ? arcadeBest : best;
+  const modeLabel = arcadeMode ? 'ARCADE' : 'INFINI';
+  if (score >= currentBest && score > 0) {
     ctx.fillStyle='#ffbe0b'; ctx.shadowColor='#ffbe0b'; ctx.shadowBlur=12;
     ctx.font='8px "Press Start 2P",monospace';
-    ctx.fillText('★ NOUVEAU RECORD! ★', W/2, H/2+6);
+    ctx.fillText('★ RECORD '+modeLabel+'! ★', W/2, H/2+6);
   } else {
     ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='7px "Press Start 2P",monospace';
-    ctx.fillText('MEILLEUR: '+best, W/2, H/2+6);
+    ctx.fillText('MEILLEUR: '+currentBest, W/2, H/2+6);
   }
   BTNS.forEach(b => drawBtn(b));
   drawBtn(BTN_SHOP_DEAD);
@@ -4218,7 +4230,8 @@ function drawPowerUpHUD() {
 // ── HOOK triggerDeath pour compter les parties ────────
 function triggerDeath() {
   stopMusic();
-  if (score > best) { best = score; saveState(); }
+  if (arcadeMode) { if (score > arcadeBest) { arcadeBest = score; saveState(); } }
+  else { if (score > best) { best = score; saveState(); } }
   spawnDeathParticles(); deathShake = 18;
   BTNS.forEach(b => b.hovered = false);
   BTN_REVIVE.hovered = BTN_SKIP.hovered = false;
@@ -4233,6 +4246,8 @@ function resetGame() {
   coins = 0; frames = 0; flashTimer = 0; coinFlashTimer = 0; deathShake = 0;
   hasUsedRevive = false; reviveCountdown = 5; skipUnlocked = false;
   adState = 'none'; adProgress = 0;
+  powerUps = []; activePowerUp = null; arcadeTier = 1; arcadeSpeedMult = 1.0;
+  boomerangBounces = 0; laserActive = false; freezeActive = false; slowMoActive = false; magnetActive = false;
   resetBird();
 }
 
