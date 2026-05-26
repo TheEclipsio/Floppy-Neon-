@@ -1098,7 +1098,7 @@ function loadState() {
 }
 function saveState() {
   localStorage.setItem('floppyNeonSave', JSON.stringify({
-    totalCoins, unlockedItems, equippedSkin, equippedBg, equippedAcc, equippedPipe, best,
+    totalCoins, unlockedItems, equippedSkin, equippedBg, equippedAcc, equippedPipe, best, arcadeBest,
     adBlockerOwned, gamesPlayedTotal, ratingDismissed
   }));
 }
@@ -1111,6 +1111,7 @@ let equippedBg   = saved.equippedBg   || 's8';
 let equippedAcc  = saved.equippedAcc  || null;
 let equippedPipe = saved.equippedPipe || 'p1';
 let best         = saved.best         || 0;
+let arcadeBest   = saved.arcadeBest   || 0;
 let adBlockerOwned = saved.adBlockerOwned || false;
 let gamesPlayedTotal = saved.gamesPlayedTotal || 0;
 let ratingDismissed = saved.ratingDismissed || false;
@@ -1177,6 +1178,35 @@ function drawBtn(b) {
 }
 
 let state = 'idle', score = 0, coins = 0, frames = 0;
+let arcadeMode = false, arcadeTier = 1, arcadeSpeedMult = 1.0;
+let activePowerUp = null;
+let powerUps = [];
+const POWERUP_DEFS = [
+  { id:'pu1',  icon:'👻', name:'Fantôme',     color:'#e0e0e0', duration:5000  },
+  { id:'pu2',  icon:'🛡️', name:'Bouclier',    color:'#4fc3f7', duration:0     },
+  { id:'pu3',  icon:'🔥', name:'Rage',         color:'#ff5722', duration:5000  },
+  { id:'pu4',  icon:'⭐', name:'Star Rush',    color:'#ffd700', duration:3000  },
+  { id:'pu5',  icon:'🎯', name:'Précision',   color:'#66bb6a', duration:6000  },
+  { id:'pu6',  icon:'💣', name:'Bombe',        color:'#78909c', duration:0     },
+  { id:'pu7',  icon:'🔫', name:'Laser',        color:'#f44336', duration:4000  },
+  { id:'pu8',  icon:'🌀', name:'Vortex',       color:'#9c27b0', duration:0     },
+  { id:'pu9',  icon:'⚡', name:'Éclair',       color:'#ffee58', duration:0     },
+  { id:'pu10', icon:'🧲', name:'Aimant',       color:'#e53935', duration:6000  },
+  { id:'pu11', icon:'⏱️', name:'Slow-Mo',     color:'#5c6bc0', duration:4000  },
+  { id:'pu12', icon:'🪃', name:'Boomerang',    color:'#ff8f00', duration:0     },
+  { id:'pu13', icon:'🌊', name:'Vague',        color:'#00bcd4', duration:3000  },
+  { id:'pu14', icon:'💎', name:'Gemme',        color:'#29b6f6', duration:0     },
+  { id:'pu15', icon:'🃏', name:'Joker',        color:'#7e57c2', duration:3000  },
+  { id:'pu16', icon:'🪙', name:'Pièce d'or', color:'#ffa000', duration:0     },
+  { id:'pu17', icon:'🤏', name:'Shrink',       color:'#f06292', duration:6000  },
+  { id:'pu18', icon:'🧊', name:'Freeze',       color:'#80deea', duration:3000  },
+  { id:'pu19', icon:'🌈', name:'Rainbow',      color:'rainbow', duration:4000  },
+];
+let boomerangBounces = 0;
+let laserActive = false, laserX = 0, laserTimer = 0;
+let freezeActive = false;
+let slowMoActive = false;
+let magnetActive = false;
 let flashTimer = 0, coinFlashTimer = 0, deathShake = 0;
 let bird = {}, pipes = [], coinObjects = [], particles = [], coinLabels = [], groundOffset = 0;
 let hasUsedRevive = false, reviveCountdown = 5, reviveTimerStart = 0, skipUnlocked = false;
