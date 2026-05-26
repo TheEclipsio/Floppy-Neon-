@@ -3109,6 +3109,8 @@ function gameLoop(timestamp) {
   drawGrid();
   pipes.forEach(p => drawPipe(p));
   coinObjects.forEach(c => drawCoin(c));
+  if (arcadeMode) { powerUps.forEach(pu => { if (!pu.collected) drawPowerUp(pu); }); }
+  if (arcadeMode && state === 'playing') drawPowerUpHUD();
   drawGround();
   drawParticles();
   drawCoinLabels();
@@ -3128,19 +3130,65 @@ function _gameUpdate() {
   if (flashTimer > 0) flashTimer--;
   if (coinFlashTimer > 0) coinFlashTimer--;
 
+  // Tick power-up actif
+  if (activePowerUp && activePowerUp.duration > 0) {
+    activePowerUp.timeLeft -= FIXED_TIMESTEP;
+    if (activePowerUp.timeLeft <= 0) {
+      deactivatePowerUp(activePowerUp.id);
+      activePowerUp = null;
+    }
+  }
+
   if (state === 'playing') {
-    groundOffset += PIPE_SPEED;
-    bird.vy += GRAVITY;
-    bird.y  += bird.vy;
+    const spd = arcadeMode ? PIPE_SPEED * arcadeSpeedMult : PIPE_SPEED;
+    const slowFactor = (arcadeMode && slowMoActive) ? 0.4 : 1.0;
+    groundOffset += spd * slowFactor;
+
+    if (!freezeActive) {
+      bird.vy += GRAVITY;
+      bird.y  += bird.vy * slowFactor;
+    }
     bird.angle = Math.max(-Math.PI/4, Math.min(Math.PI/2, bird.vy*0.06));
     bird.wingAngle += bird.wingDir*0.22;
     if (Math.abs(bird.wingAngle) > 0.8) bird.wingDir *= -1;
+
     if (frames % 90 === 0) addPipe();
+
+    // Mise à jour tier arcade
+    if (arcadeMode) {
+      if      (score >= 50) { arcadeTier = 5; arcadeSpeedMult = 1.60; }
+      else if (score >= 35) { arcadeTier = 4; arcadeSpeedMult = 1.45; }
+      else if (score >= 20) { arcadeTier = 3; arcadeSpeedMult = 1.30; }
+      else if (score >= 10) { arcadeTier = 2; arcadeSpeedMult = 1.15; }
+      else                  { arcadeTier = 1; arcadeSpeedMult = 1.00; }
+    }
+
+    // Laser
+    if (arcadeMode && laserActive) {
+      laserX += spd * slowFactor * 3;
+      laserTimer--;
+      if (laserTimer <= 0) { laserActive = false; }
+      pipes = pipes.filter(p => {
+        if (laserX > p.x && laserX < p.x + PIPE_W) { spawnDeathParticles(); return false; }
+        return true;
+      });
+      powerUps = powerUps.filter(p => p.x > laserX - 10);
+    }
+
     pipes.forEach(p => {
-      p.x -= PIPE_SPEED;
+      p.x -= spd * slowFactor;
+      // Oscillation verticale
+      if (arcadeMode && p.oscAmp > 0 && !freezeActive) {
+        p.oscOffset += p.oscSpeed * slowFactor;
+        p.topH = p.baseTopH + Math.sin(p.oscOffset) * p.oscAmp;
+        p.topH = Math.max(50, Math.min(H - GROUND_H - PIPE_GAP - 50, p.topH));
+      }
       if (!p.scored && p.x+PIPE_W < bird.x) {
-        p.scored = true; score++; flashTimer = 8;
-        const sc = score+1;
+        p.scored = true;
+        const pts = (arcadeMode && activePowerUp && (activePowerUp.id==='pu3'||activePowerUp.id==='pu19')) ? 2
+                  : (arcadeMode && activePowerUp && activePowerUp.id==='pu15') ? 3 : 1;
+        score += pts; flashTimer = 8;
+        const sc = score;
         if (sc % 10 === 0) {
           const earned = getCoinMultiplier();
           totalCoins += earned; coins += earned; coinFlashTimer = 15;
@@ -3148,8 +3196,9 @@ function _gameUpdate() {
         }
       }
     });
+
     coinObjects.forEach(c => {
-      c.x -= PIPE_SPEED;
+      c.x -= spd * slowFactor;
       c.spinAngle += 0.07;
       c.y = c.y + Math.sin((frames*0.05+c.bobOffset))*0.3 - Math.sin(((frames-1)*0.05+c.bobOffset))*0.3;
       if (!c.collected) {
@@ -3163,6 +3212,30 @@ function _gameUpdate() {
         }
       }
     });
+
+    // Power-ups : déplacement + collision
+    if (arcadeMode) {
+      const magnetRange = magnetActive ? 120 : 0;
+      powerUps.forEach(pu => {
+        pu.x -= spd * slowFactor;
+        pu.y += Math.sin((frames*0.05+pu.bobOffset))*0.3 - Math.sin(((frames-1)*0.05+pu.bobOffset))*0.3;
+        // Aimant : attirer vers l'oiseau
+        if (magnetActive) {
+          const dx = bird.x - pu.x, dy = bird.y - pu.y;
+          const dist = Math.sqrt(dx*dx+dy*dy);
+          if (dist < magnetRange) { pu.x += dx*0.06; pu.y += dy*0.06; }
+        }
+        if (!pu.collected) {
+          const dx = bird.x-pu.x, dy = bird.y-pu.y;
+          if (Math.sqrt(dx*dx+dy*dy) < BIRD_R+pu.r) {
+            pu.collected = true;
+            activatePowerUp(pu.def);
+          }
+        }
+      });
+      powerUps = powerUps.filter(p => p.x > -30 && !p.collected);
+    }
+
     pipes = pipes.filter(p => p.x > -PIPE_W-20);
     coinObjects = coinObjects.filter(c => c.x > -20);
     particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.life-=0.025; });
@@ -3170,15 +3243,40 @@ function _gameUpdate() {
     coinLabels.forEach(l => { l.y+=l.vy; l.life-=0.025; });
     coinLabels = coinLabels.filter(l => l.life > 0);
 
+    // Collisions sol/plafond
     if (bird.y+BIRD_R > H-GROUND_H || bird.y-BIRD_R < 0) { triggerDeath(); }
-    for (const p of pipes) {
-      const botY = p.topH+PIPE_GAP;
-      if (bird.x+BIRD_R*0.7 > p.x-5 && bird.x-BIRD_R*0.7 < p.x+PIPE_W+5) {
-        if (bird.y-BIRD_R*0.7 < p.topH-10 || bird.y+BIRD_R*0.7 > botY+10) { triggerDeath(); break; }
+
+    // Collisions tuyaux
+    const ghost = arcadeMode && activePowerUp && (activePowerUp.id==='pu1'||activePowerUp.id==='pu4'||activePowerUp.id==='pu19');
+    const shield = arcadeMode && activePowerUp && activePowerUp.id==='pu2';
+    const shrink = arcadeMode && activePowerUp && activePowerUp.id==='pu17';
+    const hitR = shrink ? BIRD_R * 0.55 : BIRD_R * 0.7;
+    if (!ghost) {
+      for (const p of pipes) {
+        const botY = p.topH+PIPE_GAP;
+        if (bird.x+hitR > p.x-5 && bird.x-hitR < p.x+PIPE_W+5) {
+          if (bird.y-hitR < p.topH-10 || bird.y+hitR > botY+10) {
+            if (shield) { activePowerUp = null; spawnFlapParticles(); break; }
+            // Boomerang : rebondir
+            if (arcadeMode && boomerangBounces > 0) {
+              boomerangBounces--;
+              bird.vy = JUMP_FORCE * 0.8;
+              bird.y = (bird.y-hitR < p.topH-10) ? p.topH + hitR + 5 : botY - hitR - 5;
+              break;
+            }
+            triggerDeath(); break;
+          }
+        }
       }
+    }
+
+    // Vague : faire vibrer les tuyaux
+    if (arcadeMode && activePowerUp && activePowerUp.id==='pu13') {
+      pipes.forEach(p => { p.topH += Math.sin(frames*0.3)*1.5; });
     }
   }
 }
+
 gameLoop(0);
 // ═══════════════════════════════════════════════════
 // PREVIEW HELPERS — dessin réel dans mini canvas
@@ -4052,6 +4150,71 @@ document.getElementById('dailyClaimBtn').addEventListener('click', () => {
 // Lancer le check daily au démarrage
 setTimeout(checkDailyBonus, 800);
 
+function activatePowerUp(def) {
+  spawnFlapParticles();
+  const id = def.id;
+  // Power-ups instantanés
+  if (id === 'pu6') { // Bombe
+    const next = pipes.find(p => p.x > bird.x);
+    if (next) { pipes = pipes.filter(p => p !== next); spawnDeathParticles(); } return;
+  }
+  if (id === 'pu8') { // Vortex
+    pipes = []; powerUps = []; spawnDeathParticles(); return;
+  }
+  if (id === 'pu9') { // Éclair
+    const visible = pipes.filter(p => p.x > 0 && p.x < W);
+    if (visible.length) { const pick = visible[Math.floor(Math.random()*visible.length)]; pipes = pipes.filter(p => p !== pick); spawnDeathParticles(); } return;
+  }
+  if (id === 'pu14') { // Gemme +5pts
+    score += 5; flashTimer = 12; return;
+  }
+  if (id === 'pu16') { // Pièce d'or
+    const earned = getCoinMultiplier() * 3;
+    totalCoins += earned; coins += earned; coinFlashTimer = 20; saveState(); return;
+  }
+  if (id === 'pu12') { // Boomerang
+    boomerangBounces = 2; return;
+  }
+  // Power-ups à durée
+  if (activePowerUp) deactivatePowerUp(activePowerUp.id);
+  activePowerUp = { id: def.id, icon: def.icon, color: def.color, duration: def.duration, timeLeft: def.duration };
+  if (id === 'pu7')  { laserActive = true; laserX = bird.x + 30; laserTimer = Math.floor(def.duration / FIXED_TIMESTEP); }
+  if (id === 'pu11') { slowMoActive = true; }
+  if (id === 'pu18') { freezeActive = true; }
+  if (id === 'pu10') { magnetActive = true; }
+  if (id === 'pu13') { /* vague gérée dans update */ }
+}
+
+function deactivatePowerUp(id) {
+  if (id === 'pu7')  { laserActive = false; }
+  if (id === 'pu11') { slowMoActive = false; }
+  if (id === 'pu18') { freezeActive = false; }
+  if (id === 'pu10') { magnetActive = false; }
+}
+
+function drawPowerUpHUD() {
+  if (!activePowerUp) return;
+  const pu = activePowerUp;
+  const col = pu.color === 'rainbow' ? `hsl(${(frames*2)%360},100%,60%)` : pu.color;
+  const barW = W - 80, barH = 10, barX = 40, barY = 18;
+  const pct = pu.timeLeft / pu.duration;
+  // Fond barre
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  roundRectPath(barX - 2, barY - 2, barW + 4, barH + 4, 5); ctx.fill();
+  // Barre
+  ctx.shadowColor = col; ctx.shadowBlur = 12;
+  ctx.fillStyle = col;
+  roundRectPath(barX, barY, barW * pct, barH, 4); ctx.fill();
+  // Icône
+  ctx.shadowBlur = 0;
+  ctx.font = '14px serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(pu.icon, barX - 20, barY + barH / 2);
+  ctx.restore();
+}
+  
 // ── HOOK triggerDeath pour compter les parties ────────
 function triggerDeath() {
   stopMusic();
