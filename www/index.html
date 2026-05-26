@@ -2582,7 +2582,6 @@ function drawBird() {
       ctx.fillRect(r * 0.38, -r * 0.52, r * 0.16, r * 0.2);
       ctx.fillRect(-r * 0.54, -r * 0.52, r * 0.16, r * 0.2);
     } else if (id === 'a9') {
-    } else if (id === 'a9') {
       // SKULL CROWN — tête de mort vectorielle + couronne gothique
       const pulse = 0.5 + Math.sin(t * 4) * 0.5;
       ctx.save(); ctx.translate(0, -r * 1.15);
@@ -2772,22 +2771,52 @@ function drawBird() {
         ctx.fill();
       }
       // --- TÊTE ---
-      ctx.fillStyle = '#dd2200';
-      ctx.shadowColor = '#ff3300'; ctx.shadowBlur = 8;
-      ctx.beginPath(); ctx.ellipse(r*0.55, -r*0.1, r*0.28, r*0.22, 0.2, 0, Math.PI*2); ctx.fill();
-      // Museau pointu
+      // Cou de liaison corps→tête
+      ctx.fillStyle = '#bb1a00';
+      ctx.beginPath(); ctx.ellipse(r*0.38, r*0.0, r*0.2, r*0.16, 0, 0, Math.PI*2); ctx.fill();
+      // Tête principale plus grosse et bien ronde
+      const headGrad = ctx.createRadialGradient(r*0.52, -r*0.18, r*0.04, r*0.55, -r*0.08, r*0.38);
+      headGrad.addColorStop(0, '#ff5533');
+      headGrad.addColorStop(0.5, '#dd2200');
+      headGrad.addColorStop(1, '#880000');
+      ctx.fillStyle = headGrad;
+      ctx.shadowColor = '#ff3300'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.ellipse(r*0.62, -r*0.1, r*0.38, r*0.3, -0.1, 0, Math.PI*2); ctx.fill();
+      // Crête dorsale sur la tête — 3 petites pointes
+      ctx.fillStyle = '#ff6633';
+      for (let ci = 0; ci < 3; ci++) {
+        const cx2 = r*(0.42 + ci*0.14), cy2 = -r*0.38;
+        ctx.beginPath();
+        ctx.moveTo(cx2 - r*0.06, -r*0.22);
+        ctx.lineTo(cx2, cy2 - r*(0.1 - ci*0.03));
+        ctx.lineTo(cx2 + r*0.06, -r*0.22);
+        ctx.closePath(); ctx.fill();
+      }
+      // Mâchoire inférieure légèrement ouverte
       ctx.fillStyle = '#cc1a00';
       ctx.beginPath();
-      ctx.moveTo(r*0.75, -r*0.06);
-      ctx.lineTo(r*0.92, -r*0.02);
-      ctx.lineTo(r*0.75, r*0.1);
-      ctx.closePath(); ctx.fill();
+      ctx.moveTo(r*0.38, r*0.08);
+      ctx.quadraticCurveTo(r*0.62, r*0.22, r*0.88, r*0.1);
+      ctx.quadraticCurveTo(r*0.88, r*0.02, r*0.72, -r*0.02);
+      ctx.quadraticCurveTo(r*0.62, r*0.12, r*0.38, r*0.08);
+      ctx.fill();
+      // Dents
+      ctx.fillStyle = '#fff8e0';
+      ctx.shadowBlur = 0;
+      for (let ti = 0; ti < 3; ti++) {
+        const tx2 = r*(0.5 + ti*0.12);
+        ctx.beginPath();
+        ctx.moveTo(tx2, r*0.07);
+        ctx.lineTo(tx2 + r*0.05, r*0.18);
+        ctx.lineTo(tx2 + r*0.1, r*0.07);
+        ctx.closePath(); ctx.fill();
+      }
       // Narine
-      ctx.fillStyle = '#550000';
-      ctx.beginPath(); ctx.arc(r*0.81, r*0.0, r*0.035, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#330000';
+      ctx.beginPath(); ctx.ellipse(r*0.84, -r*0.04, r*0.04, r*0.025, 0.3, 0, Math.PI*2); ctx.fill();
       // Œil — iris jaune + pupille noire fendue
-      ctx.fillStyle = '#ffdd00';
-      ctx.shadowColor = '#ffee00'; ctx.shadowBlur = 10;
+      ctx.fillStyle = '#ffee00';
+      ctx.shadowColor = '#ffee00'; ctx.shadowBlur = 12;
       ctx.beginPath(); ctx.arc(r*0.6, -r*0.18, r*0.1, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#000000';
       ctx.beginPath(); ctx.ellipse(r*0.61, -r*0.18, r*0.04, r*0.09, 0, 0, Math.PI*2); ctx.fill();
