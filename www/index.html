@@ -2582,31 +2582,85 @@ function drawBird() {
       ctx.fillRect(r * 0.38, -r * 0.52, r * 0.16, r * 0.2);
       ctx.fillRect(-r * 0.54, -r * 0.52, r * 0.16, r * 0.2);
     } else if (id === 'a9') {
-      // SKULL CROWN — couronne vectorielle + crânes + gemme pulsante
+    } else if (id === 'a9') {
+      // SKULL CROWN — tête de mort vectorielle + couronne gothique
       const pulse = 0.5 + Math.sin(t * 4) * 0.5;
-      ctx.shadowColor = `rgba(255,0,0,${pulse})`; ctx.shadowBlur = 20 + pulse * 10;
-      ctx.fillStyle = '#8b0000';
+      ctx.save(); ctx.translate(0, -r * 1.15);
+      // Aura rouge pulsante
+      ctx.globalAlpha = 0.25 + pulse * 0.2;
+      ctx.fillStyle = '#ff0000';
+      ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 22;
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.9, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      // Crâne — boîte crânienne
+      const skullGrad = ctx.createRadialGradient(-r*0.15, -r*0.2, r*0.05, 0, -r*0.1, r*0.75);
+      skullGrad.addColorStop(0, '#e8e0d0');
+      skullGrad.addColorStop(0.6, '#b8b0a0');
+      skullGrad.addColorStop(1, '#706860');
+      ctx.fillStyle = skullGrad;
+      ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.ellipse(0, -r*0.12, r*0.6, r*0.52, 0, 0, Math.PI*2); ctx.fill();
+      // Mâchoire
+      ctx.fillStyle = '#c0b8a8';
       ctx.beginPath();
-      ctx.moveTo(-r * 0.75, -r * 1.05);
-      ctx.lineTo(-r * 0.75, -r * 1.5);
-      ctx.lineTo(-r * 0.45, -r * 1.25);
-      ctx.lineTo(0,          -r * 1.62);
-      ctx.lineTo(r * 0.45,  -r * 1.25);
-      ctx.lineTo(r * 0.75,  -r * 1.5);
-      ctx.lineTo(r * 0.75,  -r * 1.05);
+      ctx.moveTo(-r*0.45, r*0.12);
+      ctx.quadraticCurveTo(-r*0.5, r*0.55, -r*0.2, r*0.58);
+      ctx.lineTo(r*0.2, r*0.58);
+      ctx.quadraticCurveTo(r*0.5, r*0.55, r*0.45, r*0.12);
       ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2;
-      ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 8;
-      ctx.stroke();
+      // Dents
+      ctx.fillStyle = '#e8e0d0';
+      for (let ti = -1; ti <= 1; ti++) {
+        ctx.beginPath();
+        ctx.rect(ti*r*0.19 - r*0.075, r*0.3, r*0.14, r*0.22);
+        ctx.fill();
+      }
+      // Fente nasale
+      ctx.fillStyle = '#2a1a1a';
+      ctx.beginPath();
+      ctx.moveTo(-r*0.1, r*0.1); ctx.lineTo(0, -r*0.02); ctx.lineTo(r*0.1, r*0.1);
+      ctx.closePath(); ctx.fill();
+      // Orbites oculaires
+      ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 14 + pulse*8;
+      ctx.fillStyle = '#1a0000';
+      ctx.beginPath(); ctx.ellipse(-r*0.24, -r*0.22, r*0.18, r*0.15, -0.15, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*0.24, -r*0.22, r*0.18, r*0.15, 0.15, 0, Math.PI*2); ctx.fill();
+      // Lueur rouge dans les orbites
+      ctx.fillStyle = `rgba(255,0,0,${0.3 + pulse*0.4})`;
       ctx.shadowBlur = 0;
-      ctx.font = (r * 0.38) + 'px serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('☠', 0,          -r * 1.62);
-      ctx.fillText('☠', -r * 0.75,  -r * 1.5);
-      ctx.fillText('☠', r * 0.75,   -r * 1.5);
-      ctx.fillStyle = `rgba(255,${Math.floor(pulse * 80)},0,0.9)`;
-      ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 12;
-      ctx.beginPath(); ctx.arc(0, -r * 1.12, r * 0.13, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(-r*0.24, -r*0.22, r*0.1, r*0.08, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*0.24, -r*0.22, r*0.1, r*0.08, 0, 0, Math.PI*2); ctx.fill();
+      // Fissure sur le crâne
+      ctx.strokeStyle = '#555045'; ctx.lineWidth = 1.2; ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.moveTo(-r*0.05, -r*0.55);
+      ctx.lineTo(r*0.08, -r*0.3);
+      ctx.lineTo(-r*0.02, -r*0.1);
+      ctx.stroke();
+      // Couronne gothique dorée
+      ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 10;
+      ctx.fillStyle = '#cc9900';
+      ctx.beginPath();
+      ctx.moveTo(-r*0.62, -r*0.62);
+      ctx.lineTo(-r*0.62, -r*0.88);
+      ctx.lineTo(-r*0.38, -r*0.72);
+      ctx.lineTo(-r*0.18, -r*0.96);
+      ctx.lineTo(0,        -r*0.74);
+      ctx.lineTo(r*0.18,  -r*0.96);
+      ctx.lineTo(r*0.38,  -r*0.72);
+      ctx.lineTo(r*0.62,  -r*0.88);
+      ctx.lineTo(r*0.62,  -r*0.62);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Gemmes couronne
+      ctx.fillStyle = `rgba(255,${Math.floor(pulse*60)},0,0.95)`;
+      ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.arc(0, -r*0.82, r*0.1, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath(); ctx.arc(-r*0.5, -r*0.68, r*0.07, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*0.5, -r*0.68, r*0.07, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
     } else if (id === 'a10') {
       // Étoile de Shérif — tourne sur elle-même
       ctx.save();
@@ -2660,47 +2714,101 @@ function drawBird() {
       ctx.fillStyle = '#8b4513';
       ctx.fillRect(r * 0.35, r * 0.55, r * 0.2, r * 0.35);
       ctx.restore();
-      
-    } else if (id === 'a16') {
-      // Dragon vectoriel miniature
-      const bob = Math.sin(t * 3) * r * 0.45;
-      ctx.save(); ctx.translate(-r * 2.2, -r * 0.1 + bob);
-      const wingFlap = Math.sin(t * 10) * 0.5;
-      ctx.fillStyle = 'rgba(180,0,60,0.75)';
-      ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 8;
-      ctx.save(); ctx.rotate(-0.3 + wingFlap);
-      ctx.beginPath(); ctx.moveTo(0,-r*0.1); ctx.lineTo(-r*0.9,-r*0.6); ctx.lineTo(-r*0.5,r*0.2); ctx.closePath(); ctx.fill();
-      ctx.restore();
-      ctx.save(); ctx.rotate(0.3 - wingFlap);
-      ctx.beginPath(); ctx.moveTo(0,-r*0.1); ctx.lineTo(r*0.6,-r*0.55); ctx.lineTo(r*0.3,r*0.2); ctx.closePath(); ctx.fill();
-      ctx.restore();
-      const dg = ctx.createRadialGradient(-r*0.05,0,r*0.05,0,0,r*0.45);
-      dg.addColorStop(0,'#cc2200'); dg.addColorStop(1,'#550000');
-      ctx.fillStyle = dg; ctx.shadowBlur = 6;
-      ctx.beginPath(); ctx.ellipse(0,0,r*0.45,r*0.3,0,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#cc2200';
-      ctx.beginPath(); ctx.ellipse(r*0.42,-r*0.08,r*0.22,r*0.18,0.3,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#ffee00'; ctx.shadowColor = '#ffee00'; ctx.shadowBlur = 6;
-      ctx.beginPath(); ctx.arc(r*0.52,-r*0.14,r*0.07,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#ff0000';
-      ctx.beginPath(); ctx.arc(r*0.54,-r*0.14,r*0.04,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle = '#990000'; ctx.lineWidth = r*0.12; ctx.lineCap = 'round'; ctx.shadowBlur = 4;
+      } else if (id === 'a16') {
+      // Dragon vectoriel — corps ovale, tête, ailes, queue, feu
+      const bob = Math.sin(t * 2.8) * r * 0.5;
+      ctx.save(); ctx.translate(-r * 2.6, bob);
+      // --- QUEUE ondulante ---
+      ctx.save();
+      ctx.strokeStyle = '#991100'; ctx.lineWidth = r * 0.28; ctx.lineCap = 'round';
+      ctx.shadowColor = '#cc2200'; ctx.shadowBlur = 6;
       ctx.beginPath();
-      ctx.moveTo(-r*0.4,r*0.05);
-      ctx.quadraticCurveTo(-r*0.8,r*0.3+Math.sin(t*6)*r*0.15,-r*1.0,Math.sin(t*4)*r*0.2);
+      ctx.moveTo(-r * 0.3, r * 0.05);
+      ctx.bezierCurveTo(
+        -r * 0.7, r * 0.35 + Math.sin(t * 5) * r * 0.2,
+        -r * 1.1, r * 0.1  + Math.sin(t * 5 + 1) * r * 0.25,
+        -r * 1.4, r * 0.3  + Math.sin(t * 4 + 2) * r * 0.2
+      );
       ctx.stroke();
-      ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = r*0.07;
-      ctx.beginPath(); ctx.moveTo(r*0.48,-r*0.24); ctx.lineTo(r*0.58,-r*0.42); ctx.stroke();
-      const fa = 0.4 + Math.sin(t * 9) * 0.4;
-      ctx.globalAlpha = fa;
-      ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 14;
-      for (let fi = 0; fi < 3; fi++) {
-        const fs = r * (0.22 - fi * 0.05);
-        ctx.fillStyle = fi===0 ? '#ffee00' : fi===1 ? '#ff6600' : '#ff2200';
-        ctx.beginPath(); ctx.arc(r*(0.72+fi*0.18),-r*0.06+Math.sin(t*12+fi)*r*0.06,fs,0,Math.PI*2); ctx.fill();
+      // Pointe de queue triangulaire
+      const qx = -r*1.4, qy = r*0.3 + Math.sin(t*4+2)*r*0.2;
+      ctx.fillStyle = '#cc2200';
+      ctx.beginPath();
+      ctx.moveTo(qx, qy - r*0.15);
+      ctx.lineTo(qx - r*0.25, qy + r*0.05);
+      ctx.lineTo(qx, qy + r*0.2);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+      // --- AILES ---
+      const flap = Math.sin(t * 9) * 0.45;
+      // Aile haute
+      ctx.save(); ctx.rotate(-0.25 + flap);
+      ctx.fillStyle = '#aa1100';
+      ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(r * 0.05, -r * 0.15);
+      ctx.quadraticCurveTo(-r * 0.3, -r * 0.9, -r * 0.8, -r * 0.7);
+      ctx.quadraticCurveTo(-r * 0.4, -r * 0.3, r * 0.05, -r * 0.15);
+      ctx.fill();
+      // Nervures aile
+      ctx.strokeStyle = '#ff4422'; ctx.lineWidth = 1; ctx.globalAlpha = 0.6;
+      ctx.beginPath(); ctx.moveTo(r*0.05,-r*0.15); ctx.lineTo(-r*0.5,-r*0.65); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r*0.05,-r*0.15); ctx.lineTo(-r*0.3,-r*0.72); ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+      // --- CORPS ---
+      const bodyGrad = ctx.createRadialGradient(r*0.05, -r*0.05, r*0.1, 0, 0, r*0.52);
+      bodyGrad.addColorStop(0, '#ff4422');
+      bodyGrad.addColorStop(0.5, '#cc1100');
+      bodyGrad.addColorStop(1, '#660000');
+      ctx.fillStyle = bodyGrad;
+      ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.ellipse(0, 0, r*0.52, r*0.34, 0, 0, Math.PI*2); ctx.fill();
+      // Écailles ventre
+      ctx.fillStyle = 'rgba(255,150,80,0.35)';
+      for (let si = 0; si < 3; si++) {
+        ctx.beginPath();
+        ctx.ellipse(-r*0.2 + si*r*0.2, r*0.1, r*0.13, r*0.08, 0, 0, Math.PI*2);
+        ctx.fill();
+      }
+      // --- TÊTE ---
+      ctx.fillStyle = '#dd2200';
+      ctx.shadowColor = '#ff3300'; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.ellipse(r*0.55, -r*0.1, r*0.28, r*0.22, 0.2, 0, Math.PI*2); ctx.fill();
+      // Museau pointu
+      ctx.fillStyle = '#cc1a00';
+      ctx.beginPath();
+      ctx.moveTo(r*0.75, -r*0.06);
+      ctx.lineTo(r*0.92, -r*0.02);
+      ctx.lineTo(r*0.75, r*0.1);
+      ctx.closePath(); ctx.fill();
+      // Narine
+      ctx.fillStyle = '#550000';
+      ctx.beginPath(); ctx.arc(r*0.81, r*0.0, r*0.035, 0, Math.PI*2); ctx.fill();
+      // Œil — iris jaune + pupille noire fendue
+      ctx.fillStyle = '#ffdd00';
+      ctx.shadowColor = '#ffee00'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(r*0.6, -r*0.18, r*0.1, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#000000';
+      ctx.beginPath(); ctx.ellipse(r*0.61, -r*0.18, r*0.04, r*0.09, 0, 0, Math.PI*2); ctx.fill();
+      // Corne
+      ctx.strokeStyle = '#ffbb44'; ctx.lineWidth = r*0.08; ctx.lineCap = 'round';
+      ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.moveTo(r*0.52,-r*0.3); ctx.lineTo(r*0.58,-r*0.52); ctx.stroke();
+      // --- SOUFFLE DE FEU ---
+      const fa = 0.5 + Math.sin(t * 10) * 0.5;
+      const fireX = r * 0.94;
+      for (let fi = 0; fi < 4; fi++) {
+        const foff = Math.sin(t * 11 + fi * 1.4) * r * 0.1;
+        const fsize = r * (0.22 - fi * 0.04);
+        ctx.globalAlpha = fa * (1 - fi * 0.22);
+        ctx.fillStyle = ['#ffff88','#ffcc00','#ff6600','#ff1100'][fi];
+        ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 12;
+        ctx.beginPath(); ctx.arc(fireX + fi * r * 0.28, -r*0.02 + foff, fsize, 0, Math.PI*2); ctx.fill();
       }
       ctx.globalAlpha = 1;
       ctx.restore();
+    
     }
 
     ctx.restore();
