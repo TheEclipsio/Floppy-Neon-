@@ -1098,9 +1098,9 @@ function loadState() {
 }
 function saveState() {
   localStorage.setItem('floppyNeonSave', JSON.stringify({
-    totalCoins, unlockedItems, equippedSkin, equippedBg, equippedAcc, equippedPipe, best, arcadeBest,
-    adBlockerOwned, gamesPlayedTotal, ratingDismissed
-  }));
+  totalCoins, unlockedItems, equippedSkin, equippedBg, equippedAcc, equippedPipe,
+  best, arcadeBest, adBlockerOwned, coinBoostIapOwned, gamesPlayedTotal, ratingDismissed
+}));
 }
 
 let saved = loadState();
@@ -1221,14 +1221,7 @@ let musicEnabled = localStorage.getItem('floppyMusicEnabled') !== 'false';
 function playMusic() { if (musicEnabled) bgMusic.play().catch(()=>{}); }
 function stopMusic() { bgMusic.pause(); }
 
-function resetGame() {
-  score = 0; pipes = []; particles = []; coinObjects = []; coinLabels = [];
-  coins = 0; frames = 0; flashTimer = 0; coinFlashTimer = 0; deathShake = 0;
-  hasUsedRevive = false; reviveCountdown = 5; skipUnlocked = false;
-  adState = 'none'; adProgress = 0;
-  resetBird();
-}
-resetBird();
+
 
 function doRevive() {
   logDebug("🎬 doRevive() — appel showRewardedAd");
