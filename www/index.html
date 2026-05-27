@@ -3260,7 +3260,7 @@ function _gameUpdate() {
 
     // Collisions tuyaux
     const ghost = arcadeMode && activePowerUp && (activePowerUp.id==='pu1'||activePowerUp.id==='pu4'||activePowerUp.id==='pu19');
-    if (shield) { pipes = pipes.filter(pipe => pipe !== p); activePowerUp = null; spawnFlapParticles(); spawnDeathParticles(); break; }
+    if (shield) { pipes = pipes.filter(pipe => pipe !== p); activePowerUp = null; spawnFlapParticles(); spawnDeathParticles(); return; }
     const shrink = arcadeMode && activePowerUp && activePowerUp.id==='pu17';
     const hitR = shrink ? BIRD_R * 0.55 : BIRD_R * 0.7;
     if (secondChanceActive) {
@@ -3276,7 +3276,7 @@ function _gameUpdate() {
         const botY = p.topH+PIPE_GAP;
         if (bird.x+hitR > p.x-5 && bird.x-hitR < p.x+PIPE_W+5) {
           if (bird.y-hitR < p.topH-10 || bird.y+hitR > botY+10) {
-            if (shield) { activePowerUp = null; spawnFlapParticles(); break; }
+            if (shield) { activePowerUp = null; spawnFlapParticles(); return; }
             // Boomerang : rebondir
             if (arcadeMode && boomerangBounces > 0) {
               boomerangBounces--;
