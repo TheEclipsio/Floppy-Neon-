@@ -1194,8 +1194,7 @@ const POWERUP_DEFS = [
   { id:'pu8',  icon:'🌀', name:'Vortex',       color:'#9c27b0', duration:0     },
   { id:'pu9',  icon:'⚡', name:'Éclair',       color:'#ffee58', duration:0     },
   { id:'pu10', icon:'🧲', name:'Aimant',       color:'#e53935', duration:6000  },
-  { id:'pu11', icon:'⏱️', name:'Slow-Mo',     color:'#5c6bc0', duration:4000  },
-  { id:'pu12', icon:'🪃', name:'Boomerang',    color:'#ff8f00', duration:0     },
+  { id:'pu12', icon:'🪃', name:'Rebond',    color:'#ff8f00', duration:0     },
   { id:'pu13', icon:'🌊', name:'Vague',        color:'#00bcd4', duration:3000  },
   { id:'pu14', icon:'💎', name:'Gemme',        color:'#29b6f6', duration:0     },
   { id:'pu15', icon:'🃏', name:'Joker',        color:'#7e57c2', duration:3000  },
@@ -1203,12 +1202,13 @@ const POWERUP_DEFS = [
   { id:'pu17', icon:'🤏', name:'Shrink',       color:'#f06292', duration:6000  },
   { id:'pu18', icon:'🧊', name:'Freeze',       color:'#80deea', duration:3000  },
   { id:'pu19', icon:'🌈', name:'Rainbow',      color:'rainbow', duration:4000  },
+  { id:'pu20', icon:'❤️', name:'2ème Chance', color:'#ff1744', duration:0 },
 ];
 let boomerangBounces = 0;
 let laserActive = false, laserX = 0, laserTimer = 0;
 let freezeActive = false;
-let slowMoActive = false;
 let magnetActive = false;
+  let secondChanceActive = false;
 let flashTimer = 0, coinFlashTimer = 0, deathShake = 0;
 let bird = {}, pipes = [], coinObjects = [], particles = [], coinLabels = [], groundOffset = 0;
 let hasUsedRevive = false, reviveCountdown = 5, reviveTimerStart = 0, skipUnlocked = false;
@@ -2519,10 +2519,12 @@ function drawBirdSprite(c, r, skinId, wAngle) {
 }
 
 function drawBird() {
-  const r = BIRD_R;
+  const shrinkActive = arcadeMode && activePowerUp && activePowerUp.id === 'pu17';
+const r = shrinkActive ? BIRD_R * 0.55 : BIRD_R;
   const skinItem = SKIN_ITEMS.find(s => s.id === equippedSkin && s.subtype === 'bird');
   const accItem  = ACC_ITEMS.find(a => a.id === equippedAcc);
   const t = performance.now() / 1000;
+  const ghostActive = arcadeMode && activePowerUp && (activePowerUp.id === 'pu1' || activePowerUp.id === 'pu4' || activePowerUp.id === 'pu19');
 
   // Effets orbitaux AVANT l'oiseau (derrière)
   if (accItem) {
@@ -2599,6 +2601,7 @@ function drawBird() {
 
   // Oiseau
   ctx.save(); ctx.translate(bird.x, bird.y); ctx.rotate(bird.angle);
+if (ghostActive) { ctx.globalAlpha = 0.38; }
   drawBirdSprite(ctx, r, skinItem ? skinItem.id : 's1', bird.wingAngle);
 
   // Accessoires SUR l'oiseau (suivent la rotation)
@@ -3208,6 +3211,10 @@ function _gameUpdate() {
       c.y = c.y + Math.sin((frames*0.05+c.bobOffset))*0.3 - Math.sin(((frames-1)*0.05+c.bobOffset))*0.3;
       if (!c.collected) {
         const dx = bird.x-c.x, dy = bird.y-c.y;
+        if (magnetActive) {
+  const dx = bird.x - c.x, dy = bird.y - c.y;
+  if (Math.sqrt(dx*dx+dy*dy) < 140) { c.x += dx*0.08; c.y += dy*0.08; }
+        }
         if (Math.sqrt(dx*dx+dy*dy) < BIRD_R+c.r) {
           const earned = getCoinMultiplier();
           c.collected = true; totalCoins += earned; coins += earned; coinFlashTimer = 15;
@@ -3253,9 +3260,17 @@ function _gameUpdate() {
 
     // Collisions tuyaux
     const ghost = arcadeMode && activePowerUp && (activePowerUp.id==='pu1'||activePowerUp.id==='pu4'||activePowerUp.id==='pu19');
-    const shield = arcadeMode && activePowerUp && activePowerUp.id==='pu2';
+    if (shield) { pipes = pipes.filter(pipe => pipe !== p); activePowerUp = null; spawnFlapParticles(); spawnDeathParticles(); break; }
     const shrink = arcadeMode && activePowerUp && activePowerUp.id==='pu17';
     const hitR = shrink ? BIRD_R * 0.55 : BIRD_R * 0.7;
+    if (secondChanceActive) {
+  secondChanceActive = false;
+  pipes = pipes.filter(pipe => pipe !== p);
+  bird.vy = JUMP_FORCE * 0.6;
+  spawnFlapParticles(); spawnDeathParticles();
+  showToast('❤️ 2ÈME CHANCE UTILISÉE!');
+  break;
+    }
     if (!ghost) {
       for (const p of pipes) {
         const botY = p.topH+PIPE_GAP;
@@ -4161,22 +4176,30 @@ function activatePowerUp(def) {
   // Power-ups instantanés
   if (id === 'pu6') { // Bombe
     const next = pipes.find(p => p.x > bird.x);
-    if (next) { pipes = pipes.filter(p => p !== next); spawnDeathParticles(); } return;
+    if (next) { score += 1; flashTimer = 12; pipes = pipes.filter(p => p !== next); spawnDeathParticles(); } return;
   }
   if (id === 'pu8') { // Vortex
-    pipes = []; powerUps = []; spawnDeathParticles(); return;
+    score += Math.max(0, pipes.length - 1); flashTimer = 12; pipes = []; powerUps = []; spawnDeathParticles(); return;
   }
   if (id === 'pu9') { // Éclair
     const visible = pipes.filter(p => p.x > 0 && p.x < W);
-    if (visible.length) { const pick = visible[Math.floor(Math.random()*visible.length)]; pipes = pipes.filter(p => p !== pick); spawnDeathParticles(); } return;
+  if (laserX > p.x && laserX < p.x + PIPE_W) { score += 1; flashTimer = 8; spawnDeathParticles(); return false; }
   }
+  if (id === 'pu20') { secondChanceActive = true; showToast('❤️ 2ÈME CHANCE PRÊTE!'); return; }
   if (id === 'pu14') { // Gemme +5pts
     score += 5; flashTimer = 12; return;
   }
   if (id === 'pu16') { // Pièce d'or
-    const earned = getCoinMultiplier() * 3;
-    totalCoins += earned; coins += earned; coinFlashTimer = 20; saveState(); return;
+    const earned = coinBoostIapOwned ? 6 : 3;
+totalCoins += earned; coins += earned; coinFlashTimer = 20; saveState();
+showToast(coinBoostIapOwned ? '🪙 +6 PIÈCES (x2)!' : '🪙 +3 PIÈCES!');
+return;
   }
+  if (id === 'pu1')  { showToast('👻 FANTÔME — TRAVERSEZ LES TUYAUX!'); }
+if (id === 'pu3')  { showToast('🔥 RAGE — SCORE x2!'); }
+if (id === 'pu4')  { showToast('⭐ STAR RUSH — INVINCIBLE!'); }
+if (id === 'pu5')  { showToast('🎯 PRÉCISION — TUYAUX ÉLARGIS!'); }
+if (id === 'pu15') { showToast('🃏 JOKER — SCORE x3!'); }
   if (id === 'pu12') { // Boomerang
     boomerangBounces = 2; return;
   }
@@ -4184,7 +4207,6 @@ function activatePowerUp(def) {
   if (activePowerUp) deactivatePowerUp(activePowerUp.id);
   activePowerUp = { id: def.id, icon: def.icon, color: def.color, duration: def.duration, timeLeft: def.duration };
   if (id === 'pu7')  { laserActive = true; laserX = bird.x + 30; laserTimer = Math.floor(def.duration / FIXED_TIMESTEP); }
-  if (id === 'pu11') { slowMoActive = true; }
   if (id === 'pu18') { freezeActive = true; }
   if (id === 'pu10') { magnetActive = true; }
   if (id === 'pu13') { /* vague gérée dans update */ }
@@ -4192,7 +4214,6 @@ function activatePowerUp(def) {
 
 function deactivatePowerUp(id) {
   if (id === 'pu7')  { laserActive = false; }
-  if (id === 'pu11') { slowMoActive = false; }
   if (id === 'pu18') { freezeActive = false; }
   if (id === 'pu10') { magnetActive = false; }
 }
@@ -4240,8 +4261,9 @@ function resetGame() {
   hasUsedRevive = false; reviveCountdown = 5; skipUnlocked = false;
   adState = 'none'; adProgress = 0;
   powerUps = []; activePowerUp = null; arcadeTier = 1; arcadeSpeedMult = 1.0;
-  boomerangBounces = 0; laserActive = false; freezeActive = false; slowMoActive = false; magnetActive = false;
+  boomerangBounces = 0; laserActive = false; freezeActive = false; magnetActive = false;
   resetBird();
+  secondChanceActive = false;
 }
 
 function doReplay() {
