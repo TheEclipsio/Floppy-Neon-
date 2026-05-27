@@ -3260,23 +3260,23 @@ function _gameUpdate() {
 
     // Collisions tuyaux
     const ghost = arcadeMode && activePowerUp && (activePowerUp.id==='pu1'||activePowerUp.id==='pu4'||activePowerUp.id==='pu19');
-    if (shield) { pipes = pipes.filter(pipe => pipe !== p); activePowerUp = null; spawnFlapParticles(); spawnDeathParticles(); return; }
+    const shield = arcadeMode && activePowerUp && activePowerUp.id==='pu2';
     const shrink = arcadeMode && activePowerUp && activePowerUp.id==='pu17';
     const hitR = shrink ? BIRD_R * 0.55 : BIRD_R * 0.7;
-    if (secondChanceActive) {
-  secondChanceActive = false;
-  pipes = pipes.filter(pipe => pipe !== p);
-  bird.vy = JUMP_FORCE * 0.6;
-  spawnFlapParticles(); spawnDeathParticles();
-  showToast('❤️ 2ÈME CHANCE UTILISÉE!');
-  break;
-    }
     if (!ghost) {
       for (const p of pipes) {
         const botY = p.topH+PIPE_GAP;
         if (bird.x+hitR > p.x-5 && bird.x-hitR < p.x+PIPE_W+5) {
           if (bird.y-hitR < p.topH-10 || bird.y+hitR > botY+10) {
-            if (shield) { activePowerUp = null; spawnFlapParticles(); return; }
+            if (shield) { pipes = pipes.filter(pipe => pipe !== p); activePowerUp = null; spawnFlapParticles(); spawnDeathParticles(); break; }
+            if (secondChanceActive) {
+              secondChanceActive = false;
+              pipes = pipes.filter(pipe => pipe !== p);
+              bird.vy = JUMP_FORCE * 0.6;
+              spawnFlapParticles(); spawnDeathParticles();
+              showToast('❤️ 2ÈME CHANCE UTILISÉE!');
+              break;
+            }
             // Boomerang : rebondir
             if (arcadeMode && boomerangBounces > 0) {
               boomerangBounces--;
@@ -3289,7 +3289,6 @@ function _gameUpdate() {
         }
       }
     }
-
     // Vague : faire vibrer les tuyaux
     if (arcadeMode && activePowerUp && activePowerUp.id==='pu13') {
       pipes.forEach(p => { p.topH += Math.sin(frames*0.3)*1.5; });
