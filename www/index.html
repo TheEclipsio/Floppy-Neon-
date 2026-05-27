@@ -1200,13 +1200,13 @@ const POWERUP_DEFS = [
   { id:'pu15', icon:'🃏', name:'Joker',        color:'#7e57c2', duration:3000  },
   { id:'pu16', icon:'🪙', name:"Pièce d'or", color:'#ffa000', duration:0     },
   { id:'pu17', icon:'🤏', name:'Shrink',       color:'#f06292', duration:6000  },
-  { id:'pu18', icon:'🧊', name:'Freeze',       color:'#80deea', duration:3000  },
+  { id:'pu18', icon:'🪶', name:'Gravité Légère', color:'#80deea', duration:5000  },
   { id:'pu19', icon:'🌈', name:'Rainbow',      color:'rainbow', duration:4000  },
   { id:'pu20', icon:'❤️', name:'2ème Chance', color:'#ff1744', duration:0 },
 ];
 let boomerangBounces = 0;
 let laserActive = false, laserX = 0, laserTimer = 0;
-let freezeActive = false;
+let lowGravityActive = false;
 let magnetActive = false;
   let secondChanceActive = false;
 let flashTimer = 0, coinFlashTimer = 0, deathShake = 0;
@@ -2601,9 +2601,10 @@ const r = shrinkActive ? BIRD_R * 0.55 : BIRD_R;
 
   // Oiseau
   ctx.save(); ctx.translate(bird.x, bird.y); ctx.rotate(bird.angle);
+ctx.save();
 if (ghostActive) { ctx.globalAlpha = 0.38; }
-  drawBirdSprite(ctx, r, skinItem ? skinItem.id : 's1', bird.wingAngle);
-
+drawBirdSprite(ctx, r, skinItem ? skinItem.id : 's1', bird.wingAngle);
+ctx.restore();
   // Accessoires SUR l'oiseau (suivent la rotation)
   if (accItem) {
     const id = accItem.id;
@@ -3123,6 +3124,7 @@ function gameLoop(timestamp) {
   drawParticles();
   drawCoinLabels();
   drawBird();
+  drawPuAnim();
   if (state === 'playing') drawScore();
   drawCoinHUD();
   if (state === 'idle') drawIdleScreen();
@@ -3152,10 +3154,9 @@ function _gameUpdate() {
     const slowFactor = 1.0;
     groundOffset += spd * slowFactor;
 
-    if (!freezeActive) {
-      bird.vy += GRAVITY;
-      bird.y  += bird.vy * slowFactor;
-    }
+    bird.vy += lowGravityActive ? GRAVITY * 0.35 : GRAVITY;
+bird.y  += bird.vy * slowFactor;
+    
     bird.angle = Math.max(-Math.PI/4, Math.min(Math.PI/2, bird.vy*0.06));
     bird.wingAngle += bird.wingDir*0.22;
     if (Math.abs(bird.wingAngle) > 0.8) bird.wingDir *= -1;
@@ -3186,7 +3187,7 @@ function _gameUpdate() {
     pipes.forEach(p => {
       p.x -= spd * slowFactor;
       // Oscillation verticale
-      if (arcadeMode && p.oscAmp > 0 && !freezeActive) {
+      if (arcadeMode && p.oscAmp > 0) {
         p.oscOffset += p.oscSpeed * slowFactor;
         p.topH = p.baseTopH + Math.sin(p.oscOffset) * p.oscAmp;
         p.topH = Math.max(50, Math.min(H - GROUND_H - PIPE_GAP - 50, p.topH));
@@ -4169,21 +4170,84 @@ document.getElementById('dailyClaimBtn').addEventListener('click', () => {
 // Lancer le check daily au démarrage
 setTimeout(checkDailyBonus, 800);
 
+let puAnim = null; // { type, x, y, timer }
+
+function spawnPuAnim(type, x, y) {
+  puAnim = { type, x, y, timer: 30 };
+}
+
+function drawPuAnim() {
+  if (!puAnim || puAnim.timer <= 0) { puAnim = null; return; }
+  const t = puAnim.timer;
+  const prog = 1 - t / 30;
+  ctx.save();
+  ctx.globalAlpha = t / 30;
+
+  if (puAnim.type === 'bombe') {
+    // Cercle d'explosion qui s'agrandit
+    const r = 20 + prog * 80;
+    ctx.strokeStyle = '#ff9100'; ctx.lineWidth = 4 - prog * 3;
+    ctx.shadowColor = '#ff9100'; ctx.shadowBlur = 20;
+    ctx.beginPath(); ctx.arc(puAnim.x, puAnim.y, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(puAnim.x, puAnim.y, r * 0.6, 0, Math.PI * 2); ctx.stroke();
+
+  } else if (puAnim.type === 'vortex') {
+    // Spirale qui s'étend sur tout l'écran
+    const r = prog * W;
+    ctx.strokeStyle = `hsl(${t * 12},100%,60%)`; ctx.lineWidth = 3;
+    ctx.shadowColor = '#9c27b0'; ctx.shadowBlur = 18;
+    ctx.beginPath(); ctx.arc(W / 2, H / 2, r * 0.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, H / 2, r * 0.3, 0, Math.PI * 2); ctx.stroke();
+
+  } else if (puAnim.type === 'eclair') {
+    // Éclair zigzag du haut en bas sur le tuyau
+    ctx.strokeStyle = '#ffee58'; ctx.lineWidth = 3 + (1 - prog) * 4;
+    ctx.shadowColor = '#ffee58'; ctx.shadowBlur = 24;
+    ctx.beginPath();
+    const x = puAnim.x;
+    ctx.moveTo(x, 0);
+    for (let i = 1; i <= 6; i++) {
+      ctx.lineTo(x + (i % 2 === 0 ? -14 : 14), (H / 6) * i);
+    }
+    ctx.stroke();
+
+  } else if (puAnim.type === 'rebond') {
+    // Ondes concentriques autour de l'oiseau
+    for (let i = 0; i < 3; i++) {
+      const r = (20 + i * 20) + prog * 40;
+      ctx.strokeStyle = '#ff8f00';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = (t / 30) * (1 - i * 0.25);
+      ctx.shadowColor = '#ff8f00'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(puAnim.x, puAnim.y, r, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+  puAnim.timer--;
+}
+  
 function activatePowerUp(def) {
   spawnFlapParticles();
   const id = def.id;
   // Power-ups instantanés
   if (id === 'pu6') { // Bombe
     const next = pipes.find(p => p.x > bird.x);
-    if (next) { score += 1; flashTimer = 12; pipes = pipes.filter(p => p !== next); spawnDeathParticles(); } return;
+    if (next) { score += 1; flashTimer = 12; spawnPuAnim('bombe', next.x + PIPE_W/2, H/2); pipes = pipes.filter(p => p !== next); spawnDeathParticles(); }
+    showToast('💣 BOMBE — TUYAU SUIVANT DÉTRUIT!'); return;
   }
   if (id === 'pu8') { // Vortex
-    score += Math.max(0, pipes.length - 1); flashTimer = 12; pipes = []; powerUps = []; spawnDeathParticles(); return;
+    score += Math.max(0, pipes.length - 1); flashTimer = 12;
+    spawnPuAnim('vortex', W/2, H/2);
+    pipes = []; powerUps = []; spawnDeathParticles();
+    showToast('🌀 VORTEX — TOUS LES TUYAUX DÉTRUITS!'); return;
   }
-  if (id === 'pu9') { // Éclair
+if (id === 'pu9') { // Éclair
     const visible = pipes.filter(p => p.x > 0 && p.x < W);
-  if (laserX > p.x && laserX < p.x + PIPE_W) { score += 1; flashTimer = 8; spawnDeathParticles(); return false; }
-  }
+    if (visible.length) { score += 1; flashTimer = 12; const pick = visible[Math.floor(Math.random()*visible.length)]; spawnPuAnim('eclair', pick.x + PIPE_W/2, H/2); pipes = pipes.filter(p => p !== pick); spawnDeathParticles(); }
+    showToast('⚡ ÉCLAIR — TUYAU ALÉATOIRE DÉTRUIT!'); return;
+}
   if (id === 'pu20') { secondChanceActive = true; showToast('❤️ 2ÈME CHANCE PRÊTE!'); return; }
   if (id === 'pu14') { // Gemme +5pts
     score += 5; flashTimer = 12; return;
@@ -4193,27 +4257,41 @@ function activatePowerUp(def) {
 totalCoins += earned; coins += earned; coinFlashTimer = 20; saveState();
 showToast(coinBoostIapOwned ? '🪙 +6 PIÈCES (x2)!' : '🪙 +3 PIÈCES!');
 return;
+    if (id === 'pu12') { // Rebond
+    boomerangBounces = 2; spawnPuAnim('rebond', bird.x, bird.y);
+    showToast('🪃 REBOND — REBONDIS SUR 2 TUYAUX!'); return;
+    }
   }
+  if (id === 'pu6')  { showToast('💣 BOMBE — TUYAU SUIVANT DÉTRUIT!'); }
+if (id === 'pu8')  { showToast('🌀 VORTEX — TOUS LES TUYAUX DÉTRUITS!'); }
+if (id === 'pu9')  { showToast('⚡ ÉCLAIR — TUYAU ALÉATOIRE DÉTRUIT!'); }
+if (id === 'pu14') { showToast('💎 GEMME — +5 POINTS!'); }
+if (id === 'pu12') { showToast('🪃 REBOND — REBONDIS SUR 2 TUYAUX!'); }
   if (id === 'pu1')  { showToast('👻 FANTÔME — TRAVERSEZ LES TUYAUX!'); }
 if (id === 'pu3')  { showToast('🔥 RAGE — SCORE x2!'); }
 if (id === 'pu4')  { showToast('⭐ STAR RUSH — INVINCIBLE!'); }
 if (id === 'pu5')  { showToast('🎯 PRÉCISION — TUYAUX ÉLARGIS!'); }
 if (id === 'pu15') { showToast('🃏 JOKER — SCORE x3!'); }
-  if (id === 'pu12') { // Boomerang
-    boomerangBounces = 2; return;
   }
   // Power-ups à durée
   if (activePowerUp) deactivatePowerUp(activePowerUp.id);
   activePowerUp = { id: def.id, icon: def.icon, color: def.color, duration: def.duration, timeLeft: def.duration };
+  if (id === 'pu2')  { showToast('🛡️ BOUCLIER — 1 TUYAU ABSORBÉ!'); }
+if (id === 'pu7')  { showToast('🔫 LASER — DÉTRUIT LES TUYAUX!'); }
+if (id === 'pu10') { showToast('🧲 AIMANT — ATTIRE PIÈCES ET POWERUPS!'); }
+if (id === 'pu13') { showToast('🌊 VAGUE — TUYAUX EN MOUVEMENT!'); }
+if (id === 'pu17') { showToast('🤏 SHRINK — HITBOX RÉDUITE!'); }
+if (id === 'pu18') { lowGravityActive = true; showToast('🪶 GRAVITÉ LÉGÈRE — FLOTTEZ!'); }
+if (id === 'pu19') { showToast('🌈 RAINBOW — INVINCIBLE + SCORE x2!'); }
   if (id === 'pu7')  { laserActive = true; laserX = bird.x + 30; laserTimer = Math.floor(def.duration / FIXED_TIMESTEP); }
-  if (id === 'pu18') { freezeActive = true; }
+  if (id === 'pu18') { lowGravityActive = true; showToast('🪶 GRAVITÉ LÉGÈRE — FLOTTEZ!'); }
   if (id === 'pu10') { magnetActive = true; }
   if (id === 'pu13') { /* vague gérée dans update */ }
 }
 
 function deactivatePowerUp(id) {
   if (id === 'pu7')  { laserActive = false; }
-  if (id === 'pu18') { freezeActive = false; }
+  if (id === 'pu18') { lowGravityActive = false; }
   if (id === 'pu10') { magnetActive = false; }
 }
 
@@ -4260,7 +4338,7 @@ function resetGame() {
   hasUsedRevive = false; reviveCountdown = 5; skipUnlocked = false;
   adState = 'none'; adProgress = 0;
   powerUps = []; activePowerUp = null; arcadeTier = 1; arcadeSpeedMult = 1.0;
-  boomerangBounces = 0; laserActive = false; freezeActive = false; magnetActive = false;
+  boomerangBounces = 0; laserActive = false; lowGravityActive = false; magnetActive = false; secondChanceActive = false;
   resetBird();
   secondChanceActive = false;
 }
