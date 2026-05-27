@@ -4232,61 +4232,50 @@ function activatePowerUp(def) {
   spawnFlapParticles();
   const id = def.id;
   // Power-ups instantanés
-  if (id === 'pu6') { // Bombe
+  if (id === 'pu6') {
     const next = pipes.find(p => p.x > bird.x);
     if (next) { score += 1; flashTimer = 12; spawnPuAnim('bombe', next.x + PIPE_W/2, H/2); pipes = pipes.filter(p => p !== next); spawnDeathParticles(); }
     showToast('💣 BOMBE — TUYAU SUIVANT DÉTRUIT!'); return;
   }
-  if (id === 'pu8') { // Vortex
+  if (id === 'pu8') {
     score += Math.max(0, pipes.length - 1); flashTimer = 12;
     spawnPuAnim('vortex', W/2, H/2);
     pipes = []; powerUps = []; spawnDeathParticles();
     showToast('🌀 VORTEX — TOUS LES TUYAUX DÉTRUITS!'); return;
   }
-if (id === 'pu9') { // Éclair
+  if (id === 'pu9') {
     const visible = pipes.filter(p => p.x > 0 && p.x < W);
     if (visible.length) { score += 1; flashTimer = 12; const pick = visible[Math.floor(Math.random()*visible.length)]; spawnPuAnim('eclair', pick.x + PIPE_W/2, H/2); pipes = pipes.filter(p => p !== pick); spawnDeathParticles(); }
     showToast('⚡ ÉCLAIR — TUYAU ALÉATOIRE DÉTRUIT!'); return;
-}
-  if (id === 'pu20') { secondChanceActive = true; showToast('❤️ 2ÈME CHANCE PRÊTE!'); return; }
-  if (id === 'pu14') { // Gemme +5pts
-    score += 5; flashTimer = 12; return;
   }
-  if (id === 'pu16') { // Pièce d'or
-    const earned = coinBoostIapOwned ? 6 : 3;
-totalCoins += earned; coins += earned; coinFlashTimer = 20; saveState();
-showToast(coinBoostIapOwned ? '🪙 +6 PIÈCES (x2)!' : '🪙 +3 PIÈCES!');
-return;
-    if (id === 'pu12') { // Rebond
+  if (id === 'pu12') {
     boomerangBounces = 2; spawnPuAnim('rebond', bird.x, bird.y);
     showToast('🪃 REBOND — REBONDIS SUR 2 TUYAUX!'); return;
-    }
   }
-  if (id === 'pu6')  { showToast('💣 BOMBE — TUYAU SUIVANT DÉTRUIT!'); }
-if (id === 'pu8')  { showToast('🌀 VORTEX — TOUS LES TUYAUX DÉTRUITS!'); }
-if (id === 'pu9')  { showToast('⚡ ÉCLAIR — TUYAU ALÉATOIRE DÉTRUIT!'); }
-if (id === 'pu14') { showToast('💎 GEMME — +5 POINTS!'); }
-if (id === 'pu12') { showToast('🪃 REBOND — REBONDIS SUR 2 TUYAUX!'); }
-  if (id === 'pu1')  { showToast('👻 FANTÔME — TRAVERSEZ LES TUYAUX!'); }
-if (id === 'pu3')  { showToast('🔥 RAGE — SCORE x2!'); }
-if (id === 'pu4')  { showToast('⭐ STAR RUSH — INVINCIBLE!'); }
-if (id === 'pu5')  { showToast('🎯 PRÉCISION — TUYAUX ÉLARGIS!'); }
-if (id === 'pu15') { showToast('🃏 JOKER — SCORE x3!'); }
+  if (id === 'pu14') {
+    score += 5; flashTimer = 12; showToast('💎 GEMME — +5 POINTS!'); return;
   }
+  if (id === 'pu16') {
+    const earned = coinBoostIapOwned ? 6 : 3;
+    totalCoins += earned; coins += earned; coinFlashTimer = 20; saveState();
+    showToast(coinBoostIapOwned ? '🪙 +6 PIÈCES (x2)!' : '🪙 +3 PIÈCES!'); return;
+  }
+  if (id === 'pu20') { secondChanceActive = true; showToast('❤️ 2ÈME CHANCE PRÊTE!'); return; }
   // Power-ups à durée
   if (activePowerUp) deactivatePowerUp(activePowerUp.id);
   activePowerUp = { id: def.id, icon: def.icon, color: def.color, duration: def.duration, timeLeft: def.duration };
+  if (id === 'pu1')  { showToast('👻 FANTÔME — TRAVERSEZ LES TUYAUX!'); }
   if (id === 'pu2')  { showToast('🛡️ BOUCLIER — 1 TUYAU ABSORBÉ!'); }
-if (id === 'pu7')  { showToast('🔫 LASER — DÉTRUIT LES TUYAUX!'); }
-if (id === 'pu10') { showToast('🧲 AIMANT — ATTIRE PIÈCES ET POWERUPS!'); }
-if (id === 'pu13') { showToast('🌊 VAGUE — TUYAUX EN MOUVEMENT!'); }
-if (id === 'pu17') { showToast('🤏 SHRINK — HITBOX RÉDUITE!'); }
-if (id === 'pu18') { lowGravityActive = true; showToast('🪶 GRAVITÉ LÉGÈRE — FLOTTEZ!'); }
-if (id === 'pu19') { showToast('🌈 RAINBOW — INVINCIBLE + SCORE x2!'); }
-  if (id === 'pu7')  { laserActive = true; laserX = bird.x + 30; laserTimer = Math.floor(def.duration / FIXED_TIMESTEP); }
+  if (id === 'pu3')  { showToast('🔥 RAGE — SCORE x2!'); }
+  if (id === 'pu4')  { showToast('⭐ STAR RUSH — INVINCIBLE!'); }
+  if (id === 'pu5')  { showToast('🎯 PRÉCISION — TUYAUX ÉLARGIS!'); }
+  if (id === 'pu7')  { laserActive = true; laserX = bird.x + 30; laserTimer = Math.floor(def.duration / FIXED_TIMESTEP); showToast('🔫 LASER — DÉTRUIT LES TUYAUX!'); }
+  if (id === 'pu10') { magnetActive = true; showToast('🧲 AIMANT — ATTIRE PIÈCES ET POWERUPS!'); }
+  if (id === 'pu13') { showToast('🌊 VAGUE — TUYAUX EN MOUVEMENT!'); }
+  if (id === 'pu15') { showToast('🃏 JOKER — SCORE x3!'); }
+  if (id === 'pu17') { showToast('🤏 SHRINK — HITBOX RÉDUITE!'); }
   if (id === 'pu18') { lowGravityActive = true; showToast('🪶 GRAVITÉ LÉGÈRE — FLOTTEZ!'); }
-  if (id === 'pu10') { magnetActive = true; }
-  if (id === 'pu13') { /* vague gérée dans update */ }
+  if (id === 'pu19') { showToast('🌈 RAINBOW — INVINCIBLE + SCORE x2!'); }
 }
 
 function deactivatePowerUp(id) {
