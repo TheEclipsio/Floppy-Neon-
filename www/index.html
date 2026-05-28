@@ -1157,7 +1157,7 @@ const BTN_SKIP   = { x: W/2-80,  y: H/2+58,  w: 160, h: 34, label: 'NON MERCI', 
 const BTN_SHOP_IDLE = { x: W/2-75, y: H/2+56, w: 150, h: 34, label: '🛒 BOUTIQUE', color: '#ff9100', hovered: false };
 // Bouton boutique sur l'écran game over
 const BTN_SHOP_DEAD = { x: W/2-60, y: H/2+115, w: 120, h: 30, label: '🛒 SHOP', color: '#ff9100', hovered: false };
-  const BTN_INFINI = { x: W/2-155, y: H/2+10,  w: 145, h: 42, label: '∞ INFINI',  color: '#00f5ff', hovered: false };
+const BTN_INFINI = { x: W/2-155, y: H/2+10,  w: 145, h: 42, label: '∞ INFINI',  color: '#00f5ff', hovered: false };
 const BTN_ARCADE = { x: W/2+10,  y: H/2+10,  w: 145, h: 42, label: '⚡ ARCADE', color: '#ff9100', hovered: false };
 const BTNS = [BTN_REPLAY, BTN_HOME];
 
@@ -1207,7 +1207,9 @@ const POWERUP_DEFS = [
 let boomerangBounces = 0;
 let laserActive = false, laserX = 0, laserTimer = 0;
 let lowGravityActive = false;
-let magnetActive = false; pipes.length  
+let slowMoActive = false;
+let freezeActive = false;
+let magnetActive = false;  
 let secondChanceActive = false;
 let flashTimer = 0, coinFlashTimer = 0, deathShake = 0;
 let bird = {}, pipes = [], coinObjects = [], particles = [], coinLabels = [], groundOffset = 0;
@@ -3151,7 +3153,7 @@ function _gameUpdate() {
 
   if (state === 'playing') {
     const spd = arcadeMode ? PIPE_SPEED * arcadeSpeedMult : PIPE_SPEED;
-    const slowFactor = 1.0;
+    const slowFactor = (arcadeMode && slowMoActive) ? 0.4 : 1.0;
     groundOffset += spd * slowFactor;
 
     bird.vy += lowGravityActive ? GRAVITY * 0.35 : GRAVITY;
