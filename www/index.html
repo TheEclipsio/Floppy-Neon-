@@ -1377,7 +1377,7 @@ function addPipe() {
     coinObjects.push({ x: W+10+PIPE_W/2+30, y: topH+gap/2, r: COIN_R, collected: false, bobOffset: Math.random()*Math.PI*2, spinAngle: 0 });
   }
 }
-  function drawPowerUp(pu) {
+function drawPowerUp(pu) {
   const t = frames * 0.05 + pu.bobOffset;
   const y = pu.y + Math.sin(t) * 4;
   const r = pu.r;
