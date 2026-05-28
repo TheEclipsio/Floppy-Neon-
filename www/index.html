@@ -2522,7 +2522,7 @@ function drawBirdSprite(c, r, skinId, wAngle) {
 
 function drawBird() {
   const shrinkActive = arcadeMode && activePowerUp && activePowerUp.id === 'pu17';
-const r = shrinkActive ? BIRD_R * 0.55 : BIRD_R;
+  const r = shrinkActive ? BIRD_R * 0.55 : BIRD_R;
   const skinItem = SKIN_ITEMS.find(s => s.id === equippedSkin && s.subtype === 'bird');
   const accItem  = ACC_ITEMS.find(a => a.id === equippedAcc);
   const t = performance.now() / 1000;
@@ -2604,9 +2604,9 @@ const r = shrinkActive ? BIRD_R * 0.55 : BIRD_R;
   // Oiseau
   ctx.save(); ctx.translate(bird.x, bird.y); ctx.rotate(bird.angle);
 ctx.save();
-if (ghostActive) { ctx.globalAlpha = 0.38; }
-drawBirdSprite(ctx, r, skinItem ? skinItem.id : 's1', bird.wingAngle);
-ctx.restore();
+  if (ghostActive) { ctx.globalAlpha = 0.38; }
+  drawBirdSprite(ctx, r, skinItem ? skinItem.id : 's1', bird.wingAngle);
+  ctx.restore();
   // Accessoires SUR l'oiseau (suivent la rotation)
   if (accItem) {
     const id = accItem.id;
