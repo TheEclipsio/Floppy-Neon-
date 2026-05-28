@@ -3149,7 +3149,7 @@ function _gameUpdate() {
 
   if (state === 'playing') {
     const spd = arcadeMode ? PIPE_SPEED * arcadeSpeedMult : PIPE_SPEED;
-    const slowFactor = (arcadeMode && slowMoActive) ? 0.4 : 1.0;
+    const slowFactor = 1.0;
     groundOffset += spd * slowFactor;
 
     if (!freezeActive) {
