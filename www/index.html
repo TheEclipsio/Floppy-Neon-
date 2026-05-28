@@ -2603,7 +2603,6 @@ function drawBird() {
 
   // Oiseau
   ctx.save(); ctx.translate(bird.x, bird.y); ctx.rotate(bird.angle);
-ctx.save();
   if (ghostActive) { ctx.globalAlpha = 0.38; }
   drawBirdSprite(ctx, r, skinItem ? skinItem.id : 's1', bird.wingAngle);
   ctx.restore();
