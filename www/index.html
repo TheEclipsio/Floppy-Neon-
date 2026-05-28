@@ -3157,7 +3157,7 @@ function _gameUpdate() {
     groundOffset += spd * slowFactor;
 
     bird.vy += lowGravityActive ? GRAVITY * 0.35 : GRAVITY;
-bird.y  += bird.vy * slowFactor;
+    bird.y  += bird.vy * slowFactor;
     
     bird.angle = Math.max(-Math.PI/4, Math.min(Math.PI/2, bird.vy*0.06));
     bird.wingAngle += bird.wingDir*0.22;
