@@ -2605,7 +2605,6 @@ function drawBird() {
   ctx.save(); ctx.translate(bird.x, bird.y); ctx.rotate(bird.angle);
   if (ghostActive) { ctx.globalAlpha = 0.38; }
   drawBirdSprite(ctx, r, skinItem ? skinItem.id : 's1', bird.wingAngle);
-  ctx.restore();
   // Accessoires SUR l'oiseau (suivent la rotation)
   if (accItem) {
     const id = accItem.id;
