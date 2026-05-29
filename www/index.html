@@ -111,7 +111,7 @@
 
   .btn-back-fixed {
     position: fixed;
-    top: 16px;
+    top: 48px;
     left: 16px;
     z-index: 110;
     background: rgba(2,0,20,0.9);
@@ -680,7 +680,157 @@
   }
   .rating-later-btn:hover { color: rgba(255,255,255,0.6); border-color: rgba(255,255,255,0.4); }
 
-  /* ── AD BLOCKER ITEM IN SHOP ─────────────────────── */
+  /* ── GACHA ANIMATION OVERLAY ─────────────────────── */
+  #gachaAnimOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: rgba(0,0,0,0.96);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .gacha-anim-stage {
+    position: relative;
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* Roulette bande défilante */
+  .gacha-reel-wrap {
+    width: 320px;
+    height: 80px;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    position: relative;
+    background: rgba(0,0,20,0.8);
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    margin-bottom: 0;
+  }
+  .gacha-reel-wrap::before,
+  .gacha-reel-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 60px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .gacha-reel-wrap::before { left: 0; background: linear-gradient(90deg, rgba(0,0,20,0.95), transparent); }
+  .gacha-reel-wrap::after  { right: 0; background: linear-gradient(-90deg, rgba(0,0,20,0.95), transparent); }
+
+  /* Curseur central */
+  .gacha-reel-cursor {
+    position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    transform: translateX(-50%);
+    width: 3px;
+    background: #ffffff;
+    box-shadow: 0 0 12px #fff, 0 0 30px rgba(255,255,255,0.6);
+    z-index: 3;
+    pointer-events: none;
+  }
+  .gacha-reel-cursor::before {
+    content: '▼';
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #fff;
+    text-shadow: 0 0 8px #fff;
+  }
+  .gacha-reel-cursor::after {
+    content: '▲';
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #fff;
+    text-shadow: 0 0 8px #fff;
+  }
+
+  .gacha-reel-track {
+    display: flex;
+    height: 80px;
+    align-items: center;
+    position: absolute;
+    left: 0; top: 0;
+    will-change: transform;
+  }
+
+  .gacha-reel-item {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    margin: 0 4px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.42rem;
+    font-family: 'Press Start 2P', monospace;
+    letter-spacing: 0.04em;
+    border: 2px solid;
+    flex-direction: column;
+    gap: 3px;
+    position: relative;
+  }
+  .gacha-reel-item .ri-icon { font-size: 1.6rem; line-height: 1; }
+  .gacha-reel-item .ri-label { font-size: 0.3rem; letter-spacing: 0.06em; opacity: 0.9; }
+
+  .gacha-reel-item.ri-common    { border-color: var(--common);    background: rgba(160,160,192,0.12); color: var(--common); }
+  .gacha-reel-item.ri-rare      { border-color: var(--rare);      background: rgba(79,195,247,0.12);  color: var(--rare); }
+  .gacha-reel-item.ri-epic      { border-color: var(--epic);      background: rgba(206,147,216,0.12); color: var(--epic); }
+  .gacha-reel-item.ri-legendary { border-color: var(--legendary); background: rgba(255,179,0,0.12);   color: var(--legendary); box-shadow: 0 0 12px rgba(255,179,0,0.3); }
+  .gacha-reel-item.ri-secret    { border-color: var(--secret);    background: rgba(255,23,68,0.12);   color: var(--secret);    box-shadow: 0 0 16px rgba(255,23,68,0.4); }
+
+  /* Flash d'écran à la révélation */
+  @keyframes rarityFlash {
+    0%   { opacity: 0; }
+    15%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .gacha-flash {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 400;
+    opacity: 0;
+  }
+
+  /* Zoom de l'item résultat */
+  @keyframes itemReveal {
+    0%   { transform: scale(0) rotate(-12deg); opacity: 0; }
+    60%  { transform: scale(1.18) rotate(2deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+  .gacha-result-zoom {
+    animation: itemReveal 0.55s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  /* Texte de rareté animé */
+  @keyframes rarityTextIn {
+    from { transform: translateY(20px) scale(0.8); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .gacha-rarity-reveal {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 1.1rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: 20px;
+    animation: rarityTextIn 0.4s ease 0.1s both;
+  }
+
   .adblocker-box {
     border: 2px solid #a855f7;
     border-radius: 12px;
@@ -725,6 +875,10 @@
 </head>
 <body>
 
+<audio id="bgMusic" loop preload="auto">
+  <source src="https://www.chosic.com/wp-content/uploads/2021/04/Cyber-Dude-ft-Doofus.mp3" type="audio/mpeg">
+</audio>
+  
 <div class="stars" id="stars"></div>
 <canvas id="particleCanvas"></canvas>
 
@@ -965,6 +1119,21 @@
   </div>
 </div>
 
+<!-- ══════════ GACHA ANIMATION OVERLAY ══════════ -->
+<div id="gachaAnimOverlay">
+  <div class="gacha-anim-stage">
+    <!-- Roulette -->
+    <div class="gacha-reel-wrap" id="gachaReelWrap">
+      <div class="gacha-reel-cursor"></div>
+      <div class="gacha-reel-track" id="gachaReelTrack"></div>
+    </div>
+    <!-- Résultat après révélation -->
+    <div id="gachaRevealArea" style="display:none;flex-direction:column;align-items:center;margin-top:16px;"></div>
+  </div>
+</div>
+<!-- Flash d'écran -->
+<div class="gacha-flash" id="gachaFlash"></div>
+
 <!-- ══════════ TOAST ══════════ -->
 <div id="toast"></div>
 
@@ -1067,18 +1236,18 @@ const PIPE_ITEMS = [
 
 const ACC_ITEMS = [
   { id:'a1',  type:'acc',    name:'Chapeau de Cowboy', emoji:'🤠', rarity:'common'    },
-  { id:'a2',  type:'acc',    name:'Casquette Rouge',   emoji:'🧢', rarity:'common'    },
+  { id:'a2',  type:'acc',    name:'Casquette Bleu',   emoji:'🧢', rarity:'common'    },
   { id:'a3',  type:'acc',    name:'Lunettes Solaires', emoji:'😎', rarity:'common'    },
   { id:'a4',  type:'acc',    name:'Nœud Papillon',     emoji:'🎀', rarity:'rare'      },
   { id:'a5',  type:'acc',    name:'Couronne Néon',     emoji:'👑', rarity:'rare'      },
   { id:'a6',  type:'acc',    name:'Ailes de Fée',      emoji:'🧚', rarity:'epic'      },
   { id:'a7',  type:'acc',    name:'Halo Doré',         emoji:'😇', rarity:'epic'      },
-  { id:'a8',  type:'acc',    name:'Masque Cyber',      emoji:'🥷', rarity:'legendary' },
+  { id:'a8',  type:'acc',    name:'Bandeau Ninja',      emoji:'🥷', rarity:'legendary' },
   { id:'a9',  type:'acc',    name:'SKULL CROWN',       emoji:'💀', rarity:'secret'    },
   // NOUVEAUX ACCESSOIRES
   { id:'a10', type:'acc',    name:'Étoile de Shérif',  emoji:'⭐', rarity:'common'    },
-  { id:'a11', type:'acc',    name:'Chapeau de Mage',   emoji:'🎩', rarity:'rare'      },
-  { id:'a12', type:'acc',    name:'Casque Astronaute', emoji:'🪖', rarity:'rare'      },
+  { id:'a11', type:'acc',    name:'Chapeau Haut-de-Forme',   emoji:'🎩', rarity:'rare'      },
+  { id:'a12', type:'acc',    name:'Casque De Soldat', emoji:'🪖', rarity:'rare'      },
   { id:'a13', type:'acc',    name:'Épée Héroïque',     emoji:'⚔️', rarity:'epic'      },
   { id:'a14', type:'acc',    name:'Arc-en-ciel',       emoji:'🌈', rarity:'epic'      },
   { id:'a15', type:'acc',    name:'Flamme Éternelle',  emoji:'🔥', rarity:'legendary' },
@@ -1094,9 +1263,9 @@ function loadState() {
 }
 function saveState() {
   localStorage.setItem('floppyNeonSave', JSON.stringify({
-    totalCoins, unlockedItems, equippedSkin, equippedBg, equippedAcc, equippedPipe, best,
-    adBlockerOwned, gamesPlayedTotal, ratingDismissed
-  }));
+  totalCoins, unlockedItems, equippedSkin, equippedBg, equippedAcc, equippedPipe,
+  best, arcadeBest, adBlockerOwned, coinBoostIapOwned, gamesPlayedTotal, ratingDismissed
+}));
 }
 
 let saved = loadState();
@@ -1107,6 +1276,7 @@ let equippedBg   = saved.equippedBg   || 's8';
 let equippedAcc  = saved.equippedAcc  || null;
 let equippedPipe = saved.equippedPipe || 'p1';
 let best         = saved.best         || 0;
+let arcadeBest   = saved.arcadeBest   || 0;
 let adBlockerOwned = saved.adBlockerOwned || false;
 let gamesPlayedTotal = saved.gamesPlayedTotal || 0;
 let ratingDismissed = saved.ratingDismissed || false;
@@ -1152,6 +1322,8 @@ const BTN_SKIP   = { x: W/2-80,  y: H/2+58,  w: 160, h: 34, label: 'NON MERCI', 
 const BTN_SHOP_IDLE = { x: W/2-75, y: H/2+56, w: 150, h: 34, label: '🛒 BOUTIQUE', color: '#ff9100', hovered: false };
 // Bouton boutique sur l'écran game over
 const BTN_SHOP_DEAD = { x: W/2-60, y: H/2+115, w: 120, h: 30, label: '🛒 SHOP', color: '#ff9100', hovered: false };
+  const BTN_INFINI = { x: W/2-155, y: H/2+10,  w: 145, h: 42, label: '∞ INFINI',  color: '#00f5ff', hovered: false };
+const BTN_ARCADE = { x: W/2+10,  y: H/2+10,  w: 145, h: 42, label: '⚡ ARCADE', color: '#ff9100', hovered: false };
 const BTNS = [BTN_REPLAY, BTN_HOME];
 
 function ptInBtn(b, mx, my) { return mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h; }
@@ -1173,23 +1345,59 @@ function drawBtn(b) {
 }
 
 let state = 'idle', score = 0, coins = 0, frames = 0;
+let arcadeMode = false, arcadeTier = 1, arcadeSpeedMult = 1.0;
+let activePowerUp = null;
+let powerUps = [];
+const POWERUP_DEFS = [
+  { id:'pu1',  icon:'👻', name:'Fantôme',     color:'#e0e0e0', duration:5000  },
+  { id:'pu2',  icon:'🛡️', name:'Bouclier',    color:'#4fc3f7', duration:0     },
+  { id:'pu3',  icon:'🔥', name:'Rage',         color:'#ff5722', duration:5000  },
+  { id:'pu4',  icon:'⭐', name:'Star Rush',    color:'#ffd700', duration:3000  },
+  { id:'pu5',  icon:'🎯', name:'Précision',   color:'#66bb6a', duration:6000  },
+  { id:'pu6',  icon:'💣', name:'Bombe',        color:'#78909c', duration:0     },
+  { id:'pu7',  icon:'🔫', name:'Laser',        color:'#f44336', duration:4000  },
+  { id:'pu8',  icon:'🌀', name:'Vortex',       color:'#9c27b0', duration:0     },
+  { id:'pu9',  icon:'⚡', name:'Éclair',       color:'#ffee58', duration:0     },
+  { id:'pu10', icon:'🧲', name:'Aimant',       color:'#e53935', duration:6000  },
+  { id:'pu12', icon:'🪃', name:'Rebond',    color:'#ff8f00', duration:0     },
+  { id:'pu13', icon:'🌊', name:'Vague',        color:'#00bcd4', duration:3000  },
+  { id:'pu14', icon:'💎', name:'Gemme',        color:'#29b6f6', duration:0     },
+  { id:'pu15', icon:'🃏', name:'Joker',        color:'#7e57c2', duration:3000  },
+  { id:'pu16', icon:'🪙', name:"Pièce d'or", color:'#ffa000', duration:0     },
+  { id:'pu17', icon:'🤏', name:'Shrink',       color:'#f06292', duration:6000  },
+  { id:'pu18', icon:'🏋️', name:'Gravité Lourde', color:'#ff7043', duration:4000  },
+
+  { id:'pu20', icon:'❤️', name:'2ème Chance', color:'#ff1744', duration:0 },
+];
+let boomerangBounces = 0;
+let laserActive = false, laserX = 0, laserTimer = 0;
+let lowGravityActive = false;
+let magnetActive = false;
+  let secondChanceActive = false;
 let flashTimer = 0, coinFlashTimer = 0, deathShake = 0;
-let bird = {}, pipes = [], coinObjects = [], particles = [], coinLabels = [], groundOffset = 0;
+let bird = {}, pipes = [], coinObjects = [], particles = [], coinLabels = [], zapEffects = [], groundOffset = 0;
 let hasUsedRevive = false, reviveCountdown = 5, reviveTimerStart = 0, skipUnlocked = false;
 let adState = 'none', adProgress = 0, adStartTime = 0;
 
 function resetBird() { bird = { x: 100, y: H/2-20, vy: 0, angle: 0, wingAngle: 0, wingDir: 1 }; }
-function resetGame() {
-  score = 0; pipes = []; particles = []; coinObjects = []; coinLabels = [];
-  coins = 0; frames = 0; flashTimer = 0; coinFlashTimer = 0; deathShake = 0;
-  hasUsedRevive = false; reviveCountdown = 5; skipUnlocked = false;
-  adState = 'none'; adProgress = 0;
-  resetBird();
-}
-resetBird();
+const bgMusic = document.getElementById('bgMusic');
+bgMusic.volume = 0.4;
+let musicEnabled = localStorage.getItem('floppyMusicEnabled') !== 'false';
+function playMusic() { if (musicEnabled) bgMusic.play().catch(()=>{}); }
+function stopMusic() { bgMusic.pause(); }
 
-function doRevive() { hasUsedRevive = true; adState = 'playing'; adStartTime = performance.now(); adProgress = 0; }
+
+
+function doRevive() {
+  logDebug("🎬 doRevive() — appel showRewardedAd");
+  showRewardedAd(() => {
+    logDebug("✅ Revive récompensé — finishRevive()");
+    hasUsedRevive = true;
+    finishRevive();
+  });
+}
 function finishRevive() {
+  playMusic();
   adState = 'none'; state = 'playing';
   bird.vy = 0; bird.y = H/2; bird.angle = 0;
   pipes = pipes.filter(p => p.x > bird.x + 120);
@@ -1204,7 +1412,7 @@ function flap() {
 }
 
 function checkMandatoryAdAndFlap() {
-  checkMandatoryAd(() => { resetGame(); state = 'playing'; });
+  checkMandatoryAd(() => { resetGame(); state = 'playing'; playMusic(); });
 }
 
 function getCanvasPos(e) {
@@ -1218,7 +1426,9 @@ canvas.addEventListener('click', e => {
   const pos = getCanvasPos(e);
   if (state === 'idle') {
     if (ptInBtn(BTN_SHOP_IDLE, pos.x, pos.y)) { openShop(); return; }
-    checkMandatoryAdAndFlap(); return;
+    if (ptInBtn(BTN_INFINI, pos.x, pos.y)) { arcadeMode = false; checkMandatoryAdAndFlap(); return; }
+    if (ptInBtn(BTN_ARCADE, pos.x, pos.y)) { arcadeMode = true; checkMandatoryAdAndFlap(); return; }
+    return;
   }
   if (state === 'revive') {
     if (ptInBtn(BTN_REVIVE, pos.x, pos.y)) { doRevive(); return; }
@@ -1263,7 +1473,9 @@ canvas.addEventListener('touchstart', e => {
   const pos = getCanvasPos(e);
   if (state === 'idle') {
     if (ptInBtn(BTN_SHOP_IDLE, pos.x, pos.y)) { openShop(); return; }
-    checkMandatoryAdAndFlap(); return;
+    if (ptInBtn(BTN_INFINI, pos.x, pos.y)) { arcadeMode = false; checkMandatoryAdAndFlap(); return; }
+    if (ptInBtn(BTN_ARCADE, pos.x, pos.y)) { arcadeMode = true; checkMandatoryAdAndFlap(); return; }
+    return;
   }
   if (state === 'revive') {
     if (ptInBtn(BTN_REVIVE, pos.x, pos.y)) { doRevive(); return; }
@@ -1305,11 +1517,66 @@ function spawnCoinParticles(x, y) {
 function spawnCoinLabel(x, y) { coinLabels.push({ x, y, vy: -1.5, life: 1 }); }
 
 function addPipe() {
-  const minY = 70, maxY = H-GROUND_H-PIPE_GAP-70;
+  const gap = (activePowerUp && activePowerUp.id==='pu5') ? PIPE_GAP*1.4 : PIPE_GAP;
+  const minY = 70, maxY = H-GROUND_H-gap-70;
   const topH = Math.random()*(maxY-minY)+minY;
-  pipes.push({ x: W+10, topH, scored: false });
-  coinObjects.push({ x: W+10+PIPE_W/2+30, y: topH+PIPE_GAP/2, r: COIN_R, collected: false, bobOffset: Math.random()*Math.PI*2, spinAngle: 0 });
+  let oscAmp = 0, oscSpeed = 0;
+  if (arcadeMode && arcadeTier >= 2) {
+    const amps  = [0, 0, 30, 50, 65, 80];
+    const spds  = [0, 0, 0.02, 0.03, 0.04, 0.05];
+    const t = Math.min(arcadeTier, 5);
+    oscAmp   = amps[t]  * (0.7 + Math.random()*0.6);
+    oscSpeed = spds[t]  * (0.7 + Math.random()*0.6);
+  }
+  pipes.push({ x: W+10, topH, gap, scored: false, oscAmp, oscSpeed, oscOffset: Math.random()*Math.PI*2, baseTopH: topH });
+  if (arcadeMode) {
+    if (Math.random() < 0.35) {
+      const def = POWERUP_DEFS[Math.floor(Math.random()*POWERUP_DEFS.length)];
+      powerUps.push({ x: W+10+PIPE_W/2+40, y: topH+gap/2, r: 16, def, collected: false, bobOffset: Math.random()*Math.PI*2 });
+    } else {
+      coinObjects.push({ x: W+10+PIPE_W/2+30, y: topH+gap/2, r: COIN_R, collected: false, bobOffset: Math.random()*Math.PI*2, spinAngle: 0 });
+    }
+  } else {
+    coinObjects.push({ x: W+10+PIPE_W/2+30, y: topH+gap/2, r: COIN_R, collected: false, bobOffset: Math.random()*Math.PI*2, spinAngle: 0 });
+  }
 }
+  function drawPowerUp(pu) {
+  const t = frames * 0.05 + pu.bobOffset;
+  const y = pu.y + Math.sin(t) * 4;
+  const r = pu.r;
+  const col = pu.def.color === 'rainbow'
+    ? `hsl(${(frames*2) % 360}, 100%, 60%)`
+    : pu.def.color;
+  ctx.save();
+  // Halo pulsant
+  const pulse = 0.5 + 0.5 * Math.sin(frames * 0.1);
+  ctx.beginPath();
+  ctx.arc(pu.x, y, r + 6 + pulse * 4, 0, Math.PI * 2);
+  ctx.fillStyle = col + '33';
+  ctx.fill();
+  // Cercle brillant
+  const grad = ctx.createRadialGradient(pu.x - r*0.3, y - r*0.3, 1, pu.x, y, r);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.4, col);
+  grad.addColorStop(1, col + 'aa');
+  ctx.beginPath();
+  ctx.arc(pu.x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.shadowColor = col;
+  ctx.shadowBlur = 18;
+  ctx.fill();
+  // Bordure
+  ctx.strokeStyle = '#ffffff88';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // Icône emoji
+  ctx.shadowBlur = 0;
+  ctx.font = `${r}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(pu.def.icon, pu.x, y + 1);
+  ctx.restore();
+  }
 
 function roundRectPath(x, y, w, h, r) {
   ctx.beginPath();
@@ -1325,19 +1592,30 @@ function drawGradientBg() {
   const bgItem = SKIN_ITEMS.find(s => s.id === equippedBg);
   let c1 = SKY_TOP, c2 = SKY_BOT;
   if (bgItem) {
-    const bgColors = {
-      's8': ['#1a0a00','#3d1a00'],
-      's9': ['#001a00','#003d00'],
-      's10':['#00001a','#001a3d'],
-      's11':['#0d0020','#200040'],
-      's12':['#0a0020','#200050'],
-      's13':['#1a1400','#3d3000'],
-      's14':['#000000','#050005'],
-      's29':['#3d2a00','#8b5a00'], // Prairie Western
-      's30':['#001a3d','#003d70'], // Cartoon Land
-      's31':['#000a1a','#001030'], // Station Orbitale
-      's32':['#1a0d00','#3d2000'], // Château Médiéval
-    };
+    // LIGNE 1346 — remplace le bloc bgColors par ceci :
+const bgColors = {
+  's8': ['#1a0a00','#3d1a00'],
+  's9': ['#001a00','#003d00'],
+  's10':['#00001a','#001a3d'],
+  's11':['#0d0020','#200040'],
+  's12':['#0a0020','#200050'],
+  's13':['#1a1400','#3d3000'],
+  's14':['#000000','#050005'],
+  's29':['#3d2a00','#8b5a00'],
+  's30':['#001a3d','#003d70'],
+  's31':['#000a1a','#001030'],
+  's32':['#1a0d00','#3d2000'],
+  's33':['#3d1400','#8b3000'],
+  's34':['#2a1a00','#664400'],
+  's35':['#0d0d0d','#1a1010'],
+  's36':['#2a0030','#60006a'],
+  's37':['#003a00','#006a00'],
+  's38':['#1a0030','#400060'],
+  's39':['#1a0000','#3d0010'],
+  's40':['#000000','#000000'],
+  's41':['#001a00','#002d00'],
+  's42':['#050010','#0d0020'],
+};
     if (bgColors[bgItem.id]) { c1 = bgColors[bgItem.id][0]; c2 = bgColors[bgItem.id][1]; }
   }
   const grad = ctx.createLinearGradient(0, 0, 0, H-GROUND_H);
@@ -1414,10 +1692,52 @@ function drawGradientBg() {
     ctx.strokeStyle = 'rgba(255,215,0,0.12)'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(W/2, H*0.3, 100, 0, Math.PI*2); ctx.stroke();
   } else if (bgItem.id === 's14') {
-    // ABYSSAL VOID — portail
     const vg = ctx.createRadialGradient(W/2, H*0.4, 10, W/2, H*0.4, 80);
     vg.addColorStop(0,'rgba(100,0,150,0.2)'); vg.addColorStop(1,'rgba(0,0,0,0)');
     ctx.fillStyle = vg; ctx.beginPath(); ctx.arc(W/2, H*0.4, 80, 0, Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's33') {
+    // Canyon Rouge
+    ctx.fillStyle='rgba(200,50,0,0.5)'; ctx.beginPath(); ctx.arc(W*0.5,60,W*0.13,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(180,60,20,0.4)'; ctx.fillRect(0,H*0.55,W*0.25,H*0.45); ctx.fillRect(W*0.38,H*0.45,W*0.28,H*0.55); ctx.fillRect(W*0.76,H*0.5,W*0.24,H*0.5);
+  } else if (bgItem.id === 's34') {
+    // Mine d'Or
+    ctx.fillStyle='rgba(100,70,0,0.4)'; ctx.fillRect(W*0.3,H*0.45,W*0.4,H*0.55);
+    ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.beginPath(); ctx.arc(W*0.5,H*0.6,30,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,200,0,0.5)'; [[W*0.2,H*0.65],[W*0.75,H*0.72],[W*0.55,H*0.8]].forEach(([rx,ry])=>{ctx.beginPath();ctx.arc(rx,ry,10,0,Math.PI*2);ctx.fill();});
+  } else if (bgItem.id === 's35') {
+    // Ghost Town
+    ctx.fillStyle='rgba(80,60,80,0.4)'; [[W*0.05,H*0.25,W*0.22,H*0.75],[W*0.35,H*0.3,W*0.25,H*0.7],[W*0.68,H*0.2,W*0.22,H*0.8]].forEach(([rx,ry,rw,rh])=>{ctx.fillRect(rx,ry,rw,rh);});
+    ctx.fillStyle='rgba(200,180,255,0.15)'; ctx.beginPath(); ctx.arc(W*0.5,50,30,0,Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's36') {
+    // Monde Bonbon
+    ctx.fillStyle='rgba(255,100,200,0.35)'; ctx.beginPath(); ctx.arc(W*0.5,H*0.3,55,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,100,0.3)'; [[W*0.15,H*0.65,28],[W*0.55,H*0.6,25],[W*0.8,H*0.7,20]].forEach(([rx,ry,cr])=>{ctx.beginPath();ctx.arc(rx,ry,cr,0,Math.PI*2);ctx.fill();});
+  } else if (bgItem.id === 's37') {
+    // Jardin Magique
+    ctx.fillStyle='rgba(0,200,80,0.25)'; for(let i=0;i<5;i++){const tx=W*(0.04+i*0.22);ctx.fillRect(tx,H*0.5,W*0.1,H*0.5);ctx.beginPath();ctx.arc(tx+W*0.05,H*0.5,W*0.1,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle='rgba(255,200,0,0.35)'; ctx.beginPath(); ctx.arc(W*0.5,55,28,0,Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's38') {
+    // Rainbow World
+    ['#ff0044aa','#ff6600aa','#ffee00aa','#00ff88aa','#0088ffaa','#cc00ffaa'].forEach((c,i)=>{ctx.strokeStyle=c;ctx.lineWidth=12;ctx.beginPath();ctx.arc(W/2,H-GROUND_H,80+i*30,Math.PI,0);ctx.stroke();});
+  } else if (bgItem.id === 's39') {
+    // Nébuleuse Rouge
+    const ng=ctx.createRadialGradient(W*0.4,H*0.35,5,W*0.4,H*0.35,120); ng.addColorStop(0,'rgba(255,50,0,0.4)'); ng.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=ng; ctx.beginPath(); ctx.arc(W*0.4,H*0.35,120,0,Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's40') {
+    // Singularité
+    const sg=ctx.createRadialGradient(W/2,H*0.4,0,W/2,H*0.4,100); sg.addColorStop(0,'rgba(0,0,0,1)'); sg.addColorStop(0.5,'rgba(80,0,120,0.6)'); sg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(W/2,H*0.4,100,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(180,0,255,0.4)'; ctx.lineWidth=1.5; for(let r=25;r<110;r+=25){ctx.beginPath();ctx.arc(W/2,H*0.4,r,0,Math.PI*2);ctx.stroke();}
+  } else if (bgItem.id === 's41') {
+    // Forêt Enchantée
+    ctx.fillStyle='rgba(0,150,60,0.25)'; for(let i=0;i<4;i++){const tx=W*(0.06+i*0.26);ctx.fillRect(tx,H*0.4,W*0.12,H*0.6);ctx.beginPath();ctx.arc(tx+W*0.06,H*0.4,W*0.12,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle='rgba(100,255,100,0.15)'; ctx.beginPath(); ctx.arc(W*0.5,55,25,0,Math.PI*2); ctx.fill();
+  } else if (bgItem.id === 's42') {
+    // Donjon Maudit
+    ctx.fillStyle='rgba(60,0,100,0.4)'; ctx.fillRect(W*0.35,H*0.15,W*0.3,H*0.85);
+    for(let i=0;i<3;i++) ctx.fillRect(W*(0.35+i*0.1),H*0.08,W*0.08,H*0.1);
+    ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.beginPath(); ctx.arc(W*0.5,H*0.5,18,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(150,0,255,0.3)'; ctx.beginPath(); ctx.arc(W*0.5,H*0.15,18,0,Math.PI*2); ctx.fill();
   }
   ctx.restore();
 }
@@ -1454,8 +1774,9 @@ function getPipeStyle() {
   return p;
 }
 
-function drawPipeStyled(x, topH, pipeStyle) {
-  const botY = topH+PIPE_GAP, botH = H-GROUND_H-botY;
+function drawPipeStyled(x, topH, pipeStyle, gap) {
+  gap = gap || PIPE_GAP;
+  const botY = topH+gap, botH = H-GROUND_H-botY;
   ctx.save();
   const gc = pipeStyle.glowColor;
   ctx.shadowColor = gc; ctx.shadowBlur = 16;
@@ -1529,7 +1850,87 @@ function drawPipeStyled(x, topH, pipeStyle) {
       ctx.beginPath(); ctx.moveTo(x+PIPE_W-10, ry-6); ctx.lineTo(x+PIPE_W-10, ry+6); ctx.stroke();
     });
     ctx.globalAlpha = 1;
+  } else if (pid === 'p12') {
+    // Candy Cane — rayures rouges/blanches
+    ctx.fillRect(x, 0, PIPE_W, topH-10);
+    ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
+    ctx.fillRect(x, botY+10, PIPE_W, botH);
+    ctx.fillRect(x-5, botY, PIPE_W+10, 18);
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#ffffff';
+    for (let y2 = 0; y2 < topH-10; y2 += 16) ctx.fillRect(x, y2, PIPE_W, 8);
+    for (let y2 = botY+10; y2 < botY+botH; y2 += 16) ctx.fillRect(x, y2, PIPE_W, 8);
+    ctx.globalAlpha = 1;
+  } else if (pid === 'p13') {
+    // Nuage Sucré — violet avec effet nuageux
+    ctx.fillRect(x, 0, PIPE_W, topH-10);
+    ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
+    ctx.fillRect(x, botY+10, PIPE_W, botH);
+    ctx.fillRect(x-5, botY, PIPE_W+10, 18);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(x+PIPE_W*0.5, topH*0.25+i*topH*0.3, PIPE_W*0.45, 0, Math.PI*2);
+      ctx.fill();
+    }
+  } else if (pid === 'p22') {
+    // Arc-en-ciel — bandes colorées
+    const colors = ['#ff0044','#ff6600','#ffee00','#00ff88','#0088ff','#cc00ff'];
+    const bH = Math.floor((topH-10)/colors.length);
+    colors.forEach((c,i)=>{ctx.fillStyle=c;ctx.globalAlpha=1;ctx.fillRect(x,i*bH,PIPE_W,bH);});
+    const bH2 = Math.floor(botH/colors.length);
+    colors.forEach((c,i)=>{ctx.fillStyle=c;ctx.globalAlpha=1;ctx.fillRect(x,botY+10+i*bH2,PIPE_W,bH2);});
+    ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
+    ctx.fillRect(x-5, botY, PIPE_W+10, 18);
+  } else if (pid === 'p17') {
+    // Mur de Château — briques décalées comme la preview
+    const bh = 12, bw = PIPE_W / 2;
+    // Tuyau haut
+    for (let y2 = 0; y2 < topH-10; y2 += bh) {
+      const off = (Math.floor(y2/bh) % 2 === 0) ? -bw/4 : bw/4;
+      ctx.fillStyle = pipeStyle.pipeColor[1];
+      ctx.fillRect(x+off,       y2, bw-1, bh-1);
+      ctx.fillRect(x+off+bw,    y2, bw-1, bh-1);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(x+off,       y2+bh-1, bw-1, 1);
+      ctx.fillRect(x+off+bw,    y2+bh-1, bw-1, 1);
+    }
+    // Rebord haut
+    ctx.fillStyle = pipeStyle.pipeColor[2];
+    ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(x-5, topH-18, PIPE_W+10, 4);
+    // Tuyau bas
+    for (let y2 = botY+10; y2 < botY+botH; y2 += bh) {
+      const off = (Math.floor(y2/bh) % 2 === 0) ? -bw/4 : bw/4;
+      ctx.fillStyle = pipeStyle.pipeColor[1];
+      ctx.fillRect(x+off,       y2, bw-1, bh-1);
+      ctx.fillRect(x+off+bw,    y2, bw-1, bh-1);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(x+off,       y2+bh-1, bw-1, 1);
+      ctx.fillRect(x+off+bw,    y2+bh-1, bw-1, 1);
+    }
+    // Rebord bas
+    ctx.fillStyle = pipeStyle.pipeColor[2];
+    ctx.fillRect(x-5, botY, PIPE_W+10, 18);
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(x-5, botY, PIPE_W+10, 4);
+  } else if (pid === 'p18') {
+    // Tour Maudite — violet avec aura mystique
+    ctx.fillRect(x, 0, PIPE_W, topH-10);
+    ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
+    ctx.fillRect(x, botY+10, PIPE_W, botH);
+    ctx.fillRect(x-5, botY, PIPE_W+10, 18);
+    ctx.strokeStyle = '#cc44ff'; ctx.lineWidth = 2; ctx.globalAlpha = 0.9;
+    for (let y2 = 8; y2 < topH-10; y2 += 18) {
+      ctx.beginPath(); ctx.moveTo(x+6, y2); ctx.lineTo(x+PIPE_W-6, y2); ctx.stroke();
+    }
+    for (let y2 = botY+18; y2 < botY+botH; y2 += 18) {
+      ctx.beginPath(); ctx.moveTo(x+6, y2); ctx.lineTo(x+PIPE_W-6, y2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
   } else {
+    // Style par défaut (tous les autres pipes)
     // Style par défaut (tous les autres pipes)
     ctx.fillRect(x, 0, PIPE_W, topH-10);
     ctx.fillRect(x-5, topH-18, PIPE_W+10, 18);
@@ -1552,7 +1953,7 @@ function drawPipeStyled(x, topH, pipeStyle) {
 }
 
 function drawPipe(p) {
-  drawPipeStyled(p.x, p.topH, getPipeStyle());
+  drawPipeStyled(p.x, p.topH, getPipeStyle(), p.gap || PIPE_GAP);
 }
 
 function drawCoin(c) {
@@ -1582,6 +1983,7 @@ function drawCoin(c) {
 // BIRD DRAWING — ailes et becs améliorés
 // ═══════════════════════════════════════════════════
 function drawBirdSprite(c, r, skinId, wAngle) {
+  c.save(); // ← protection globale : rien ne fuit de drawBirdSprite
   const wa = wAngle !== undefined ? wAngle : bird.wingAngle;
 
   if (!skinId || skinId === 's1') {
@@ -2281,20 +2683,796 @@ function drawBirdSprite(c, r, skinId, wAngle) {
     c.beginPath(); c.moveTo(r*0.6,-r*0.08); c.lineTo(r*1.6,-r*0.0); c.lineTo(r*0.6,r*0.36); c.closePath(); c.fill();
     c.strokeStyle='#ffd700'; c.lineWidth=1; c.beginPath(); c.moveTo(r*0.6,-r*0.08); c.lineTo(r*1.6,-r*0.0); c.lineTo(r*0.6,r*0.36); c.closePath(); c.stroke();
   }
+  c.globalAlpha = 1; // reset explicite avant de rendre la main
+  c.restore(); // ← fermeture protection globale
 }
 
 function drawBird() {
-  ctx.save(); ctx.translate(bird.x, bird.y); ctx.rotate(bird.angle);
-  const r = BIRD_R;
+  ctx.save(); // ← protection globale anti-fuite alpha/transform
+  const shrinkActive = arcadeMode && activePowerUp && activePowerUp.id === 'pu17';
+const r = shrinkActive ? BIRD_R * 0.55 : BIRD_R;
   const skinItem = SKIN_ITEMS.find(s => s.id === equippedSkin && s.subtype === 'bird');
   const accItem  = ACC_ITEMS.find(a => a.id === equippedAcc);
-  drawBirdSprite(ctx, r, skinItem ? skinItem.id : 's1', bird.wingAngle);
+  const t = performance.now() / 1000;
+  const ghostActive = arcadeMode && activePowerUp && (activePowerUp.id === 'pu1' || activePowerUp.id === 'pu4');
+
+  // Effets orbitaux AVANT l'oiseau (derrière)
   if (accItem) {
-    ctx.font = (r*1.2)+'px serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    ctx.fillText(accItem.emoji, 0, -r*0.9);
+    const id = accItem.id;
+    ctx.save(); ctx.translate(bird.x, bird.y);
+
+    if (id === 'a6') {
+      // Ailes de Fée — 2 ailes qui battent de chaque côté
+      for (let side = -1; side <= 1; side += 2) {
+        const flap = Math.sin(t * 8) * 0.3;
+        ctx.save(); ctx.rotate(flap * side);
+        ctx.globalAlpha = 0.75;
+        ctx.fillStyle = side < 0 ? '#ff88ff' : '#88ccff';
+        ctx.shadowColor = '#cc88ff'; ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.ellipse(side * r * 1.6, -r * 0.3, r * 0.9, r * 0.45, side * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+    } else if (id === 'a7') {
+      // Halo Doré — anneau lumineux qui tourne doucement
+      ctx.save();
+      ctx.rotate(t * 0.8);
+      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3;
+      ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 14;
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath(); ctx.ellipse(0, -r * 1.35, r * 0.8, r * 0.22, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    } else if (id === 'a14') {
+      // Arc-en-ciel — traînée arc-en-ciel derrière
+      const colors = ['#ff0044','#ff6600','#ffee00','#00ff88','#0088ff','#cc00ff'];
+      colors.forEach((c, i) => {
+        ctx.save();
+        ctx.globalAlpha = 0.55 - i * 0.06;
+        ctx.strokeStyle = c; ctx.lineWidth = 3;
+        ctx.shadowColor = c; ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(-r * 0.5, 0, r * (0.9 + i * 0.18), Math.PI * 0.6, Math.PI * 1.4);
+        ctx.stroke();
+        ctx.restore();
+      });
+    } else if (id === 'a17') {
+      // NOVA CORONA — étoiles en orbite
+      for (let i = 0; i < 5; i++) {
+        const angle = t * 2.5 + (i / 5) * Math.PI * 2;
+        const ox = Math.cos(angle) * r * 1.7;
+        const oy = Math.sin(angle) * r * 0.7;
+        ctx.save();
+        ctx.shadowColor = '#fff700'; ctx.shadowBlur = 16;
+        ctx.fillStyle = i % 2 === 0 ? '#fff700' : '#ffffff';
+        ctx.font = (r * 0.55) + 'px serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('★', ox, oy);
+        ctx.restore();
+      }
+    } else if (id === 'a15') {
+      // Flamme Éternelle — flammes animées sous l'oiseau
+      for (let i = 0; i < 6; i++) {
+        const fx = (Math.sin(t * 7 + i * 1.1) * r * 0.5);
+        const fy = r * 0.9 + Math.abs(Math.sin(t * 9 + i)) * r * 0.6;
+        const fsize = r * (0.4 + Math.random() * 0.3);
+        ctx.save();
+        ctx.globalAlpha = 0.7 - i * 0.08;
+        ctx.font = fsize + 'px serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(i < 3 ? '🔥' : '✨', fx, fy);
+        ctx.restore();
+      }
+    }
+    ctx.restore();
   }
-  ctx.restore();
+
+  // Oiseau
+  ctx.save(); ctx.translate(bird.x, bird.y); ctx.rotate(bird.angle);
+  if (ghostActive) { ctx.globalAlpha = 0.38; }
+  drawBirdSprite(ctx, r, skinItem ? skinItem.id : 's1', bird.wingAngle);
+  ctx.globalAlpha = 1;
+
+  // Accessoires SUR l'oiseau (suivent la rotation)
+  if (accItem) {
+    const id = accItem.id;
+    ctx.save();
+
+    if (id === 'a1') {
+      // Chapeau de Cowboy — bord large + calotte brune
+      ctx.fillStyle = '#5c3a00';
+      ctx.shadowColor = '#3a2000'; ctx.shadowBlur = 4;
+      ctx.fillRect(-r * 1.05, -r * 1.55, r * 2.1, r * 0.22); // bord
+      ctx.fillStyle = '#7a4f00';
+      ctx.beginPath(); ctx.ellipse(0, -r * 1.55, r * 0.65, r * 0.55, 0, 0, Math.PI * 2); ctx.fill(); // calotte
+      ctx.fillStyle = '#c8860a';
+      ctx.fillRect(-r * 0.65, -r * 1.6, r * 1.3, r * 0.15); // ruban
+    } else if (id === 'a2') {
+      // Casquette Bleue
+      ctx.fillStyle = '#1a3dcc';
+      ctx.shadowColor = '#0022aa'; ctx.shadowBlur = 4;
+      ctx.beginPath(); ctx.ellipse(0, -r * 1.1, r * 0.8, r * 0.5, 0, Math.PI, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1122aa';
+      ctx.fillRect(-r * 0.1, -r * 1.05, r * 0.9, r * 0.15); // visière
+    } else if (id === 'a3') {
+      // Lunettes Solaires
+      ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
+      ctx.fillStyle = 'rgba(0,200,255,0.5)';
+      ctx.shadowColor = '#00ccff'; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.ellipse(r * 0.2, -r * 0.18, r * 0.28, r * 0.18, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(r * 0.68, -r * 0.18, r * 0.22, r * 0.15, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r * 0.44, -r * 0.18); ctx.lineTo(r * 0.52, -r * 0.18); ctx.stroke();
+    } else if (id === 'a4') {
+      // Nœud Papillon
+      ctx.fillStyle = '#ff2266';
+      ctx.shadowColor = '#ff2266'; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.moveTo(r * 0.55, r * 0.25); ctx.quadraticCurveTo(r * 0.3, r * 0.4, r * 0.55, r * 0.55); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(r * 0.55, r * 0.25); ctx.quadraticCurveTo(r * 0.8, r * 0.4, r * 0.55, r * 0.55); ctx.fill();
+      ctx.fillStyle = '#ff6699'; ctx.beginPath(); ctx.arc(r * 0.55, r * 0.4, r * 0.07, 0, Math.PI * 2); ctx.fill();
+    } else if (id === 'a5') {
+      // Couronne Néon
+      ctx.strokeStyle = '#00ffcc'; ctx.lineWidth = 2;
+      ctx.fillStyle = 'rgba(0,255,200,0.15)';
+      ctx.shadowColor = '#00ffcc'; ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.65, -r * 1.1);
+      ctx.lineTo(-r * 0.65, -r * 1.45);
+      ctx.lineTo(-r * 0.32, -r * 1.2);
+      ctx.lineTo(0, -r * 1.5);
+      ctx.lineTo(r * 0.32, -r * 1.2);
+      ctx.lineTo(r * 0.65, -r * 1.45);
+      ctx.lineTo(r * 0.65, -r * 1.1);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    } else if (id === 'a8') {
+      // Bandeau Ninja style Naruto
+      ctx.fillStyle = '#111111';
+      ctx.shadowColor = '#444'; ctx.shadowBlur = 4;
+      ctx.fillRect(-r * 0.9, -r * 0.58, r * 1.8, r * 0.32);
+      ctx.fillStyle = '#aaaacc';
+      ctx.shadowColor = '#aaaaff'; ctx.shadowBlur = 8;
+      ctx.fillRect(-r * 0.38, -r * 0.55, r * 0.76, r * 0.28);
+      ctx.strokeStyle = '#333355'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(0, -r * 0.41, r * 0.11, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, -r * 0.41); ctx.lineTo(r * 0.11, -r * 0.3); ctx.stroke();
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(r * 0.38, -r * 0.52, r * 0.16, r * 0.2);
+      ctx.fillRect(-r * 0.54, -r * 0.52, r * 0.16, r * 0.2);
+    } else if (id === 'a9') {
+      // SKULL CROWN — tête de mort vectorielle + couronne gothique
+      const pulse = 0.5 + Math.sin(t * 4) * 0.5;
+      ctx.save(); ctx.translate(0, -r * 1.15);
+      // Aura rouge pulsante
+      ctx.globalAlpha = 0.25 + pulse * 0.2;
+      ctx.fillStyle = '#ff0000';
+      ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 22;
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.9, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      // Crâne — boîte crânienne
+      const skullGrad = ctx.createRadialGradient(-r*0.15, -r*0.2, r*0.05, 0, -r*0.1, r*0.75);
+      skullGrad.addColorStop(0, '#e8e0d0');
+      skullGrad.addColorStop(0.6, '#b8b0a0');
+      skullGrad.addColorStop(1, '#706860');
+      ctx.fillStyle = skullGrad;
+      ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.ellipse(0, -r*0.12, r*0.6, r*0.52, 0, 0, Math.PI*2); ctx.fill();
+      // Mâchoire
+      ctx.fillStyle = '#c0b8a8';
+      ctx.beginPath();
+      ctx.moveTo(-r*0.45, r*0.12);
+      ctx.quadraticCurveTo(-r*0.5, r*0.55, -r*0.2, r*0.58);
+      ctx.lineTo(r*0.2, r*0.58);
+      ctx.quadraticCurveTo(r*0.5, r*0.55, r*0.45, r*0.12);
+      ctx.closePath(); ctx.fill();
+      // Dents
+      ctx.fillStyle = '#e8e0d0';
+      for (let ti = -1; ti <= 1; ti++) {
+        ctx.beginPath();
+        ctx.rect(ti*r*0.19 - r*0.075, r*0.3, r*0.14, r*0.22);
+        ctx.fill();
+      }
+      // Fente nasale
+      ctx.fillStyle = '#2a1a1a';
+      ctx.beginPath();
+      ctx.moveTo(-r*0.1, r*0.1); ctx.lineTo(0, -r*0.02); ctx.lineTo(r*0.1, r*0.1);
+      ctx.closePath(); ctx.fill();
+      // Orbites oculaires
+      ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 14 + pulse*8;
+      ctx.fillStyle = '#1a0000';
+      ctx.beginPath(); ctx.ellipse(-r*0.24, -r*0.22, r*0.18, r*0.15, -0.15, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*0.24, -r*0.22, r*0.18, r*0.15, 0.15, 0, Math.PI*2); ctx.fill();
+      // Lueur rouge dans les orbites
+      ctx.fillStyle = `rgba(255,0,0,${0.3 + pulse*0.4})`;
+      ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.ellipse(-r*0.24, -r*0.22, r*0.1, r*0.08, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*0.24, -r*0.22, r*0.1, r*0.08, 0, 0, Math.PI*2); ctx.fill();
+      // Fissure sur le crâne
+      ctx.strokeStyle = '#555045'; ctx.lineWidth = 1.2; ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.moveTo(-r*0.05, -r*0.55);
+      ctx.lineTo(r*0.08, -r*0.3);
+      ctx.lineTo(-r*0.02, -r*0.1);
+      ctx.stroke();
+      // Couronne gothique dorée
+      ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 10;
+      ctx.fillStyle = '#cc9900';
+      ctx.beginPath();
+      ctx.moveTo(-r*0.62, -r*0.62);
+      ctx.lineTo(-r*0.62, -r*0.88);
+      ctx.lineTo(-r*0.38, -r*0.72);
+      ctx.lineTo(-r*0.18, -r*0.96);
+      ctx.lineTo(0,        -r*0.74);
+      ctx.lineTo(r*0.18,  -r*0.96);
+      ctx.lineTo(r*0.38,  -r*0.72);
+      ctx.lineTo(r*0.62,  -r*0.88);
+      ctx.lineTo(r*0.62,  -r*0.62);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Gemmes couronne
+      ctx.fillStyle = `rgba(255,${Math.floor(pulse*60)},0,0.95)`;
+      ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.arc(0, -r*0.82, r*0.1, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath(); ctx.arc(-r*0.5, -r*0.68, r*0.07, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*0.5, -r*0.68, r*0.07, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    } else if (id === 'a10') {
+      // Étoile de Shérif — tourne sur elle-même
+      ctx.save();
+      ctx.rotate(t * 2);
+      ctx.fillStyle = '#ffd700';
+      ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 12;
+      ctx.font = (r * 0.9) + 'px serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('⭐', 0, -r * 1.2);
+      ctx.restore();
+    } else if (id === 'a11') {
+      // Haut-de-Forme noir élégant
+      ctx.fillStyle = '#111111';
+      ctx.shadowColor = '#555'; ctx.shadowBlur = 6;
+      ctx.fillRect(-r * 0.62, -r * 2.0, r * 1.24, r * 0.95);
+      ctx.fillStyle = '#222222';
+      ctx.fillRect(-r * 0.85, -r * 1.1, r * 1.7, r * 0.18);
+      ctx.fillStyle = '#cc0000';
+      ctx.fillRect(-r * 0.62, -r * 1.22, r * 1.24, r * 0.1);
+      ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+      ctx.strokeRect(-r * 0.62, -r * 2.0, r * 1.24, r * 0.95);
+      
+    } else if (id === 'a12') {
+      // Casque Soldat militaire
+      ctx.fillStyle = '#3a4a2a';
+      ctx.shadowColor = '#2a3a1a'; ctx.shadowBlur = 4;
+      ctx.beginPath();
+      ctx.ellipse(0, -r * 1.05, r * 0.85, r * 0.6, 0, Math.PI, Math.PI * 2); ctx.fill();
+      ctx.fillRect(-r * 0.85, -r * 1.05, r * 1.7, r * 0.22);
+      ctx.fillStyle = '#2a3a1a';
+      ctx.beginPath(); ctx.ellipse(0, -r * 1.05, r * 0.6, r * 0.35, 0, Math.PI, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#4a5a3a';
+      ctx.fillRect(-r * 0.25, -r * 1.38, r * 0.5, r * 0.18);
+    } else if (id === 'a13') {
+      // Épée Héroïque — pointe vers le haut au saut, vers le bas en chute
+      const swordAngle = -bird.vel * 0.08;
+      ctx.save(); ctx.rotate(swordAngle);
+      ctx.fillStyle = '#c0c0e0';
+      ctx.shadowColor = '#aaaaff'; ctx.shadowBlur = 10;
+      // Lame
+      ctx.beginPath();
+      ctx.moveTo(r * 0.3, r * 0.5);
+      ctx.lineTo(r * 0.55, r * 0.5);
+      ctx.lineTo(r * 0.7, -r * 1.4);
+      ctx.lineTo(r * 0.45, -r * 1.5);
+      ctx.closePath(); ctx.fill();
+      // Garde
+      ctx.fillStyle = '#ffd700';
+      ctx.fillRect(r * 0.15, r * 0.45, r * 0.7, r * 0.15);
+      // Manche
+      ctx.fillStyle = '#8b4513';
+      ctx.fillRect(r * 0.35, r * 0.55, r * 0.2, r * 0.35);
+      ctx.restore();
+      } else if (id === 'a16') {
+      // Dragon vectoriel — corps ovale, tête, ailes, queue, feu
+      const bob = Math.sin(t * 2.8) * r * 0.5;
+      ctx.save(); ctx.translate(-r * 2.6, bob);
+      // --- QUEUE ondulante ---
+      ctx.save();
+      ctx.strokeStyle = '#991100'; ctx.lineWidth = r * 0.28; ctx.lineCap = 'round';
+      ctx.shadowColor = '#cc2200'; ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.3, r * 0.05);
+      ctx.bezierCurveTo(
+        -r * 0.7, r * 0.35 + Math.sin(t * 5) * r * 0.2,
+        -r * 1.1, r * 0.1  + Math.sin(t * 5 + 1) * r * 0.25,
+        -r * 1.4, r * 0.3  + Math.sin(t * 4 + 2) * r * 0.2
+      );
+      ctx.stroke();
+      // Pointe de queue triangulaire
+      const qx = -r*1.4, qy = r*0.3 + Math.sin(t*4+2)*r*0.2;
+      ctx.fillStyle = '#cc2200';
+      ctx.beginPath();
+      ctx.moveTo(qx, qy - r*0.15);
+      ctx.lineTo(qx - r*0.25, qy + r*0.05);
+      ctx.lineTo(qx, qy + r*0.2);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+      // --- AILES ---
+      const flap = Math.sin(t * 9) * 0.45;
+      // Aile haute
+      ctx.save(); ctx.rotate(-0.25 + flap);
+      ctx.fillStyle = '#aa1100';
+      ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(r * 0.05, -r * 0.15);
+      ctx.quadraticCurveTo(-r * 0.3, -r * 0.9, -r * 0.8, -r * 0.7);
+      ctx.quadraticCurveTo(-r * 0.4, -r * 0.3, r * 0.05, -r * 0.15);
+      ctx.fill();
+      // Nervures aile
+      ctx.strokeStyle = '#ff4422'; ctx.lineWidth = 1; ctx.globalAlpha = 0.6;
+      ctx.beginPath(); ctx.moveTo(r*0.05,-r*0.15); ctx.lineTo(-r*0.5,-r*0.65); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r*0.05,-r*0.15); ctx.lineTo(-r*0.3,-r*0.72); ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+      // --- CORPS ---
+      const bodyGrad = ctx.createRadialGradient(r*0.05, -r*0.05, r*0.1, 0, 0, r*0.52);
+      bodyGrad.addColorStop(0, '#ff4422');
+      bodyGrad.addColorStop(0.5, '#cc1100');
+      bodyGrad.addColorStop(1, '#660000');
+      ctx.fillStyle = bodyGrad;
+      ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.ellipse(0, 0, r*0.52, r*0.34, 0, 0, Math.PI*2); ctx.fill();
+      // Écailles ventre
+      ctx.fillStyle = 'rgba(255,150,80,0.35)';
+      for (let si = 0; si < 3; si++) {
+        ctx.beginPath();
+        ctx.ellipse(-r*0.2 + si*r*0.2, r*0.1, r*0.13, r*0.08, 0, 0, Math.PI*2);
+        ctx.fill();
+      }
+      // --- TÊTE ---
+      // Cou de liaison corps→tête
+      ctx.fillStyle = '#bb1a00';
+      ctx.beginPath(); ctx.ellipse(r*0.38, r*0.0, r*0.2, r*0.16, 0, 0, Math.PI*2); ctx.fill();
+      // Tête principale plus grosse et bien ronde
+      const headGrad = ctx.createRadialGradient(r*0.52, -r*0.18, r*0.04, r*0.55, -r*0.08, r*0.38);
+      headGrad.addColorStop(0, '#ff5533');
+      headGrad.addColorStop(0.5, '#dd2200');
+      headGrad.addColorStop(1, '#880000');
+      ctx.fillStyle = headGrad;
+      ctx.shadowColor = '#ff3300'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.ellipse(r*0.62, -r*0.1, r*0.38, r*0.3, -0.1, 0, Math.PI*2); ctx.fill();
+      // Crête dorsale sur la tête — 3 petites pointes
+      ctx.fillStyle = '#ff6633';
+      for (let ci = 0; ci < 3; ci++) {
+        const cx2 = r*(0.42 + ci*0.14), cy2 = -r*0.38;
+        ctx.beginPath();
+        ctx.moveTo(cx2 - r*0.06, -r*0.22);
+        ctx.lineTo(cx2, cy2 - r*(0.1 - ci*0.03));
+        ctx.lineTo(cx2 + r*0.06, -r*0.22);
+        ctx.closePath(); ctx.fill();
+      }
+      // Mâchoire inférieure légèrement ouverte
+      ctx.fillStyle = '#cc1a00';
+      ctx.beginPath();
+      ctx.moveTo(r*0.38, r*0.08);
+      ctx.quadraticCurveTo(r*0.62, r*0.22, r*0.88, r*0.1);
+      ctx.quadraticCurveTo(r*0.88, r*0.02, r*0.72, -r*0.02);
+      ctx.quadraticCurveTo(r*0.62, r*0.12, r*0.38, r*0.08);
+      ctx.fill();
+      // Dents
+      ctx.fillStyle = '#fff8e0';
+      ctx.shadowBlur = 0;
+      for (let ti = 0; ti < 3; ti++) {
+        const tx2 = r*(0.5 + ti*0.12);
+        ctx.beginPath();
+        ctx.moveTo(tx2, r*0.07);
+        ctx.lineTo(tx2 + r*0.05, r*0.18);
+        ctx.lineTo(tx2 + r*0.1, r*0.07);
+        ctx.closePath(); ctx.fill();
+      }
+      // Narine
+      ctx.fillStyle = '#330000';
+      ctx.beginPath(); ctx.ellipse(r*0.84, -r*0.04, r*0.04, r*0.025, 0.3, 0, Math.PI*2); ctx.fill();
+      // Œil — iris jaune + pupille noire fendue
+      ctx.fillStyle = '#ffee00';
+      ctx.shadowColor = '#ffee00'; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(r*0.6, -r*0.18, r*0.1, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#000000';
+      ctx.beginPath(); ctx.ellipse(r*0.61, -r*0.18, r*0.04, r*0.09, 0, 0, Math.PI*2); ctx.fill();
+      // Corne
+      ctx.strokeStyle = '#ffbb44'; ctx.lineWidth = r*0.08; ctx.lineCap = 'round';
+      ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.moveTo(r*0.52,-r*0.3); ctx.lineTo(r*0.58,-r*0.52); ctx.stroke();
+      // --- SOUFFLE DE FEU ---
+      const fa = 0.5 + Math.sin(t * 10) * 0.5;
+      const fireX = r * 0.94;
+      for (let fi = 0; fi < 4; fi++) {
+        const foff = Math.sin(t * 11 + fi * 1.4) * r * 0.1;
+        const fsize = r * (0.22 - fi * 0.04);
+        ctx.globalAlpha = fa * (1 - fi * 0.22);
+        ctx.fillStyle = ['#ffff88','#ffcc00','#ff6600','#ff1100'][fi];
+        ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 12;
+        ctx.beginPath(); ctx.arc(fireX + fi * r * 0.28, -r*0.02 + foff, fsize, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    
+    }
+
+    ctx.restore();
+  }
+
+  ctx.restore(); // ferme le save oiseau (translate+rotate)
+
+  // ── RAGE OVERLAY : rougissement pulsant ────────────
+  const rageActive = arcadeMode && activePowerUp && activePowerUp.id === 'pu3';
+  if (rageActive) {
+    const rPulse = 0.3 + 0.25 * Math.sin(performance.now() * 0.012);
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+    // Halo rouge extérieur
+    const rHalo = ctx.createRadialGradient(0, 0, r * 0.4, 0, 0, r * 2.2);
+    rHalo.addColorStop(0, `rgba(255,60,0,${rPulse * 0.55})`);
+    rHalo.addColorStop(0.5, `rgba(255,0,0,${rPulse * 0.3})`);
+    rHalo.addColorStop(1, 'rgba(255,0,0,0)');
+    ctx.beginPath(); ctx.arc(0, 0, r * 2.2, 0, Math.PI * 2);
+    ctx.fillStyle = rHalo; ctx.fill();
+    // Voile rouge sur le corps de l'oiseau
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.globalAlpha = rPulse * 0.55;
+    ctx.fillStyle = '#ff2200';
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    // Yeux qui rougissent (petits éclairs)
+    ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 10 + rPulse * 14;
+    ctx.fillStyle = `rgba(255,80,0,${rPulse})`;
+    ctx.beginPath(); ctx.arc(r * 0.42, -r * 0.2, r * 0.18, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // ── STAR RUSH OVERLAY : étoiles filantes + traînée cosmique ──
+  const starRushActive = arcadeMode && activePowerUp && activePowerUp.id === 'pu4';
+  if (starRushActive) {
+    const t2 = performance.now() * 0.001;
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+
+    // Traînée arc-en-ciel derrière l'oiseau (plusieurs strates)
+    for (let li = 0; li < 5; li++) {
+      const trailLen = 90 + li * 30;
+      const hue = (frames * 4 + li * 40) % 360;
+      const trailGrad = ctx.createLinearGradient(-trailLen, 0, 0, 0);
+      trailGrad.addColorStop(0, `hsla(${hue},100%,60%,0)`);
+      trailGrad.addColorStop(1, `hsla(${hue},100%,70%,${0.35 - li * 0.06})`);
+      ctx.save();
+      ctx.translate(0, (li - 2) * 3);
+      ctx.strokeStyle = trailGrad;
+      ctx.lineWidth = 6 - li;
+      ctx.shadowColor = `hsl(${hue},100%,60%)`;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.moveTo(-trailLen, 0);
+      ctx.lineTo(0, 0);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Halo cosmique pulsant (arc-en-ciel)
+    const haloHue = (frames * 3) % 360;
+    const haloPulse = 0.6 + 0.4 * Math.sin(t2 * 6);
+    const haloR = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r * 2.8);
+    haloR.addColorStop(0, `hsla(${haloHue},100%,70%,${0.5 * haloPulse})`);
+    haloR.addColorStop(0.5, `hsla(${(haloHue+60)%360},100%,60%,${0.25 * haloPulse})`);
+    haloR.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(0, 0, r * 2.8, 0, Math.PI * 2);
+    ctx.fillStyle = haloR; ctx.fill();
+
+    // Étoiles qui orbitent autour de l'oiseau
+    for (let i = 0; i < 5; i++) {
+      const angle = t2 * 3 + i * (Math.PI * 2 / 5);
+      const dist  = r * 1.8 + Math.sin(t2 * 4 + i) * r * 0.4;
+      const sx    = Math.cos(angle) * dist;
+      const sy    = Math.sin(angle) * dist;
+      const starHue = (frames * 5 + i * 72) % 360;
+      const starSize = 3 + Math.sin(t2 * 5 + i) * 1.5;
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(angle + t2 * 2);
+      ctx.shadowColor = `hsl(${starHue},100%,70%)`;
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = `hsl(${starHue},100%,85%)`;
+      // Étoile à 4 branches
+      ctx.beginPath();
+      for (let p = 0; p < 4; p++) {
+        const a = (p / 4) * Math.PI * 2 - Math.PI / 4;
+        const d = p % 2 === 0 ? starSize : starSize * 0.4;
+        p === 0 ? ctx.moveTo(Math.cos(a)*d, Math.sin(a)*d) : ctx.lineTo(Math.cos(a)*d, Math.sin(a)*d);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+
+    // Étincelles de vitesse (mini étoiles filantes)
+    for (let i = 0; i < 4; i++) {
+      const sx = -r * (1.5 + i * 0.8) - Math.sin(t2 * 8 + i * 1.3) * 8;
+      const sy = (i - 1.5) * r * 0.7 + Math.cos(t2 * 6 + i) * 5;
+      ctx.save();
+      ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t2 * 7 + i * 2);
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(sx, sy, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
+  // ── JOKER OVERLAY : cartes volantes + aura mystique ──
+  const jokerActive = arcadeMode && activePowerUp && activePowerUp.id === 'pu15';
+  if (jokerActive) {
+    const t2 = performance.now() * 0.001;
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+
+    // Halo violet/or mystique
+    const jPulse = 0.5 + 0.5 * Math.sin(t2 * 4);
+    const jHalo = ctx.createRadialGradient(0, 0, r * 0.3, 0, 0, r * 2.5);
+    jHalo.addColorStop(0,   `rgba(180,0,255,${0.45 * jPulse})`);
+    jHalo.addColorStop(0.4, `rgba(100,0,180,${0.25 * jPulse})`);
+    jHalo.addColorStop(0.7, `rgba(255,200,0,${0.12 * jPulse})`);
+    jHalo.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(0, 0, r * 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = jHalo; ctx.fill();
+
+    // Cartes à jouer qui orbitent (4 cartes)
+    const SUITS = ['♠','♥','♦','♣'];
+    const SUIT_COLORS = ['#ffffff','#ff4466','#ff4466','#ffffff'];
+    for (let i = 0; i < 4; i++) {
+      const angle = t2 * 2.5 + i * (Math.PI * 2 / 4);
+      const dist  = r * 2.0 + Math.sin(t2 * 3 + i * 1.1) * r * 0.4;
+      const cx2   = Math.cos(angle) * dist;
+      const cy2   = Math.sin(angle) * dist;
+      const cardW = 14, cardH = 18;
+      ctx.save();
+      ctx.translate(cx2, cy2);
+      ctx.rotate(angle + t2 * 1.5 + i * 0.8);
+      // Carte fond
+      ctx.shadowColor = '#cc44ff';
+      ctx.shadowBlur  = 10;
+      ctx.fillStyle   = 'rgba(20,0,40,0.92)';
+      ctx.strokeStyle = '#cc44ff';
+      ctx.lineWidth   = 1.5;
+      roundRectPath(-cardW/2, -cardH/2, cardW, cardH, 2);
+      ctx.fill(); ctx.stroke();
+      // Symbole
+      ctx.shadowBlur = 0;
+      ctx.fillStyle  = SUIT_COLORS[i];
+      ctx.font       = '9px serif';
+      ctx.textAlign  = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(SUITS[i], 0, 0);
+      ctx.restore();
+    }
+
+    // Symbole 🃏 central pulsant
+    ctx.save();
+    const jScale = 0.9 + 0.2 * Math.sin(t2 * 6);
+    ctx.scale(jScale, jScale);
+    ctx.shadowColor = '#ff00ff';
+    ctx.shadowBlur  = 20 * jPulse;
+    ctx.font        = `${r * 0.9}px serif`;
+    ctx.textAlign   = 'center';
+    ctx.textBaseline= 'middle';
+    ctx.globalAlpha = 0.7 + 0.3 * jPulse;
+    ctx.fillText('🃏', 0, -r * 1.6);
+    ctx.restore();
+
+    // Petites étoiles/losanges scintillants autour
+    for (let i = 0; i < 6; i++) {
+      const angle = t2 * 1.5 + i * (Math.PI / 3);
+      const dist  = r * 1.3 + Math.sin(t2 * 5 + i) * r * 0.3;
+      const sx    = Math.cos(angle) * dist;
+      const sy    = Math.sin(angle) * dist;
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t2 * 4 + i * 1.5);
+      ctx.shadowColor = i % 2 === 0 ? '#cc00ff' : '#ffcc00';
+      ctx.shadowBlur  = 8;
+      ctx.fillStyle   = i % 2 === 0 ? '#dd88ff' : '#ffee44';
+      ctx.beginPath();
+      ctx.rotate(t2 * 3 + i);
+      ctx.moveTo(0, -3); ctx.lineTo(1.5, 0); ctx.lineTo(0, 3); ctx.lineTo(-1.5, 0);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
+  // ── MAGNET OVERLAY : champ magnétique + arcs électriques ──
+  const magnetOverlay = arcadeMode && activePowerUp && activePowerUp.id === 'pu10';
+  if (magnetOverlay) {
+    const t2 = performance.now() * 0.001;
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+
+    // Cercles de champ magnétique concentriques
+    const magR = [r * 2.5, r * 4.0, r * 5.5];
+    magR.forEach((mr, idx) => {
+      const dashOffset = -(frames * (1.5 + idx * 0.5)) % 20;
+      ctx.save();
+      ctx.setLineDash([6, 8]);
+      ctx.lineDashOffset = dashOffset;
+      ctx.strokeStyle = `rgba(229,57,53,${0.35 - idx * 0.08})`;
+      ctx.lineWidth = 1.5 - idx * 0.3;
+      ctx.shadowColor = '#e53935';
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.arc(0, 0, mr, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // Lignes de force magnétiques (courbes)
+    for (let i = 0; i < 8; i++) {
+      const baseAngle = (i / 8) * Math.PI * 2 + t2 * 0.8;
+      ctx.save();
+      ctx.globalAlpha = 0.3 + 0.2 * Math.sin(t2 * 3 + i);
+      ctx.strokeStyle = '#ff6659';
+      ctx.lineWidth = 1;
+      ctx.shadowColor = '#e53935';
+      ctx.shadowBlur = 4;
+      ctx.beginPath();
+      const r1 = r * 1.5, r2 = r * 5.5;
+      ctx.moveTo(Math.cos(baseAngle) * r1, Math.sin(baseAngle) * r1);
+      ctx.quadraticCurveTo(
+        Math.cos(baseAngle + 0.4) * (r1 + r2) * 0.55,
+        Math.sin(baseAngle + 0.4) * (r1 + r2) * 0.55,
+        Math.cos(baseAngle + 0.8) * r2,
+        Math.sin(baseAngle + 0.8) * r2
+      );
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Noyau magnétique (N/S)
+    const polePulse = 0.7 + 0.3 * Math.sin(t2 * 8);
+    ['N','S'].forEach((pole, pi) => {
+      const angle = pi * Math.PI + t2 * 1.2;
+      const px2 = Math.cos(angle) * r * 0.8;
+      const py2 = Math.sin(angle) * r * 0.8;
+      ctx.save();
+      ctx.translate(px2, py2);
+      const poleColor = pi === 0 ? '#ff4444' : '#4488ff';
+      ctx.shadowColor = poleColor;
+      ctx.shadowBlur  = 12 * polePulse;
+      ctx.fillStyle   = poleColor;
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.38, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${r * 0.38}px "Orbitron",sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(pole, 0, 1);
+      ctx.restore();
+    });
+
+    // Arcs électriques vers les pièces proches
+    coinObjects.forEach(c => {
+      if (c.collected) return;
+      const dx = c.x - bird.x, dy = c.y - bird.y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if (dist < 140 && dist > r * 1.5) {
+        const arcAlpha = (1 - dist / 140) * (0.4 + 0.4 * Math.sin(frames * 0.4 + c.x));
+        ctx.save();
+        ctx.globalAlpha = arcAlpha;
+        ctx.strokeStyle = '#ff8888';
+        ctx.lineWidth = 1;
+        ctx.shadowColor = '#e53935';
+        ctx.shadowBlur = 6;
+        ctx.setLineDash([3, 5]);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        // Zigzag vers la pièce
+        const steps = 3;
+        for (let s = 1; s <= steps; s++) {
+          const frac = s / (steps + 1);
+          const zx = dx * frac + (Math.random() - 0.5) * 12;
+          const zy = dy * frac + (Math.random() - 0.5) * 12;
+          ctx.lineTo(zx, zy);
+        }
+        ctx.lineTo(dx, dy);
+        ctx.stroke();
+        ctx.restore();
+      }
+    });
+
+    ctx.restore();
+  }
+
+  // ── SHIELD OVERLAY : dôme hexagonal énergétique ──
+  const shieldOverlay = arcadeMode && activePowerUp && activePowerUp.id === 'pu2';
+  if (shieldOverlay) {
+    const t2 = performance.now() * 0.001;
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+
+    const sPulse   = 0.7 + 0.3 * Math.sin(t2 * 5);
+    const shieldR  = r * 2.0;
+    const hexCount = 6;
+
+    // Hexagones sur la surface du dôme
+    for (let h = 0; h < hexCount; h++) {
+      const angle  = (h / hexCount) * Math.PI * 2 + t2 * 0.4;
+      const hx     = Math.cos(angle) * shieldR * 0.82;
+      const hy     = Math.sin(angle) * shieldR * 0.82;
+      const hexR   = shieldR * 0.35;
+      ctx.save();
+      ctx.translate(hx, hy);
+      ctx.globalAlpha = 0.18 + 0.10 * Math.sin(t2 * 3 + h);
+      ctx.strokeStyle = '#4fc3f7';
+      ctx.lineWidth = 1.2;
+      ctx.shadowColor = '#00bcd4';
+      ctx.shadowBlur  = 8;
+      ctx.beginPath();
+      for (let v = 0; v < 6; v++) {
+        const va = (v / 6) * Math.PI * 2 - Math.PI / 6;
+        v === 0 ? ctx.moveTo(Math.cos(va)*hexR, Math.sin(va)*hexR)
+                : ctx.lineTo(Math.cos(va)*hexR, Math.sin(va)*hexR);
+      }
+      ctx.closePath(); ctx.stroke();
+      ctx.restore();
+    }
+
+    // Dôme principal — cercle lumineux cyan
+    const sGrad = ctx.createRadialGradient(0, 0, shieldR * 0.7, 0, 0, shieldR + 4);
+    sGrad.addColorStop(0, `rgba(79,195,247,0)`);
+    sGrad.addColorStop(0.7, `rgba(79,195,247,${0.12 * sPulse})`);
+    sGrad.addColorStop(1,   `rgba(79,195,247,${0.4 * sPulse})`);
+    ctx.beginPath(); ctx.arc(0, 0, shieldR, 0, Math.PI * 2);
+    ctx.fillStyle = sGrad; ctx.fill();
+
+    // Contour du bouclier
+    ctx.save();
+    ctx.strokeStyle = `rgba(79,195,247,${0.7 * sPulse})`;
+    ctx.lineWidth   = 2.5;
+    ctx.shadowColor = '#4fc3f7';
+    ctx.shadowBlur  = 16 * sPulse;
+    ctx.beginPath(); ctx.arc(0, 0, shieldR, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    // Reflet animé (arc lumineux qui tourne)
+    ctx.save();
+    ctx.rotate(t2 * 1.5);
+    const reflGrad = ctx.createConicalGradient ? null : null;
+    ctx.globalAlpha = 0.4 * sPulse;
+    ctx.strokeStyle = '#b3e5fc';
+    ctx.lineWidth   = 3;
+    ctx.shadowColor = '#81d4fa';
+    ctx.shadowBlur  = 10;
+    ctx.beginPath();
+    ctx.arc(0, 0, shieldR - 1, -0.5, 0.5);
+    ctx.stroke();
+    ctx.restore();
+
+    // Particules de bouclier (étincelles cyan qui orbitent)
+    for (let i = 0; i < 5; i++) {
+      const angle = t2 * 2.5 + i * (Math.PI * 2 / 5) + Math.sin(t2 * 4 + i) * 0.3;
+      const sparkX = Math.cos(angle) * shieldR;
+      const sparkY = Math.sin(angle) * shieldR;
+      ctx.save();
+      ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t2 * 5 + i);
+      ctx.shadowColor = '#00e5ff';
+      ctx.shadowBlur  = 10;
+      ctx.fillStyle   = '#b2ebf2';
+      ctx.beginPath(); ctx.arc(sparkX, sparkY, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
+  ctx.restore(); // ← protection globale anti-fuite
 }
 
 function drawParticles() {
@@ -2310,6 +3488,151 @@ function drawCoinLabels() {
     ctx.fillStyle='#ffd700'; ctx.font='9px "Press Start 2P",monospace';
     ctx.textAlign='center'; ctx.textBaseline='alphabetic';
     ctx.fillText('+1', l.x, l.y); ctx.restore();
+  });
+}
+
+// ── LASER BEAM ANIMATION ────────────────────────────
+function drawLaserBeam() {
+  if (!laserActive) return;
+  const progress = 1 - (laserTimer / Math.floor(4000 / FIXED_TIMESTEP));
+  const pulseT = performance.now() * 0.01;
+  const pulse = 0.7 + 0.3 * Math.sin(pulseT * 3);
+  ctx.save();
+
+  // ── Halo large (lueur externe rouge/orange) ──
+  const haloGrad = ctx.createLinearGradient(laserX - 40, 0, laserX + 40, 0);
+  haloGrad.addColorStop(0,   'rgba(255,0,0,0)');
+  haloGrad.addColorStop(0.5, `rgba(255,80,0,${0.18 * pulse})`);
+  haloGrad.addColorStop(1,   'rgba(255,0,0,0)');
+  ctx.fillStyle = haloGrad;
+  ctx.fillRect(laserX - 40, 0, 80, H - GROUND_H);
+
+  // ── Trail de chaleur (traînée derrière) ──
+  const trailLen = 80 + progress * 120;
+  const trailGrad = ctx.createLinearGradient(laserX - trailLen, 0, laserX, 0);
+  trailGrad.addColorStop(0, 'rgba(255,50,0,0)');
+  trailGrad.addColorStop(1, `rgba(255,80,20,${0.12 * pulse})`);
+  ctx.fillStyle = trailGrad;
+  ctx.fillRect(laserX - trailLen, 0, trailLen, H - GROUND_H);
+
+  // ── Rayon principal (gros glow orange/rouge) ──
+  const cy = H / 2;
+  const beamY = cy; // centré verticalement
+  for (let i = 0; i < 4; i++) {
+    const sizes   = [18, 10, 5, 2];
+    const alphas  = [0.10, 0.20, 0.55, 0.95];
+    const colors  = ['#ff2200','#ff5500','#ff8800','#ffffff'];
+    ctx.save();
+    ctx.shadowColor = '#ff2200';
+    ctx.shadowBlur = 30 - i * 6;
+    ctx.strokeStyle = colors[i];
+    ctx.globalAlpha = alphas[i] * pulse;
+    ctx.lineWidth = sizes[i];
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, beamY);
+    ctx.lineTo(laserX + 10, beamY);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Tête du rayon : boule d'énergie ──
+  const headGrad = ctx.createRadialGradient(laserX, beamY, 0, laserX, beamY, 22);
+  headGrad.addColorStop(0,   `rgba(255,255,200,${pulse})`);
+  headGrad.addColorStop(0.3, `rgba(255,120,0,${0.9 * pulse})`);
+  headGrad.addColorStop(0.7, `rgba(255,0,0,${0.5 * pulse})`);
+  headGrad.addColorStop(1,   'rgba(200,0,0,0)');
+  ctx.shadowColor = '#ff5500';
+  ctx.shadowBlur = 40;
+  ctx.fillStyle = headGrad;
+  ctx.beginPath();
+  ctx.arc(laserX, beamY, 22, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Étincelles autour de la tête ──
+  const sparkCount = 6;
+  for (let i = 0; i < sparkCount; i++) {
+    const angle = (frames * 0.18 + i * (Math.PI * 2 / sparkCount));
+    const dist  = 14 + Math.sin(frames * 0.25 + i) * 6;
+    const sx    = laserX + Math.cos(angle) * dist;
+    const sy    = beamY  + Math.sin(angle) * dist;
+    ctx.save();
+    ctx.globalAlpha = (0.5 + 0.5 * Math.sin(frames * 0.3 + i)) * pulse;
+    ctx.shadowColor = '#ff8800';
+    ctx.shadowBlur  = 10;
+    ctx.fillStyle   = '#ffcc00';
+    ctx.beginPath();
+    ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Petits éclairs latéraux (crackle) ──
+  for (let i = 0; i < 3; i++) {
+    const sign  = i % 2 === 0 ? 1 : -1;
+    const offY  = sign * (8 + Math.random() * 12);
+    const offX  = -20 - Math.random() * 30;
+    ctx.save();
+    ctx.globalAlpha = 0.4 * pulse * Math.random();
+    ctx.strokeStyle = '#ffaa00';
+    ctx.lineWidth   = 1.5;
+    ctx.shadowColor = '#ff6600';
+    ctx.shadowBlur  = 8;
+    ctx.beginPath();
+    ctx.moveTo(laserX + offX,        beamY);
+    ctx.lineTo(laserX + offX - 8,    beamY + offY);
+    ctx.lineTo(laserX + offX - 18,   beamY + offY * 0.4);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Onde de choc sur impact (ligne verticale pulsante) ──
+  ctx.save();
+  ctx.globalAlpha = 0.35 * pulse;
+  ctx.strokeStyle = '#ff4400';
+  ctx.lineWidth   = 3;
+  ctx.shadowColor = '#ff4400';
+  ctx.shadowBlur  = 20;
+  ctx.beginPath();
+  ctx.moveTo(laserX + 8, 0);
+  ctx.lineTo(laserX + 8, H - GROUND_H);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawZapEffects() {
+  zapEffects.forEach(z => {
+    if (z.points.length < 2) return;
+    ctx.save();
+    ctx.globalAlpha = z.life;
+    // Lueur large derrière
+    ctx.shadowColor = '#ffee58';
+    ctx.shadowBlur = 18;
+    ctx.strokeStyle = 'rgba(255,255,180,0.4)';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(z.points[0].x, z.points[0].y);
+    for (let i = 1; i < z.points.length; i++) ctx.lineTo(z.points[i].x, z.points[i].y);
+    ctx.stroke();
+    // Trait principal jaune vif
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = '#ffee58';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(z.points[0].x, z.points[0].y);
+    for (let i = 1; i < z.points.length; i++) ctx.lineTo(z.points[i].x, z.points[i].y);
+    ctx.stroke();
+    // Trait blanc central
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(z.points[0].x, z.points[0].y);
+    for (let i = 1; i < z.points.length; i++) ctx.lineTo(z.points[i].x, z.points[i].y);
+    ctx.stroke();
+    ctx.restore();
   });
 }
 
@@ -2341,26 +3664,30 @@ function drawCoinHUD() {
 function drawIdleScreen() {
   ctx.save();
   ctx.fillStyle='rgba(2,0,20,0.85)';
-  roundRectPath(W/2-155, H/2-110, 310, 200, 12); ctx.fill();
+  roundRectPath(W/2-155, H/2-120, 310, 230, 12); ctx.fill();
   ctx.strokeStyle='#00f5ff'; ctx.shadowColor='#00f5ff'; ctx.shadowBlur=20; ctx.lineWidth=2;
-  roundRectPath(W/2-155, H/2-110, 310, 200, 12); ctx.stroke();
-  ctx.shadowBlur=0; ctx.fillStyle='#00f5ff'; ctx.font='13px "Press Start 2P",monospace';
+  roundRectPath(W/2-155, H/2-120, 310, 230, 12); ctx.stroke();
+  ctx.shadowBlur=0; ctx.fillStyle='#00f5ff'; ctx.font='11px "Press Start 2P",monospace';
   ctx.textAlign='center'; ctx.textBaseline='alphabetic';
-  ctx.fillText('APPUYEZ POUR', W/2, H/2-68);
+  ctx.fillText('CHOISISSEZ UN MODE', W/2, H/2-82);
   ctx.fillStyle='#ffbe0b'; ctx.shadowColor='#ffbe0b'; ctx.shadowBlur=16;
-  ctx.font='18px "Press Start 2P",monospace'; ctx.fillText('JOUER', W/2, H/2-36);
+  ctx.font='16px "Press Start 2P",monospace'; ctx.fillText('FLOPPY NEON', W/2, H/2-52);
+  ctx.shadowBlur=0;
   if (best > 0) {
-    ctx.shadowBlur=0; ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font='8px "Press Start 2P",monospace';
-    ctx.fillText('MEILLEUR SCORE: '+best, W/2, H/2-8);
+    ctx.fillStyle='rgba(0,245,255,0.5)'; ctx.font='7px "Press Start 2P",monospace';
+    ctx.fillText('INFINI: '+best, W/2-50, H/2-26);
+  }
+  if (arcadeBest > 0) {
+    ctx.fillStyle='rgba(255,145,0,0.6)'; ctx.font='7px "Press Start 2P",monospace';
+    ctx.fillText('ARCADE: '+arcadeBest, W/2+50, H/2-26);
   }
   ctx.fillStyle='#ffd700'; ctx.shadowColor=COIN_GLOW; ctx.shadowBlur=10;
   ctx.font='8px "Press Start 2P",monospace';
-  ctx.fillText('PIECES: '+totalCoins, W/2, H/2+14);
+  ctx.fillText('PIECES: '+totalCoins, W/2, H/2-6);
   ctx.shadowBlur=0;
-  ctx.fillStyle='rgba(0,245,255,0.6)'; ctx.font='7px "Press Start 2P",monospace';
-  ctx.fillText('ESPACE / CLIC / TAP', W/2, H/2+34);
   ctx.restore();
-  // Bouton boutique
+  drawBtn(BTN_INFINI);
+  drawBtn(BTN_ARCADE);
   drawBtn(BTN_SHOP_IDLE);
 }
 
@@ -2409,13 +3736,15 @@ function drawDeadScreen() {
   ctx.fillText('SCORE: '+score, W/2, H/2-32);
   ctx.fillStyle='rgba(255,215,0,0.8)'; ctx.font='8px "Press Start 2P",monospace';
   ctx.fillText('PIECES: +'+coins, W/2, H/2-14);
-  if (score >= best && score > 0) {
+  const currentBest = arcadeMode ? arcadeBest : best;
+  const modeLabel = arcadeMode ? 'ARCADE' : 'INFINI';
+  if (score >= currentBest && score > 0) {
     ctx.fillStyle='#ffbe0b'; ctx.shadowColor='#ffbe0b'; ctx.shadowBlur=12;
     ctx.font='8px "Press Start 2P",monospace';
-    ctx.fillText('★ NOUVEAU RECORD! ★', W/2, H/2+6);
+    ctx.fillText('★ RECORD '+modeLabel+'! ★', W/2, H/2+6);
   } else {
     ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='7px "Press Start 2P",monospace';
-    ctx.fillText('MEILLEUR: '+best, W/2, H/2+6);
+    ctx.fillText('MEILLEUR: '+currentBest, W/2, H/2+6);
   }
   BTNS.forEach(b => drawBtn(b));
   drawBtn(BTN_SHOP_DEAD);
@@ -2450,29 +3779,122 @@ function drawAdScreen() {
 }
 
 // ── Main game loop ──────────────────────────────────
-function gameLoop() {
-  requestAnimationFrame(gameLoop);
-  frames++;
-  let sx = 0, sy = 0;
-  if (deathShake > 0) { sx=(Math.random()-0.5)*deathShake*0.6; sy=(Math.random()-0.5)*deathShake*0.6; deathShake*=0.82; if(deathShake<0.5) deathShake=0; }
-  ctx.save(); ctx.translate(sx, sy);
+const FIXED_TIMESTEP = 1000 / 60;
+let _glLastTime = 0;
+let _glAccum = 0;
 
+function gameLoop(timestamp) {
+  requestAnimationFrame(gameLoop);
+  if (!_glLastTime) _glLastTime = timestamp;
+  let delta = timestamp - _glLastTime;
+  _glLastTime = timestamp;
+  if (delta > 100) delta = 100;
+  _glAccum += delta;
+
+  while (_glAccum >= FIXED_TIMESTEP) {
+    _gameUpdate();
+    _glAccum -= FIXED_TIMESTEP;
+  }
+
+  // Rendu
+  let sx = 0, sy = 0;
+  if (deathShake > 0) { sx=(Math.random()-0.5)*deathShake*0.6; sy=(Math.random()-0.5)*deathShake*0.6; }
+  ctx.save(); ctx.translate(sx, sy);
   drawGradientBg();
   drawGrid();
+  pipes.forEach(p => drawPipe(p));
+  coinObjects.forEach(c => drawCoin(c));
+  if (arcadeMode) { powerUps.forEach(pu => { if (!pu.collected) drawPowerUp(pu); }); }
+  if (arcadeMode && state === 'playing') drawPowerUpHUD();
+  drawGround();
+  drawParticles();
+  drawCoinLabels();
+  drawZapEffects();
+  if (arcadeMode && laserActive) drawLaserBeam();
+  drawBird();
+  if (state === 'playing') drawScore();
+  drawCoinHUD();
+  if (state === 'idle') drawIdleScreen();
+  if (state === 'revive' && adState === 'none') drawReviveScreen();
+  if (state === 'dead' && adState === 'none') drawDeadScreen();
+  if (adState === 'playing') drawAdScreen();
+  ctx.restore();
+}
+
+function _gameUpdate() {
+  frames++;
+  if (deathShake > 0) { deathShake*=0.82; if(deathShake<0.5) deathShake=0; }
+  if (flashTimer > 0) flashTimer--;
+  if (coinFlashTimer > 0) coinFlashTimer--;
+
+  // Tick power-up actif
+  if (activePowerUp && activePowerUp.duration > 0) {
+    activePowerUp.timeLeft -= FIXED_TIMESTEP;
+    if (activePowerUp.timeLeft <= 0) {
+      deactivatePowerUp(activePowerUp.id);
+      activePowerUp = null;
+    }
+  }
 
   if (state === 'playing') {
-    groundOffset += PIPE_SPEED;
-    bird.vy += GRAVITY;
-    bird.y  += bird.vy;
+    const spd = arcadeMode ? PIPE_SPEED * arcadeSpeedMult : PIPE_SPEED;
+    const slowFactor = 1.0;
+    groundOffset += spd * slowFactor;
+
+    if (!lowGravityActive) {
+      bird.vy += GRAVITY;
+    } else {
+      bird.vy += GRAVITY * 2;
+    }
+      bird.y  += bird.vy * slowFactor;
     bird.angle = Math.max(-Math.PI/4, Math.min(Math.PI/2, bird.vy*0.06));
     bird.wingAngle += bird.wingDir*0.22;
     if (Math.abs(bird.wingAngle) > 0.8) bird.wingDir *= -1;
+
     if (frames % 90 === 0) addPipe();
+
+    // Mise à jour tier arcade
+    if (arcadeMode) {
+      if      (score >= 50) { arcadeTier = 5; arcadeSpeedMult = 1.60; }
+      else if (score >= 35) { arcadeTier = 4; arcadeSpeedMult = 1.45; }
+      else if (score >= 20) { arcadeTier = 3; arcadeSpeedMult = 1.30; }
+      else if (score >= 10) { arcadeTier = 2; arcadeSpeedMult = 1.15; }
+      else                  { arcadeTier = 1; arcadeSpeedMult = 1.00; }
+    }
+
+    if (arcadeMode && laserActive) {
+      laserX += spd * slowFactor * 3;
+      laserTimer--;
+      if (laserTimer <= 0) { laserActive = false; }
+      pipes = pipes.filter(p => {
+        if (laserX > p.x && laserX < p.x + PIPE_W) {
+          score += 1; flashTimer = 8;
+          const cy = p.topH + (p.gap || PIPE_GAP) / 2;
+          for (let i = 0; i < 8; i++) {
+            particles.push({ x: laserX, y: cy + (Math.random()-0.5)*80, vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4, life: 1, r: Math.random()*3+2, color: '#f44336' });
+          }
+          showToast('🔫 LASER! +1');
+          return false;
+        }
+        return true;
+      });
+      powerUps = powerUps.filter(p => p.x > laserX - 10);
+    }
+
     pipes.forEach(p => {
-      p.x -= PIPE_SPEED;
+      p.x -= spd * slowFactor;
+      // Oscillation verticale
+      if (arcadeMode && p.oscAmp > 0) {
+        p.oscOffset += p.oscSpeed * slowFactor;
+        p.topH = p.baseTopH + Math.sin(p.oscOffset) * p.oscAmp;
+        p.topH = Math.max(50, Math.min(H - GROUND_H - (p.gap || PIPE_GAP) - 50, p.topH));
+      }
       if (!p.scored && p.x+PIPE_W < bird.x) {
-        p.scored = true; score++; flashTimer = 8;
-        const sc = score+1;
+        p.scored = true;
+        const pts = (arcadeMode && activePowerUp && activePowerUp.id==='pu3') ? 2
+                  : (arcadeMode && activePowerUp && activePowerUp.id==='pu15') ? 3 : 1;
+        score += pts; flashTimer = 8;
+        const sc = score;
         if (sc % 10 === 0) {
           const earned = getCoinMultiplier();
           totalCoins += earned; coins += earned; coinFlashTimer = 15;
@@ -2480,12 +3902,17 @@ function gameLoop() {
         }
       }
     });
+
     coinObjects.forEach(c => {
-      c.x -= PIPE_SPEED;
+      c.x -= spd * slowFactor;
       c.spinAngle += 0.07;
       c.y = c.y + Math.sin((frames*0.05+c.bobOffset))*0.3 - Math.sin(((frames-1)*0.05+c.bobOffset))*0.3;
       if (!c.collected) {
         const dx = bird.x-c.x, dy = bird.y-c.y;
+        if (magnetActive) {
+  const dx = bird.x - c.x, dy = bird.y - c.y;
+  if (Math.sqrt(dx*dx+dy*dy) < 140) { c.x += dx*0.08; c.y += dy*0.08; }
+        }
         if (Math.sqrt(dx*dx+dy*dy) < BIRD_R+c.r) {
           const earned = getCoinMultiplier();
           c.collected = true; totalCoins += earned; coins += earned; coinFlashTimer = 15;
@@ -2495,45 +3922,93 @@ function gameLoop() {
         }
       }
     });
+
+    // Power-ups : déplacement + collision
+    if (arcadeMode) {
+      const magnetRange = magnetActive ? 120 : 0;
+      powerUps.forEach(pu => {
+        pu.x -= spd * slowFactor;
+        pu.y += Math.sin((frames*0.05+pu.bobOffset))*0.3 - Math.sin(((frames-1)*0.05+pu.bobOffset))*0.3;
+        // Aimant : attirer vers l'oiseau
+        if (magnetActive) {
+          const dx = bird.x - pu.x, dy = bird.y - pu.y;
+          const dist = Math.sqrt(dx*dx+dy*dy);
+          if (dist < magnetRange) { pu.x += dx*0.06; pu.y += dy*0.06; }
+        }
+        if (!pu.collected) {
+          const dx = bird.x-pu.x, dy = bird.y-pu.y;
+          if (Math.sqrt(dx*dx+dy*dy) < BIRD_R+pu.r) {
+            pu.collected = true;
+            activatePowerUp(pu.def);
+          }
+        }
+      });
+      powerUps = powerUps.filter(p => p.x > -30 && !p.collected);
+    }
+
     pipes = pipes.filter(p => p.x > -PIPE_W-20);
     coinObjects = coinObjects.filter(c => c.x > -20);
+    particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.life-=0.025; });
+    particles = particles.filter(p => p.life > 0);
+    coinLabels.forEach(l => { l.y+=l.vy; l.life-=0.025; });
+    coinLabels = coinLabels.filter(l => l.life > 0);
+    zapEffects.forEach(z => { z.life -= 0.07; });
+    zapEffects = zapEffects.filter(z => z.life > 0);
 
-    // Collisions
-    if (bird.y+BIRD_R > H-GROUND_H || bird.y-BIRD_R < 0) { triggerDeath(); }
-    for (const p of pipes) {
-      const botY = p.topH+PIPE_GAP;
-      if (bird.x+BIRD_R*0.7 > p.x-5 && bird.x-BIRD_R*0.7 < p.x+PIPE_W+5) {
-        if (bird.y-BIRD_R*0.7 < p.topH-10 || bird.y+BIRD_R*0.7 > botY+10) { triggerDeath(); break; }
+    // Collisions sol/plafond
+    const starRush = arcadeMode && activePowerUp && activePowerUp.id==='pu4';
+    if (!starRush && (bird.y+BIRD_R > H-GROUND_H || bird.y-BIRD_R < 0)) { triggerDeath(); }
+
+    // Collisions tuyaux
+    const ghost = arcadeMode && activePowerUp && (activePowerUp.id==='pu1'||activePowerUp.id==='pu4');
+    const shield = arcadeMode && activePowerUp && activePowerUp.id==='pu2';
+    const shrink = arcadeMode && activePowerUp && activePowerUp.id==='pu17';
+    const hitR = shrink ? BIRD_R * 0.55 : BIRD_R * 0.7;
+    if (!ghost) {
+      for (const p of pipes) {
+        const botY = p.topH + (p.gap || PIPE_GAP);
+        if (bird.x+hitR > p.x-5 && bird.x-hitR < p.x+PIPE_W+5) {
+          if (bird.y-hitR < p.topH-10 || bird.y+hitR > botY+10) {
+            if (shield) { pipes = pipes.filter(pipe => pipe !== p); activePowerUp = null; spawnFlapParticles(); spawnDeathParticles(); break; }
+            if (secondChanceActive) {
+              secondChanceActive = false;
+              pipes = pipes.filter(pipe => pipe !== p);
+              bird.vy = JUMP_FORCE * 0.6;
+              spawnFlapParticles(); spawnDeathParticles();
+              showToast('❤️ 2ÈME CHANCE UTILISÉE!');
+              break;
+            }
+            // Boomerang : rebondir
+            if (arcadeMode && boomerangBounces > 0) {
+              boomerangBounces--;
+              const hitTop = bird.y - hitR < p.topH - 10;
+              if (hitTop) {
+                // Frappe le dessous du tuyau haut → pousser vers le bas
+                bird.vy = Math.abs(JUMP_FORCE) * 0.8;
+                bird.y = p.topH + hitR + 5;
+              } else {
+                // Frappe le dessus du tuyau bas → pousser vers le haut
+                bird.vy = JUMP_FORCE * 0.8;
+                bird.y = botY - hitR - 5;
+              }
+              break;
+            }
+            triggerDeath(); break;
+          }
+        }
       }
     }
+    // Vague : faire vibrer les tuyaux (oscillation autour de baseTopH, sans dérive)
+    if (arcadeMode && activePowerUp && activePowerUp.id==='pu13') {
+      pipes.forEach(p => {
+        p.topH = p.baseTopH + Math.sin(frames * 0.3 + p.oscOffset) * 18;
+        p.topH = Math.max(50, Math.min(H - GROUND_H - (p.gap || PIPE_GAP) - 50, p.topH));
+      });
+    }
   }
-
-  pipes.forEach(p => drawPipe(p));
-  coinObjects.forEach(c => drawCoin(c));
-  drawGround();
-  drawParticles();
-  particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.life-=0.025; });
-  particles = particles.filter(p => p.life > 0);
-
-  drawCoinLabels();
-  coinLabels.forEach(l => { l.y+=l.vy; l.life-=0.025; });
-  coinLabels = coinLabels.filter(l => l.life > 0);
-
-  drawBird();
-  if (state === 'playing') drawScore();
-  drawCoinHUD();
-  if (flashTimer > 0) { flashTimer--; }
-  if (coinFlashTimer > 0) coinFlashTimer--;
-
-  if (state === 'idle') drawIdleScreen();
-  if (state === 'revive' && adState === 'none') drawReviveScreen();
-  if (state === 'dead' && adState === 'none') drawDeadScreen();
-  if (adState === 'playing') drawAdScreen();
-
-  ctx.restore();
 }
-gameLoop();
 
+gameLoop(0);
 // ═══════════════════════════════════════════════════
 // PREVIEW HELPERS — dessin réel dans mini canvas
 // ═══════════════════════════════════════════════════
@@ -2820,6 +4295,7 @@ const gachaOverlay  = document.getElementById('gachaOverlay');
 let currentTab = 'skins';
 
 function openShop() {
+  stopMusic();
   shopScreen.style.display = 'flex';
   shopCoinsEl.textContent = totalCoins;
   document.getElementById('fixedAdBtn').style.display = 'none';
@@ -2832,13 +4308,15 @@ function openShop() {
 function closeShop() {
   shopScreen.style.display = 'none';
   document.getElementById('fixedAdBtn').style.display = '';
+  resetGame();
   state = 'idle';
-  resetBird();
-  pipes = []; coinObjects = []; particles = []; coinLabels = [];
 }
 
-document.getElementById('shopBackBtn').addEventListener('click', closeShop);
-
+document.getElementById('shopBackBtn').addEventListener('click', () => {
+  closeShop();
+  playMusic();
+});
+  
 // Tabs
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -3061,29 +4539,29 @@ function handleShopAdBonus() {
   const box = document.getElementById('adBonusBox');
   box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
   document.getElementById('adBonusCooldown').textContent = 'PUB EN COURS...';
-  let t = 5;
-  const iv = setInterval(() => {
-    t--;
-    const cd = document.getElementById('adBonusCooldown');
-    if (cd) cd.textContent = `${t}s...`;
-    if (t <= 0) {
-      clearInterval(iv); lastAdBonus = Date.now();
-      totalCoins += 25; shopCoinsEl.textContent = totalCoins; saveState();
-      box.style.opacity = '1'; box.style.pointerEvents = '';
-      updateAdBonusCooldown(); showToast('✨ +25 PIÈCES REÇUES!');
-    }
-  }, 1000);
+  logDebug('🎬 handleShopAdBonus() — appel showRewardedAd');
+  showRewardedAd(() => {
+    lastAdBonus = Date.now();
+    totalCoins += 25;
+    shopCoinsEl.textContent = totalCoins;
+    saveState();
+    box.style.opacity = '1'; box.style.pointerEvents = '';
+    updateAdBonusCooldown();
+    showToast('✨ +25 PIÈCES REÇUES!');
+  });
+  // Réactive le bouton si pub annulée/échouée après 500ms
+  setTimeout(() => { box.style.opacity = '1'; box.style.pointerEvents = ''; }, 500);
 }
 setInterval(() => { if (shopScreen && shopScreen.style.display !== 'none') updateAdBonusCooldown(); }, 1000);
 
-// ── COIN PACKS ────────────────────────────────────────
+
+// ── COIN PACKS (IAP réels via Google Play Billing) ────
 const COIN_PACKS = [
-  { id:'cp1', coins:100,   price:'0,05 €', bonus:'',      highlight:false },
-  { id:'cp2', coins:500,   price:'0,20 €', bonus:'+50',   highlight:false },
-  { id:'cp3', coins:1200,  price:'0,45 €', bonus:'+200',  highlight:false },
-  { id:'cp4', coins:3000,  price:'0,99 €', bonus:'+500',  highlight:true  },
-  { id:'cp5', coins:7000,  price:'1,99 €', bonus:'+2000', highlight:false },
-  { id:'cp6', coins:10000, price:'2,99 €', bonus:'+5000', highlight:true  },
+  { id:'cp2', skuId:'coins_500',   coins:500,   price:'0,20 €', bonus:'+50',   highlight:false },
+  { id:'cp3', skuId:'coins_1200',  coins:1200,  price:'0,45 €', bonus:'+200',  highlight:false },
+  { id:'cp4', skuId:'coins_3000',  coins:3000,  price:'0,99 €', bonus:'+500',  highlight:true  },
+  { id:'cp5', skuId:'coins_7000',  coins:7000,  price:'1,99 €', bonus:'+2000', highlight:false },
+  { id:'cp6', skuId:'coins_10000', coins:10000, price:'2,99 €', bonus:'+5000', highlight:true  },
 ];
 function renderCoinPacks() {
   const grid = document.getElementById('coinPackGrid');
@@ -3100,12 +4578,14 @@ function renderCoinPacks() {
 function buyCoinPack(id) {
   const pack = COIN_PACKS.find(p => p.id === id);
   if (!pack) return;
-  if (confirm(`Acheter ${pack.coins.toLocaleString()} pièces pour ${pack.price} ?`)) {
-    totalCoins += pack.coins;
+  iapPurchase(pack.skuId, (skuId) => {
+    const bonusCoins = pack.bonus ? parseInt(pack.bonus.replace(/[^0-9]/g, '')) : 0;
+    const total = pack.coins + bonusCoins;
+    totalCoins += total;
     shopCoinsEl.textContent = totalCoins;
     saveState();
-    showToast(`💳 +${pack.coins.toLocaleString()} PIÈCES!`);
-  }
+    showToast(`💳 +${total.toLocaleString()} PIÈCES!`);
+  });
 }
 
 
@@ -3132,20 +4612,21 @@ document.getElementById('fixedAdBtn').addEventListener('click', () => {
     showToast(`PUB DISPONIBLE DANS ${m}:${s.toString().padStart(2,'0')}`);
     return;
   }
-  // Simule la pub
-  lastAdBonus = Date.now();
-  totalCoins += 25;
-  shopCoinsEl.textContent = totalCoins;
-  saveState();
-  updateFixedAdCd();
-  showToast('✨ +25 PIÈCES REÇUES!');
+  showRewardedAd(() => {
+    lastAdBonus = Date.now();
+    totalCoins += 25;
+    shopCoinsEl.textContent = totalCoins;
+    saveState();
+    updateFixedAdCd();
+    showToast('✨ +25 PIÈCES REÇUES!');
+  });
 });
 
 // ── COIN BOOST (X2) ──────────────────────────────────
 let coinBoostIapOwned = false;
 let coinBoostAdEnd = 0;
-const COIN_BOOST_AD_DURATION = 5 * 60 * 1000; // 5 min
-const COIN_BOOST_AD_COOLDOWN = 30 * 60 * 1000; // 30 min cooldown
+const COIN_BOOST_AD_DURATION = 5 * 60 * 1000;
+const COIN_BOOST_AD_COOLDOWN = 30 * 60 * 1000;
 let lastCoinBoostAd = parseInt(localStorage.getItem('floppyLastBoostAd') || '0');
 
 function isCoinBoostActive() {
@@ -3181,41 +4662,36 @@ function handleCoinBoostAd() {
     const r = Math.ceil((COIN_BOOST_AD_COOLDOWN - elapsed) / 1000);
     showToast(`CD: ${Math.floor(r/60)}:${(r%60).toString().padStart(2,'0')}`); return;
   }
-  // Simule pub 5s
   const box = document.getElementById('coinBoostAdBox');
   box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
   document.getElementById('coinBoostAdCd').textContent = 'PUB EN COURS...';
-  let t = 5;
-  const iv = setInterval(() => {
-    t--;
-    const cd = document.getElementById('coinBoostAdCd');
-    if (cd) cd.textContent = `${t}s...`;
-    if (t <= 0) {
-      clearInterval(iv);
-      coinBoostAdEnd = Date.now() + COIN_BOOST_AD_DURATION;
-      lastCoinBoostAd = Date.now();
-      localStorage.setItem('floppyLastBoostAd', lastCoinBoostAd.toString());
-      box.style.opacity = '1'; box.style.pointerEvents = '';
-      updateCoinBoostAdCd();
-      showToast('⚡ PIÈCES X2 ACTIF — 5 MINUTES!');
-    }
-  }, 1000);
+  showRewardedAd(() => {
+    coinBoostAdEnd = Date.now() + COIN_BOOST_AD_DURATION;
+    lastCoinBoostAd = Date.now();
+    localStorage.setItem('floppyLastBoostAd', lastCoinBoostAd.toString());
+    box.style.opacity = '1'; box.style.pointerEvents = '';
+    updateCoinBoostAdCd();
+    showToast('⚡ PIÈCES X2 ACTIF — 5 MINUTES!');
+  });
+  setTimeout(() => { box.style.opacity = '1'; box.style.pointerEvents = ''; }, 500);
 }
 
 function purchaseCoinBoostIap() {
   if (coinBoostIapOwned) { showToast('💰 X2 DÉJÀ ACTIF!'); return; }
-  if (confirm('Activer Pièces X2 permanent pour 0,99 € ?')) {
-    coinBoostIapOwned = true;
-    coinBoostAdEnd = 0;
-    localStorage.setItem('floppyCoinBoostIap', '1');
-    updateCoinBoostIapUI();
-    showToast('💰 PIÈCES X2 PERMANENT ACTIVÉ!');
-  }
+  iapPurchase('coins_x2_permanent', () => {
+    _activateCoinBoostIap();
+  });
 }
 
-function purchaseCoinBoostIapFromAd() {
-  purchaseCoinBoostIap();
+function _activateCoinBoostIap() {
+  coinBoostIapOwned = true;
+  coinBoostAdEnd = 0;
+  localStorage.setItem('floppyCoinBoostIap', '1');
+  updateCoinBoostIapUI();
+  showToast('💰 PIÈCES X2 PERMANENT ACTIVÉ!');
 }
+
+function purchaseCoinBoostIapFromAd() { purchaseCoinBoostIap(); }
 
 function updateCoinBoostIapUI() {
   const right = document.getElementById('coinBoostIapRight');
@@ -3235,42 +4711,48 @@ if (localStorage.getItem('floppyCoinBoostIap') === '1') {
 setInterval(() => {
   if (shopScreen && shopScreen.style.display !== 'none') updateCoinBoostAdCd();
 }, 1000);
+
 let madTimer = null, madInterval = null;
 const mandatoryAdOverlay = document.getElementById('mandatoryAdOverlay');
 const madBarFill = document.getElementById('madBarFill');
 const madTimerEl = document.getElementById('madTimer');
 const madSkipBtn = document.getElementById('madSkipBtn');
 
-function showMandatoryAd(onDone) {
+function showMandatoryAdFallback(onDone) {
+  // AdMob pas dispo (test/navigateur) → on passe directement, sans overlay
+  logDebug('⚠️ FALLBACK interstitielle (AdMob KO) — passage direct');
+  setTimeout(() => { onDone(); }, 300);
+}
+
+async function showMandatoryAd(onDone) {
   if (adBlockerOwned) { onDone(); return; }
-  mandatoryAdOverlay.style.display = 'flex';
-  madBarFill.style.width = '0%';
-  madSkipBtn.classList.remove('ready');
-  madTimerEl.textContent = '5s...';
-  let elapsed = 0;
-  const duration = 5000;
-  madInterval = setInterval(() => {
-    elapsed += 100;
-    const pct = Math.min(100, (elapsed/duration)*100);
-    madBarFill.style.width = pct + '%';
-    const remaining = Math.max(0, Math.ceil((duration - elapsed)/1000));
-    madTimerEl.textContent = remaining > 0 ? remaining + 's...' : 'Terminé!';
-    if (elapsed >= duration) {
-      clearInterval(madInterval);
-      madSkipBtn.classList.add('ready');
+  logDebug('🎬 showMandatoryAd() — interPreloaded=' + interstitialPreloaded);
+  if (!admobReady || !AdMob) { showMandatoryAdFallback(onDone); return; }
+  try {
+    if (!interstitialPreloaded) {
+      logDebug('⏳ Interstitielle pas prête — préparation...');
+      interstitialPreparing = true;
+      await AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID, isTesting: false });
+      interstitialPreloaded = true;
+      interstitialPreparing = false;
     }
-  }, 100);
-  madSkipBtn.onclick = () => {
-    if (!madSkipBtn.classList.contains('ready')) return;
-    clearInterval(madInterval);
-    mandatoryAdOverlay.style.display = 'none';
+    interstitialPreloaded = false; // consommée
+    await AdMob.showInterstitial();
+    logDebug('✅ Interstitielle affichée');
     onDone();
-  };
+  } catch(e) {
+    logDebug('🔴 INTER ERR: ' + (e.message || JSON.stringify(e)));
+    interstitialPreloaded = false;
+    interstitialPreparing = false;
+    showMandatoryAdFallback(onDone);
+    setTimeout(preloadInterstitialAd, 5000);
+  }
 }
 
 function checkMandatoryAd(onDone) {
   if (adBlockerOwned) { onDone(); return; }
-  if (gamesPlayedTotal > 0 && gamesPlayedTotal % 5 === 0) {
+  // Pub obligatoire toutes les 10 parties (au lieu de 5)
+  if (gamesPlayedTotal > 0 && gamesPlayedTotal % 2 === 0) {
     showMandatoryAd(onDone);
   } else {
     onDone();
@@ -3292,7 +4774,13 @@ function updateAdBlockerUI() {
 }
 
 function purchaseAdBlocker() {
-  // Simulation achat IAP
+  if (adBlockerOwned) return;
+  iapPurchase('remove_ads', () => {
+    _activateAdBlocker();
+  });
+}
+
+function _activateAdBlocker() {
   adBlockerOwned = true;
   saveState();
   updateAdBlockerUI();
@@ -3313,6 +4801,13 @@ document.getElementById('ratingYesBtn').addEventListener('click', () => {
   saveState();
   ratingOverlay.style.display = 'none';
   showToast('⭐ +100 PIÈCES — MERCI POUR VOTRE SOUTIEN!');
+  const pkg = 'com.theeclipsio.floppyneon';
+  if (isNativeApp() && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+    window.Capacitor.Plugins.App.openUrl({ url: 'market://details?id=' + pkg })
+      .catch(() => window.Capacitor.Plugins.App.openUrl({ url: 'https://play.google.com/store/apps/details?id=' + pkg }));
+  } else {
+    window.open('https://play.google.com/store/apps/details?id=' + pkg, '_blank');
+  }
 });
 
 document.getElementById('ratingLaterBtn').addEventListener('click', () => {
@@ -3330,7 +4825,14 @@ document.getElementById('shareYesBtn').addEventListener('click', () => {
     saveState();
     showToast('🚀 +100 PIÈCES — MERCI DE PARTAGER!');
   }
-  if (navigator.share) navigator.share({ title:'Floppy Neon', text:'Essaie ce jeu!', url: window.location.href });
+  const shareUrl = 'https://play.google.com/store/apps/details?id=com.theeclipsio.floppyneon';
+  if (isNativeApp() && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share) {
+    window.Capacitor.Plugins.Share.share({ title: 'Floppy Neon', text: 'Essaie de battre mon score sur Floppy Neon! 🎮', url: shareUrl, dialogTitle: 'Partager Floppy Neon' });
+  } else if (navigator.share) {
+    navigator.share({ title: 'Floppy Neon', text: 'Essaie de battre mon score sur Floppy Neon! 🎮', url: shareUrl });
+  } else {
+    window.open(shareUrl, '_blank');
+  }
 });
 document.getElementById('shareLaterBtn').addEventListener('click', () => {
   document.getElementById('shareOverlay').style.display = 'none';
@@ -3378,9 +4880,127 @@ document.getElementById('dailyClaimBtn').addEventListener('click', () => {
 // Lancer le check daily au démarrage
 setTimeout(checkDailyBonus, 800);
 
+function activatePowerUp(def) {
+  spawnFlapParticles();
+  const id = def.id;
+  // Power-ups instantanés
+  if (id === 'pu6') { // Bombe
+    const next = pipes.find(p => p.x > bird.x);
+    if (next) {
+      score += 1; flashTimer = 12;
+      pipes = pipes.filter(p => p !== next);
+      // Animation explosion au centre du tuyau
+      const cx = next.x + PIPE_W / 2;
+      const cy = next.topH + (next.gap || PIPE_GAP) / 2;
+      const expColors = ['#ff6600','#ffcc00','#ff2200','#ffffff','#ffaa00'];
+      for (let i = 0; i < 20; i++) {
+        const a = (i / 20) * Math.PI * 2, sp = Math.random() * 6 + 3;
+        particles.push({ x: cx, y: cy, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life: 1, r: Math.random()*5+3, color: expColors[i % expColors.length] });
+      }
+      showToast('💣 BOMBE! TUYAU DÉTRUIT! +1');
+    } return;
+  }
+  if (id === 'pu8') { // Vortex
+    const count = pipes.length;
+    score += Math.max(0, count); flashTimer = 12; pipes = []; powerUps = [];
+    // Animation spirale
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2, r2 = Math.random() * 120 + 40;
+      particles.push({ x: bird.x + Math.cos(a)*r2, y: bird.y + Math.sin(a)*r2, vx: -Math.cos(a)*3, vy: -Math.sin(a)*3, life: 1, r: Math.random()*4+2, color: '#9c27b0' });
+    }
+    showToast('🌀 VORTEX! ' + count + ' TUYAUX DÉTRUITS! +' + count);
+    return;
+  }
+  if (id === 'pu9') { // Éclair
+    const visible = pipes.filter(p => p.x > 0 && p.x < W);
+    if (visible.length > 0) {
+      const target = visible[Math.floor(Math.random() * visible.length)];
+      const cx = target.x + PIPE_W / 2;
+      pipes = pipes.filter(p => p !== target);
+      score += 1; flashTimer = 12;
+      // Générer les segments du zigzag (du haut vers le bas)
+      const boltPoints = [];
+      let bx = cx, by = 0;
+      while (by < H - GROUND_H) {
+        boltPoints.push({ x: bx, y: by });
+        by += 18 + Math.random() * 14;
+        bx = cx + (Math.random() - 0.5) * 40;
+      }
+      boltPoints.push({ x: bx, y: H - GROUND_H });
+      zapEffects.push({ points: boltPoints, life: 1, cx });
+      // Particules jaunes autour de l'impact
+      for (let i = 0; i < 14; i++) {
+        particles.push({ x: cx + (Math.random()-0.5)*PIPE_W, y: Math.random()*(H-GROUND_H),
+          vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5,
+          life: 1, r: Math.random()*3+2, color: '#ffee58' });
+      }
+      showToast('⚡ ÉCLAIR! +1 POINT!');
+    }
+    return;
+  }
+  if (id === 'pu20') { secondChanceActive = true; showToast('❤️ 2ÈME CHANCE PRÊTE!'); return; }
+  if (id === 'pu14') { // Gemme +5pts
+    score += 5; flashTimer = 12; showToast('💎 GEMME! +5 POINTS!'); return;
+  }
+  if (id === 'pu16') { // Pièce d'or
+    const earned = coinBoostIapOwned ? 20 : 10;
+    totalCoins += earned; coins += earned; coinFlashTimer = 20; saveState();
+    showToast(coinBoostIapOwned ? '🪙 +20 PIÈCES (x2)!' : '🪙 +10 PIÈCES!');
+    return;
+  }
+  if (id === 'pu1')  { showToast('👻 FANTÔME — TRAVERSEZ LES TUYAUX!'); }
+  if (id === 'pu2')  { showToast('🛡️ BOUCLIER — ABSORBE 1 TUYAU!'); }
+  if (id === 'pu3')  { showToast('🔥 RAGE — SCORE x2!'); }
+  if (id === 'pu4')  { showToast('⭐ STAR RUSH — INVINCIBLE!'); }
+  if (id === 'pu5')  { showToast('🎯 PRÉCISION — TUYAUX ÉLARGIS!'); }
+  if (id === 'pu15') { showToast('🃏 JOKER — SCORE x3!'); }
+  if (id === 'pu17') { showToast('🤏 SHRINK — HITBOX RÉDUITE!'); }
+  if (id === 'pu12') { // Boomerang
+    boomerangBounces = 2; showToast('🪃 REBOND — 2 REBONDS SUR LES TUYAUX!'); return;
+  }
+  // Power-ups à durée
+  if (activePowerUp) deactivatePowerUp(activePowerUp.id);
+  activePowerUp = { id: def.id, icon: def.icon, color: def.color, duration: def.duration, timeLeft: def.duration };
+  if (id === 'pu7')  { laserActive = true; laserX = bird.x + 30; laserTimer = Math.floor(def.duration / FIXED_TIMESTEP); showToast('🔫 LASER — DESTRUCTION EN COURS!'); }
+  if (id === 'pu18') { lowGravityActive = true; showToast('🏋️ GRAVITÉ LOURDE — ATTENTION!'); }
+  if (id === 'pu10') { magnetActive = true; showToast('🧲 AIMANT — PIÈCES ET POWER-UPS ATTIRÉS!'); }
+  if (id === 'pu13') { /* vague gérée dans update */ }
+}
+
+function deactivatePowerUp(id) {
+  if (id === 'pu7')  { laserActive = false; }
+  if (id === 'pu18') { lowGravityActive = false; }
+  if (id === 'pu10') { magnetActive = false; }
+}
+
+function drawPowerUpHUD() {
+  if (!activePowerUp) return;
+  const pu = activePowerUp;
+  const col = pu.color === 'rainbow' ? `hsl(${(frames*2)%360},100%,60%)` : pu.color;
+  const barW = W - 80, barH = 10, barX = 40, barY = 18;
+  const pct = pu.timeLeft / pu.duration;
+  // Fond barre
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  roundRectPath(barX - 2, barY - 2, barW + 4, barH + 4, 5); ctx.fill();
+  // Barre
+  ctx.shadowColor = col; ctx.shadowBlur = 12;
+  ctx.fillStyle = col;
+  roundRectPath(barX, barY, barW * pct, barH, 4); ctx.fill();
+  // Icône
+  ctx.shadowBlur = 0;
+  ctx.font = '14px serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(pu.icon, barX - 20, barY + barH / 2);
+  ctx.restore();
+}
+  
 // ── HOOK triggerDeath pour compter les parties ────────
 function triggerDeath() {
-  if (score > best) { best = score; saveState(); }
+  stopMusic();
+  if (arcadeMode) { if (score > arcadeBest) { arcadeBest = score; saveState(); } }
+  else { if (score > best) { best = score; saveState(); } }
   spawnDeathParticles(); deathShake = 18;
   BTNS.forEach(b => b.hovered = false);
   BTN_REVIVE.hovered = BTN_SKIP.hovered = false;
@@ -3391,21 +5011,24 @@ function triggerDeath() {
 
 // Surcharge de resetGame pour compter les parties
 function resetGame() {
-  score = 0; pipes = []; particles = []; coinObjects = []; coinLabels = [];
+  score = 0; pipes = []; particles = []; coinObjects = []; coinLabels = []; zapEffects = [];
   coins = 0; frames = 0; flashTimer = 0; coinFlashTimer = 0; deathShake = 0;
   hasUsedRevive = false; reviveCountdown = 5; skipUnlocked = false;
   adState = 'none'; adProgress = 0;
+  powerUps = []; activePowerUp = null; arcadeTier = 1; arcadeSpeedMult = 1.0;
+  boomerangBounces = 0; laserActive = false; lowGravityActive = false; magnetActive = false;
   resetBird();
+  secondChanceActive = false;
 }
 
 function doReplay() {
-  checkMandatoryAd(() => { resetGame(); state = 'playing'; });
+  checkMandatoryAd(() => { resetGame(); state = 'playing'; playMusic(); });
 }
 
 function onGameEnded() {
   gamesPlayedTotal++;
   saveState();
-  if (!adBlockerOwned && gamesPlayedTotal % 10 === 0) {
+  if (!adBlockerOwned && gamesPlayedTotal % 3 === 0) {
     setTimeout(() => {
       if (shopScreen.style.display === 'none' && mandatoryAdOverlay.style.display === 'none') {
         openShop();
@@ -3454,86 +5077,188 @@ const pCanvas = document.getElementById('particleCanvas');
 const pCtx = pCanvas.getContext('2d');
 let pParticles = [], pAnim = null;
 
-function showGachaResult(item, isNew) {
-  const r = RARITIES[item.rarity];
-  const panel = document.getElementById('resultPanel');
-  panel.className = 'result-panel ' + r.cls;
+// ── GACHA ROULETTE ANIMATION ────────────────────────
+const RARITY_ORDER = ['common','rare','epic','legendary','secret'];
+const RARITY_ICONS = { common:'⬜', rare:'🔷', epic:'🔮', legendary:'⭐', secret:'🔴' };
+const RARITY_NAMES = { common:'COMMUN', rare:'RARE', epic:'ÉPIQUE', legendary:'LÉGENDAIRE', secret:'SECRET' };
 
-  document.getElementById('resultRarity').textContent = r.label;
-  document.getElementById('resultRarity').style.color = r.color;
-
-  // Preview canvas dans le résultat
-  const rpc = document.getElementById('resultPreviewCanvas');
-  const rpc2 = rpc.getContext('2d');
-  rpc2.clearRect(0,0,80,80);
-  let previewImg;
-  if (item.type === 'skin' && item.subtype === 'bird') {
-    previewImg = renderBirdPreview(item.id, 80);
-  } else if (item.type === 'skin' && item.subtype === 'bg') {
-    previewImg = renderBgPreview(item.id, 80);
-  } else if (item.type === 'pipe') {
-    previewImg = renderPipePreview(item, 80);
-  } else {
-    // Accessoire — juste emoji
-    rpc.style.display = 'none';
-    const emojiDiv = document.getElementById('resultEmoji');
-    emojiDiv.style.display = 'block';
-    emojiDiv.textContent = item.emoji;
+function buildReelItems(targetRarity, totalItems) {
+  // Génère une séquence de raretés pour la roulette (biaisée vers common/rare en début)
+  const seq = [];
+  const weights = { common:55, rare:28, epic:12, legendary:4, secret:1 };
+  for (let i = 0; i < totalItems - 1; i++) {
+    let r = Math.random() * 100, cum = 0;
+    let chosen = 'common';
+    for (const [k, w] of Object.entries(weights)) { cum += w; if (r < cum) { chosen = k; break; } }
+    seq.push(chosen);
   }
-  if (previewImg) {
-    rpc.style.display = 'block';
-    const emojiDiv = document.getElementById('resultEmoji');
-    if (emojiDiv) emojiDiv.style.display = 'none';
-    rpc2.drawImage(previewImg, 0, 0);
-  }
-
-  document.getElementById('resultName').textContent = item.name;
-  document.getElementById('resultName').style.color = r.color;
-  const typeLabel = item.type === 'acc' ? 'ACCESSOIRE' : item.type === 'pipe' ? 'SKIN TUYAU' : (item.subtype === 'bird' ? 'SKIN OISEAU' : 'SKIN DÉCOR');
-  document.getElementById('resultType').textContent = typeLabel;
-  document.getElementById('resultBadge').innerHTML = isNew
-    ? '<div class="result-new-badge">✨ NOUVEAU!</div>'
-    : `<div class="result-duplicate-badge">DOUBLON — +${item._dupBonus || 10} <span style="display:inline-block;width:10px;height:10px;background:radial-gradient(circle at 35% 35%,#fff9c4,#ffd700 40%,#b8860b);border-radius:50%;vertical-align:middle;margin-left:2px;"></span></div>`;
-
-  gachaOverlay.style.display = 'flex';
-
-  pCanvas.width = window.innerWidth;
-  pCanvas.height = window.innerHeight;
-  pCanvas.style.display = 'block';
-  pParticles = [];
-  const cx = window.innerWidth/2, cy = window.innerHeight/2;
-  const count = item.rarity === 'secret' ? 80 : item.rarity === 'legendary' ? 60 : item.rarity === 'epic' ? 40 : 20;
-  for (let i = 0; i < count; i++) {
-    const a = Math.random()*Math.PI*2, sp = Math.random()*8+2;
-    pParticles.push({ x: cx, y: cy, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp-3, life: 1, r: Math.random()*4+2, color: r.color, decay: 0.012+Math.random()*0.008 });
-  }
-  function animP() {
-    pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);
-    pParticles.forEach(p => {
-      pCtx.save(); pCtx.globalAlpha = p.life; pCtx.shadowColor = p.color; pCtx.shadowBlur = 12;
-      pCtx.fillStyle = p.color; pCtx.beginPath(); pCtx.arc(p.x, p.y, p.r*p.life, 0, Math.PI*2); pCtx.fill(); pCtx.restore();
-      p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= p.decay;
-    });
-    pParticles = pParticles.filter(p => p.life > 0);
-    if (pParticles.length > 0) pAnim = requestAnimationFrame(animP);
-    else { pCanvas.style.display = 'none'; }
-  }
-  pAnim = requestAnimationFrame(animP);
+  // La dernière (sur laquelle on s'arrête) est la vraie rareté
+  seq.push(targetRarity);
+  return seq;
 }
 
-// Élément emoji result (pour accessoires)
-(function() {
-  const rp = document.getElementById('resultPanel');
-  const canvas80 = document.getElementById('resultPreviewCanvas');
-  // Ajouter un span emoji après canvas si pas déjà là
-  if (!document.getElementById('resultEmoji')) {
-    const em = document.createElement('span');
-    em.id = 'resultEmoji';
-    em.style.cssText = 'font-size:4rem;display:none;margin:8px 0;animation:resultBounce 0.6s ease 0.2s both';
-    canvas80.insertAdjacentElement('afterend', em);
-  }
-})();
+function createReelItem(rarity) {
+  const el = document.createElement('div');
+  el.className = `gacha-reel-item ri-${rarity}`;
+  el.innerHTML = `<span class="ri-icon">${RARITY_ICONS[rarity]}</span><span class="ri-label">${RARITY_NAMES[rarity]}</span>`;
+  return el;
+}
 
+function showGachaResult(item, isNew) {
+  // 1. Construire la roulette
+  const targetRarity = item.rarity;
+  const ITEM_W = 80; // 72px + 8px margin
+  const TOTAL_ITEMS = 28;
+  const STOP_IDX = TOTAL_ITEMS - 1; // dernier item = la bonne rareté
+  const seq = buildReelItems(targetRarity, TOTAL_ITEMS);
+
+  const track = document.getElementById('gachaReelTrack');
+  track.innerHTML = '';
+  seq.forEach(r => track.appendChild(createReelItem(r)));
+
+  // Position de départ : centré sur item 0
+  const wrapW = 320;
+  const centerOffset = wrapW / 2 - ITEM_W / 2;
+  // Position finale : le dernier item centré
+  const finalX = -(STOP_IDX * ITEM_W - centerOffset);
+  // Position de départ : bien avant (les items défilent de droite à gauche)
+  const startX = centerOffset;
+  track.style.transform = `translateX(${startX}px)`;
+  track.style.transition = 'none';
+
+  // 2. Afficher l'overlay roulette
+  const animOverlay = document.getElementById('gachaAnimOverlay');
+  const revealArea  = document.getElementById('gachaRevealArea');
+  revealArea.style.display = 'none';
+  revealArea.innerHTML = '';
+  animOverlay.style.display = 'flex';
+
+  // 3. Lancer l'animation après 1 frame
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      // Phase 1 : défilement rapide puis ralentissement (easing cubic)
+      track.style.transition = `transform 2.8s cubic-bezier(0.12, 0.82, 0.25, 1)`;
+      track.style.transform  = `translateX(${finalX}px)`;
+
+      // Phase 2 : après l'arrêt → flash + révélation
+      setTimeout(() => {
+        // Flash couleur selon rareté
+        const flashEl = document.getElementById('gachaFlash');
+        const rarityColor = RARITIES[targetRarity].color;
+        flashEl.style.background = rarityColor;
+        flashEl.style.animation  = 'none';
+        flashEl.offsetWidth; // reflow
+        flashEl.style.animation  = 'rarityFlash 0.7s ease forwards';
+
+        // Son (vibration visuelle sur le wrap)
+        const wrap = document.getElementById('gachaReelWrap');
+        wrap.style.boxShadow = `0 0 60px ${rarityColor}, 0 0 120px ${rarityColor}55`;
+        wrap.style.borderColor = rarityColor;
+        setTimeout(() => {
+          wrap.style.boxShadow = '';
+          wrap.style.borderColor = '';
+        }, 600);
+
+        // Cacher la roulette, afficher le résultat
+        setTimeout(() => {
+          track.parentElement.style.display = 'none';
+
+          // Construire le panneau résultat dans revealArea
+          revealArea.style.display = 'flex';
+
+          // Preview canvas
+          let previewEl;
+          if (item.type === 'skin' && item.subtype === 'bird') {
+            previewEl = renderBirdPreview(item.id, 100);
+          } else if (item.type === 'skin' && item.subtype === 'bg') {
+            previewEl = renderBgPreview(item.id, 100);
+          } else if (item.type === 'pipe') {
+            previewEl = renderPipePreview(item, 100);
+          } else {
+            previewEl = document.createElement('div');
+            previewEl.style.cssText = `font-size:4.5rem;line-height:1;`;
+            previewEl.textContent = item.emoji;
+          }
+          previewEl.classList && previewEl.classList.add('gacha-result-zoom');
+          if (previewEl instanceof HTMLCanvasElement) {
+            previewEl.style.borderRadius = '14px';
+            previewEl.style.border = `3px solid ${rarityColor}`;
+            previewEl.style.boxShadow = `0 0 30px ${rarityColor}88`;
+          }
+          revealArea.appendChild(previewEl);
+
+          // Rareté colorée
+          const rarityEl = document.createElement('div');
+          rarityEl.className = 'gacha-rarity-reveal';
+          rarityEl.style.color = rarityColor;
+          rarityEl.style.textShadow = `0 0 20px ${rarityColor}, 0 0 40px ${rarityColor}88`;
+          rarityEl.textContent = RARITIES[targetRarity].label;
+          revealArea.appendChild(rarityEl);
+
+          // Nom de l'item
+          const nameEl = document.createElement('div');
+          nameEl.style.cssText = `font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.9rem;color:#fff;letter-spacing:0.1em;margin-top:6px;text-align:center;animation:rarityTextIn 0.4s ease 0.25s both;`;
+          nameEl.textContent = item.name;
+          revealArea.appendChild(nameEl);
+
+          // Badge nouveau/doublon
+          const badgeEl = document.createElement('div');
+          badgeEl.style.marginTop = '10px';
+          badgeEl.innerHTML = isNew
+            ? '<div class="result-new-badge">✨ NOUVEAU!</div>'
+            : `<div class="result-duplicate-badge">DOUBLON — +${item._dupBonus || 10} 🪙</div>`;
+          revealArea.appendChild(badgeEl);
+
+          // Bouton continuer
+          const btn = document.createElement('button');
+          btn.className = 'result-close-btn';
+          btn.textContent = 'CONTINUER';
+          btn.style.marginTop = '20px';
+          btn.style.animation = 'rarityTextIn 0.4s ease 0.4s both';
+          btn.addEventListener('click', () => {
+            animOverlay.style.display = 'none';
+            track.parentElement.style.display = '';
+            revealArea.style.display = 'none';
+            if (pAnim) cancelAnimationFrame(pAnim);
+            pCanvas.style.display = 'none';
+            // Mettre à jour le vrai overlay gacha (pour rétro-compat)
+            gachaOverlay.style.display = 'none';
+          });
+          revealArea.appendChild(btn);
+
+          // Particules (réutiliser le pCanvas existant)
+          pCanvas.width = window.innerWidth;
+          pCanvas.height = window.innerHeight;
+          pCanvas.style.display = 'block';
+          pParticles = [];
+          const r = RARITIES[targetRarity];
+          const cx = window.innerWidth/2, cy = window.innerHeight/2;
+          const count = targetRarity === 'secret' ? 100 : targetRarity === 'legendary' ? 70 : targetRarity === 'epic' ? 45 : 25;
+          for (let i = 0; i < count; i++) {
+            const a = Math.random()*Math.PI*2, sp = Math.random()*9+2;
+            pParticles.push({ x:cx, y:cy, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-4, life:1, r:Math.random()*5+2, color:r.color, decay:0.01+Math.random()*0.008 });
+          }
+          function animP() {
+            pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);
+            pParticles.forEach(p => {
+              pCtx.save(); pCtx.globalAlpha=p.life; pCtx.shadowColor=p.color; pCtx.shadowBlur=14;
+              pCtx.fillStyle=p.color; pCtx.beginPath(); pCtx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); pCtx.fill(); pCtx.restore();
+              p.x+=p.vx; p.y+=p.vy; p.vy+=0.15; p.life-=p.decay;
+            });
+            pParticles = pParticles.filter(p=>p.life>0);
+            if (pParticles.length>0) pAnim = requestAnimationFrame(animP);
+            else { pCanvas.style.display='none'; }
+          }
+          pAnim = requestAnimationFrame(animP);
+
+        }, 300);
+      }, 2900);
+    });
+  });
+}
+
+
+// Bouton de l'ancien overlay gacha (gardé pour rétro-compat)
 document.getElementById('resultCloseBtn').addEventListener('click', () => {
   gachaOverlay.style.display = 'none';
   if (pAnim) cancelAnimationFrame(pAnim);
@@ -3550,139 +5275,309 @@ function showToast(msg) {
   toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
 }
 
-  
+function logDebug(msg) { console.log('[FLOPPY]', msg); }
 
-// ═══════════════════════════════════════════════════
-// ADMOB
-// ═══════════════════════════════════════════════════
-const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-1235003260250332/3993727693';
+
+
+// ── ADMOB ─────────────────────────────────────────────
 const ADMOB_REWARDED_ID     = 'ca-app-pub-1235003260250332/4788768765';
+const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-1235003260250332/3993727693';
 
 const isNativeApp = () =>
   typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
 
 let AdMob = null;
 let admobReady = false;
+let admobListenersReady = false;
+let currentRewardedCallback = null;
+
+// États pré-chargement
+let rewardedAdPreloaded  = false;
+let rewardedAdPreparing  = false;
+let interstitialPreloaded = false;
+let interstitialPreparing = false;
 
 async function initAdMob() {
-  if (!isNativeApp()) return;
+  if (!isNativeApp()) { logDebug('🔴 MODE NAVIGATEUR — AdMob désactivé'); return; }
+  logDebug('⏳ Initialisation AdMob...');
   try {
     AdMob = window.Capacitor.Plugins.AdMob;
-    if (!AdMob) return;
-    await AdMob.initialize({ requestTrackingAuthorization: false });
+    if (!AdMob) {
+      logDebug('🔴 Plugin AdMob introuvable. Plugins: ' + Object.keys(window.Capacitor.Plugins||{}).join(', '));
+      return;
+    }
+    await AdMob.initialize({ requestTrackingAuthorization: false, initializeForTesting: false });
+
+    // ── UMP SDK — consentement RGPD ──
+    try {
+      const consentInfo = await AdMob.requestConsentInfoUpdate({
+        debugGeography: 0,
+        testDeviceIdentifiers: []
+      });
+      logDebug('📋 Consent info: ' + JSON.stringify(consentInfo));
+      if (consentInfo.isConsentFormAvailable) {
+        const formResult = await AdMob.showConsentForm();
+        logDebug('✅ RGPD form result: ' + JSON.stringify(formResult));
+      }
+    } catch(ump) {
+      logDebug('⚠️ UMP err (ignoré): ' + (ump.message||JSON.stringify(ump)));
+    }
+    // ────────────────────────────────
+
     admobReady = true;
-  } catch(e) { console.warn('[AdMob] init:', e); }
+    logDebug('✅ AdMob initialisé');
+    setupAdMobListeners();
+    preloadRewardedAd();
+    preloadInterstitialAd();
+  } catch(e) { logDebug('🔴 INIT ERR: ' + (e.message||JSON.stringify(e))); }
 }
-document.addEventListener('deviceready', initAdMob, false);
-setTimeout(initAdMob, 2000);
+function setupAdMobListeners() {
+  if (admobListenersReady || !AdMob) return;
+
+  // REWARDED — flag : la récompense a été gagnée (pub vue jusqu'au bout)
+  let _rewardEarned = false;
+  AdMob.addListener('onRewardedVideoAdReward', () => {
+    logDebug('🎁 Récompense gagnée (flag)');
+    _rewardEarned = true;
+  });
+
+  // REWARDED — pub fermée : c'est ICI qu'on accorde la récompense
+  // (l'événement Reward arrive toujours AVANT Dismissed)
+  AdMob.addListener('onRewardedVideoAdDismissed', () => {
+    logDebug('📴 Rewarded fermée — earned=' + _rewardEarned);
+    if (_rewardEarned && currentRewardedCallback) {
+      const cb = currentRewardedCallback;
+      currentRewardedCallback = null;
+      _rewardEarned = false;
+      cb(); // ✅ Revive / bonus accordé ici
+    } else if (!_rewardEarned && currentRewardedCallback) {
+      currentRewardedCallback = null;
+      showToast("⚠️ Regardez la pub jusqu'à la fin!");
+    }
+    _rewardEarned = false;
+    // Recharge immédiate pour la prochaine fois
+    rewardedAdPreloaded = false;
+    rewardedAdPreparing = false;
+    preloadRewardedAd();
+  });
+
+  // INTERSTITIELLE — fermée → recharger
+  AdMob.addListener('onInterstitialAdDismiss', () => {
+    logDebug('📴 Interstitielle fermée');
+    interstitialPreloaded = false;
+    interstitialPreparing = false;
+    preloadInterstitialAd();
+  });
+
+  admobListenersReady = true;
+  logDebug('✅ Listeners AdMob installés');
+}
+
+function preloadRewardedAd() {
+  if (!admobReady || !AdMob || rewardedAdPreloaded || rewardedAdPreparing) return;
+  rewardedAdPreparing = true;
+  logDebug('⏳ Préchargement rewarded...');
+  AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false })
+    .then(() => {
+      rewardedAdPreloaded = true;
+      rewardedAdPreparing = false;
+      logDebug('✅ Rewarded prête');
+    })
+    .catch(e => {
+      rewardedAdPreparing = false;
+      logDebug('⚠️ Rewarded preload échoué: ' + (e.message||JSON.stringify(e)));
+      setTimeout(preloadRewardedAd, 30000); // retry dans 30s
+    });
+}
+
+function preloadInterstitialAd() {
+  if (!admobReady || !AdMob || interstitialPreloaded || interstitialPreparing) return;
+  interstitialPreparing = true;
+  logDebug('⏳ Préchargement interstitielle...');
+  AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID, isTesting: false })
+    .then(() => {
+      interstitialPreloaded = true;
+      interstitialPreparing = false;
+      logDebug('✅ Interstitielle prête');
+    })
+    .catch(e => {
+      interstitialPreparing = false;
+      logDebug('⚠️ Interstitielle preload échoué: ' + (e.message||JSON.stringify(e)));
+      setTimeout(preloadInterstitialAd, 30000); // retry dans 30s
+    });
+}
+
+setTimeout(initAdMob, 1500);
+
+// ── REWARDED ──────────────────────────────────────────
+function showRewardedAdFallback(onRewarded) {
+  logDebug('⚠️ FALLBACK rewarded (AdMob KO)');
+  // Fallback silencieux : on accorde directement sans animation gênante
+  // (AdMob n'est pas encore actif = app en test, pas en prod)
+  setTimeout(() => { onRewarded(); }, 500);
+}
 
 async function showRewardedAd(onRewarded) {
-  if (!isNativeApp() || !admobReady || !AdMob) {
-    let t = 5;
-    showToast('PUB EN COURS... ' + t + 's');
-    const iv = setInterval(() => {
-      t--;
-      if (t > 0) showToast('PUB EN COURS... ' + t + 's');
-      else { clearInterval(iv); onRewarded(); }
-    }, 1000);
-    return;
-  }
+  logDebug('🎬 showRewardedAd() — preloaded=' + rewardedAdPreloaded);
+  if (!admobReady || !AdMob) { showRewardedAdFallback(onRewarded); return; }
+  currentRewardedCallback = onRewarded;
   try {
-    let rewarded = false;
-    const events = ['onRewardedVideoAdRewarded','rewarded','rewardedVideoAdRewarded','onRewarded'];
-    const listeners = await Promise.all(events.map(ev =>
-      AdMob.addListener(ev, () => {
-        if (!rewarded) {
-          rewarded = true;
-          listeners.forEach(l => l && l.remove());
-          onRewarded();
-        }
-      }).catch(() => null)
-    ));
-    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
+    if (!rewardedAdPreloaded) {
+      logDebug('⏳ Rewarded pas prête — préparation...');
+      rewardedAdPreparing = true;
+      await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID, isTesting: false });
+      rewardedAdPreloaded = true;
+      rewardedAdPreparing = false;
+    }
+    rewardedAdPreloaded = false; // consommée
     await AdMob.showRewardVideoAd();
-  } catch(e) { console.warn('[AdMob] rewarded:', e); }
+    logDebug('✅ Rewarded affichée');
+  } catch(e) {
+    logDebug('🔴 REWARDED ERR: ' + (e.message||JSON.stringify(e)));
+    currentRewardedCallback = null;
+    rewardedAdPreloaded  = false;
+    rewardedAdPreparing  = false;
+    showRewardedAdFallback(onRewarded);
+    setTimeout(preloadRewardedAd, 5000);
+  }
 }
 
-const _simAd = showMandatoryAd;
-async function showMandatoryAd(onDone) {
-  if (adBlockerOwned) { onDone(); return; }
-  if (!isNativeApp() || !admobReady || !AdMob) { _simAd(onDone); return; }
-  try {
-    await AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID });
-    const il = await AdMob.addListener('onInterstitialAdDismissed', () => { il.remove(); onDone(); });
-    await AdMob.showInterstitial();
-  } catch(e) { console.warn('[AdMob] interstitial:', e); onDone(); }
-}
+// ── IAP ENGINE — capacitor-plugin-cdv-purchase v13 ───
+// Plugin : npm install capacitor-plugin-cdv-purchase
+// Compatible Capacitor 6 — Google Play Billing
+//
+// Produits à créer dans Play Console :
+//   NON_CONSUMABLE : remove_ads | coins_x2_permanent
+//   CONSUMABLE     : coins_500 | coins_1200 | coins_3000 | coins_7000 | coins_10000
 
-document.getElementById('fixedAdBtn').addEventListener('click', () => {
-  const elapsed = Date.now() - lastAdBonus;
-  if (lastAdBonus !== 0 && elapsed < AD_BONUS_COOLDOWN) {
-    const r = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
-    showToast('PUB DANS ' + Math.floor(r/60) + ':' + (r%60).toString().padStart(2,'0'));
+const IAP_PRODUCTS_DEF = [
+  { id: 'remove_ads',         type: 'NON_CONSUMABLE' },
+  { id: 'coins_x2_permanent', type: 'NON_CONSUMABLE' },
+  { id: 'coins_500',          type: 'CONSUMABLE' },
+  { id: 'coins_1200',         type: 'CONSUMABLE' },
+  { id: 'coins_3000',         type: 'CONSUMABLE' },
+  { id: 'coins_7000',         type: 'CONSUMABLE' },
+  { id: 'coins_10000',        type: 'CONSUMABLE' },
+];
+
+// Callbacks en attente : skuId -> onSuccess
+const _iapPendingCallbacks = {};
+
+let iapReady = false;
+let _iapStore = null;
+
+function _handleRestoredPurchase(pid) {
+  if (pid === 'remove_ads'         && !adBlockerOwned)    { _activateAdBlocker();   }
+if (pid === 'coins_x2_permanent' && !coinBoostIapOwned) { _activateCoinBoostIap(); }
+}
+  
+function _iapGrantReward(productId) {
+  // Callback explicite (achat initié par l'utilisateur)
+  if (_iapPendingCallbacks[productId]) {
+    const cb = _iapPendingCallbacks[productId];
+    delete _iapPendingCallbacks[productId];
+    cb(productId);
     return;
   }
-  showRewardedAd(() => {
-    lastAdBonus = Date.now();
-    totalCoins += 25;
-    shopCoinsEl.textContent = totalCoins;
-    saveState(); updateFixedAdCd();
-    showToast('✨ +25 PIÈCES!');
-  });
-}, { capture: true });
+  // Achat restauré au démarrage
+  _handleRestoredPurchase(productId);
+}
 
-function handleShopAdBonus() {
-  const elapsed = Date.now() - lastAdBonus;
-  if (lastAdBonus !== 0 && elapsed < AD_BONUS_COOLDOWN) {
-    const r = Math.ceil((AD_BONUS_COOLDOWN - elapsed) / 1000);
-    showToast('CD: ' + Math.floor(r/60) + ':' + (r%60).toString().padStart(2,'0')); return;
+function initIAP() {
+  if (!isNativeApp()) {
+    logDebug('🔴 IAP — mode navigateur, simulation activée');
+    return;
   }
-  const box = document.getElementById('adBonusBox');
-  box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
-  document.getElementById('adBonusCooldown').textContent = 'PUB EN COURS...';
-  showRewardedAd(() => {
-    lastAdBonus = Date.now();
-    totalCoins += 25; shopCoinsEl.textContent = totalCoins; saveState();
-    box.style.opacity = '1'; box.style.pointerEvents = '';
-    updateAdBonusCooldown(); showToast('✨ +25 PIÈCES!');
-  });
-}
 
-function handleCoinBoostAd() {
-  if (coinBoostIapOwned) { showToast('X2 PERMANENT ACTIF!'); return; }
-  if (Date.now() < coinBoostAdEnd) { showToast('X2 DÉJÀ EN COURS!'); return; }
-  const elapsed = Date.now() - lastCoinBoostAd;
-  if (lastCoinBoostAd > 0 && elapsed < COIN_BOOST_AD_COOLDOWN) {
-    const r = Math.ceil((COIN_BOOST_AD_COOLDOWN - elapsed) / 1000);
-    showToast('CD: ' + Math.floor(r/60) + ':' + (r%60).toString().padStart(2,'0')); return;
+  // CdvPurchase est injecté par capacitor-plugin-cdv-purchase
+  if (typeof CdvPurchase === 'undefined') {
+    logDebug('🔴 CdvPurchase introuvable — plugin non installé?');
+    return;
   }
-  const box = document.getElementById('coinBoostAdBox');
-  box.style.opacity = '0.5'; box.style.pointerEvents = 'none';
-  document.getElementById('coinBoostAdCd').textContent = 'PUB EN COURS...';
-  showRewardedAd(() => {
-    coinBoostAdEnd = Date.now() + COIN_BOOST_AD_DURATION;
-    lastCoinBoostAd = Date.now();
-    localStorage.setItem('floppyLastBoostAd', lastCoinBoostAd.toString());
-    box.style.opacity = '1'; box.style.pointerEvents = '';
-    updateCoinBoostAdCd(); showToast('X2 ACTIF - 5 MIN!');
+
+  const store = CdvPurchase.store;
+  _iapStore = store;
+
+  // 1. Enregistrement des produits
+  IAP_PRODUCTS_DEF.forEach(p => {
+    store.register({
+      id: p.id,
+      type: p.type === 'CONSUMABLE'
+        ? CdvPurchase.ProductType.CONSUMABLE
+        : CdvPurchase.ProductType.NON_CONSUMABLE,
+      platform: CdvPurchase.Platform.GOOGLE_PLAY,
+    });
   });
+
+  // 2. Listeners
+  store.when()
+    .approved(transaction => {
+      logDebug('💳 Transaction approuvée: ' + JSON.stringify(transaction.products.map(p=>p.id)));
+      // Accorder la récompense pour chaque produit
+      transaction.products.forEach(p => _iapGrantReward(p.id));
+      // Finaliser OBLIGATOIRE (acknowledge Google Play / consume consommable)
+      transaction.finish();
+    })
+    .finished(transaction => {
+      logDebug('✅ Transaction finalisée: ' + JSON.stringify(transaction.products.map(p=>p.id)));
+    })
+    .receiptUpdated(receipt => {
+      // Restaure les non-consommables au démarrage (réinstallation, changement appareil)
+      if (!receipt) return;
+      receipt.transactions.forEach(t => {
+        t.products.forEach(p => _handleRestoredPurchase(p.id));
+      });
+    });
+
+  // 3. Initialisation
+  store.initialize([CdvPurchase.Platform.GOOGLE_PLAY])
+    .then(() => {
+      iapReady = true;
+      logDebug('✅ IAP store initialisé (CdvPurchase v13)');
+    })
+    .catch(e => {
+      logDebug('🔴 IAP init err: ' + (e.message || JSON.stringify(e)));
+    });
 }
 
-function doRevive() {
-  showRewardedAd(() => {
-    hasUsedRevive = true;
-    adState = 'none';
-    state = 'playing';
-    bird.vy = 0;
-    bird.y = H / 2;
-    bird.angle = 0;
-    pipes = pipes.filter(p => p.x > bird.x + 120);
-    coinObjects = coinObjects.filter(c => c.x > bird.x + 120);
-    deathShake = 0;
-    spawnFlapParticles();
-  });
+// Fonction centrale d'achat — appelée depuis buyCoinPack, purchaseAdBlocker, purchaseCoinBoostIap
+async function iapPurchase(skuId, onSuccess) {
+  // ── Mode navigateur / simulation ──────────────────
+  if (!isNativeApp() || !iapReady || !_iapStore) {
+    logDebug('⚠️ IAP fallback simulation pour: ' + skuId);
+    if (confirm('(SIMULATION DEV)\nAcheter : ' + skuId + ' ?')) {
+      onSuccess(skuId);
+    }
+    return;
+  }
+
+  // ── Achat réel Google Play ─────────────────────────
+  const product = _iapStore.get(skuId, CdvPurchase.Platform.GOOGLE_PLAY);
+  if (!product) {
+    logDebug('🔴 Produit introuvable: ' + skuId);
+    showToast('❌ Produit non disponible');
+    return;
+  }
+  const offer = product.getOffer();
+  if (!offer) {
+    logDebug('🔴 Pas d\'offre pour: ' + skuId);
+    showToast('❌ Offre non disponible');
+    return;
+  }
+
+  _iapPendingCallbacks[skuId] = onSuccess;
+  try {
+    await _iapStore.order(offer);
+  } catch(e) {
+    delete _iapPendingCallbacks[skuId];
+    logDebug('🔴 Achat annulé/échoué [' + skuId + ']: ' + (e.message || JSON.stringify(e)));
+    showToast('❌ Achat annulé');
+  }
 }
+
+// Init IAP après AdMob (délai 2500ms pour laisser deviceready se terminer)
+setTimeout(initIAP, 2500);
 </script>
-</script>
+
 </body>
 </html>
